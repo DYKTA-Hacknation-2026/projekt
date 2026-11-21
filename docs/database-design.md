@@ -75,6 +75,8 @@ If the dictionary is unavailable (managed DB, deployment option B), fall back to
 
 ### 2.4 `docs`: uploads and extraction (FR-PRD-06)
 
+> **Implemented (migration `0006_documents_uploads_extraction`).** Differences from this design: `uploads` has `owner_key` (session subject — guests have no user row) next to the optional `owner_user_id`, plus `status`, `sample_case_id`, `consent_granted_at` and `file_name_hint` (only the form code suggested by the file name; the name itself is not stored). `extractions` keeps all fields in `result jsonb` (one snapshot of the `DocumentExtraction` contract, with `userEdited`, `confirmed` and the original confidence) instead of an `extracted_fields` table: the confirmation UI reads and writes the whole set, every edit re-runs the validators over all fields, and the snapshot shares the upload's 24 h lifetime. `validation_findings` stores `message` text (Polish) rather than a `message_key`. `sample_cases` is not a table: synthetic cases are code (`packages/documents/src/samples`) and private ones come from `fixtures/private/sample-cases/manifest.json`. `app.checklist_items` uses `owner_key` and `source_document_id` (set null when the upload is purged) instead of `household_id`, and records `rule_set_version` and `input_hash`.
+
 | Table | Key columns | Notes |
 |-------|-------------|-------|
 | `uploads` | `id`, `owner_user_id`, `storage_key`, `sha256`, `mime`, `size`, `origin` enum(`USER_UPLOAD`,`SAMPLE_CASE`), `delete_after` | |

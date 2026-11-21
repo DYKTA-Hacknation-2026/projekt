@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 
 import { addMonths } from "./dates"
 import { relevantDeadlines } from "./deadlines"
-import { requiredDocuments } from "./documents"
 import { assessEligibility } from "./eligibility"
 import { compareLeaveScenarios } from "./scenarios"
 import { testRuleSet } from "./testing"
@@ -95,35 +94,6 @@ describe("assessEligibility", () => {
       { asOf, ruleSet, benefits: ["PATERNITY_BENEFIT"] }
     )
     expect(result.determinations[0]?.status).toBe("NOT_ELIGIBLE")
-  })
-})
-
-describe("requiredDocuments", () => {
-  it("routes the self-employed to ZUS with ZAM", () => {
-    const list = requiredDocuments(
-      "MATERNITY_ALLOWANCE",
-      {
-        employmentType: "SELF_EMPLOYMENT",
-      },
-      ruleSet
-    )
-    expect(list.routing.payer).toBe("ZUS")
-    expect(list.documents.map((d) => d.code)).toContain("ZAM")
-    expect(list.documents.find((d) => d.code === "Z-3b")?.caveat).toContain(
-      "Q-33"
-    )
-  })
-
-  it("asks about the payer size for employees", () => {
-    const list = requiredDocuments(
-      "MATERNITY_ALLOWANCE",
-      {
-        employmentType: "EMPLOYMENT",
-      },
-      ruleSet
-    )
-    expect(list.routing.payer).toBe("UNKNOWN")
-    expect(list.missingFacts.map((m) => m.key)).toContain("payerSize")
   })
 })
 

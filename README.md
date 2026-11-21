@@ -89,7 +89,7 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 | `/mobywatel`     | Simulated mObywatel / login.gov.pl flow that prefills the onboarding wizard |
 | `/kalkulator`    | Birth/adoption/foster calculator: both parents, work + parental leave, detailed/known basis, ZUS case JSON import, trace and persisted result |
 | `/asystent`      | Streaming conversational assistant: tools, citations, history, deletion   |
-| `/dokumenty`     | Document analysis demo (sample ZUS forms or a PDF signature check)        |
+| `/dokumenty`     | Document analysis: sample case or PDF upload → extraction → field confirmation → eligibility, amount, checklist and deadlines |
 | `/os-czasu`      | Two-parent leave/application/payment timeline planner                     |
 | `/wiedza`        | Centrum wiedzy: search, categories, FAQ, articles, documents, guides, glossary |
 | `/wiedza/faq`    | FAQ with category filter and full-text search                            |
@@ -136,8 +136,16 @@ machine-readable contract.
 | `/api/v1/timeline`                     | POST       | Benefit periods and dated deadlines                                                               |
 | `/api/v1/documents/required`           | POST       | Required documents, forms and where to submit them                                                |
 | `/api/v1/rulesets`                     | GET        | Rule set versions, parameters with verification status, rules, assumptions, unsupported scenarios |
-| `/api/v1/documents/analyze`            | GET        | Available synthetic sample documents                                                              |
-| `/api/v1/documents/analyze`            | POST       | Analyze a PDF or `sampleCase` multipart field                                                     |
+| `/api/v1/documents`                    | POST       | Upload a PDF (multipart `file` + `consent=DOCUMENT_PROCESSING`) → `documentId`, status, TTL       |
+| `/api/v1/documents/{id}`               | GET/DELETE | Metadata and status / immediate deletion of file, extraction and findings                         |
+| `/api/v1/documents/{id}/file`          | GET        | The owner's PDF for the preview (session-bound, `no-store`, never a public URL)                   |
+| `/api/v1/documents/{id}/extract`       | POST       | Run extraction (AcroForm → template/regex → optional OCR → optional LLM proposals)                |
+| `/api/v1/documents/{id}/extraction`    | GET        | Latest extraction, facts mapping and saved checklist                                              |
+| `/api/v1/documents/{id}/fields`        | PUT        | Confirm/correct fields; when complete: eligibility, amounts, documents, timeline, checklist       |
+| `/api/v1/documents/cleanup`            | POST       | TTL purge for a cron job (service token); uploads also trigger it                                 |
+| `/api/v1/sample-cases`                 | GET        | Synthetic sample cases (+ private ones from a git-ignored manifest)                               |
+| `/api/v1/sample-cases/{id}/load`       | POST       | Load a sample case as a document of this session and extract it                                   |
+| `/api/v1/documents/analyze`            | GET/POST   | **Deprecated** one-step alias of the above (old response shape + `extraction`)                    |
 | `/api/v1/admin/login`                  | POST       | Demo admin login, sets an HMAC-signed HttpOnly cookie                                             |
 | `/api/v1/admin/logout`                 | POST       | Clears the admin cookie                                                                           |
 | `/api/v1/data-import/sources`  | GET    | Simulated institutions, consent scopes and progress steps |
@@ -151,6 +159,40 @@ machine-readable contract.
 | `/api/v1/sim/mobywatel/personas` | GET  | Synthetic profiles for the simulated login              |
 | `/api/v1/sim/mobywatel/authorize` | POST | Set a short-lived signed prefill session                |
 | `/api/v1/sim/mobywatel/logout` | POST   | Clear the simulated mObywatel session                    |
+
+### Documents (`/dokumenty`)
+
+```
+PDF ─▶ POST /documents        size ≤ 10 MB, declared type + %PDF- magic bytes, consent DOCUMENT_PROCESSING,
+                              private storage (var/uploads or a bucket adapter), docs.uploads, delete_after = now + 24 h
+    ─▶ POST /{id}/extract     @zpr/documents: pdf.js text + AcroForm → form detection (fields → headings → text → file name)
+                              → R1316 annex 2/3/6 templates → [OCR if a scan and DOCUMENT_OCR_ENABLED]
+                              → [LLM proposals if DOCUMENT_LLM_FALLBACK + per-request consent, PII scrubbed]
+                              → validators (LR-05 withdrawn forms, missing fields, dates, attachments) → docs.extractions
+    ─▶ UI                      PDF preview next to the fields: value, source, page, confidence, "changed by you"
+    ─▶ PUT /{id}/fields        user confirms/corrects; userEdited kept, original confidence kept
+    ─▶ engine                  evaluateEligibility, calculateParentalBenefits, identifyRequiredDocuments, generateBenefitTimeline
+    ─▶ app.checklist_items     documents, where to file (payer vs ZUS) and deadlines
+    ─▶ /kalkulator             prefill { monthlyBasisGrosze | grossMonthlyGrosze } — a payer's basis is used as-is
+```
+
+- **Deterministic first.** No external AI unless `DOCUMENT_LLM_FALLBACK=true`,
+  an `AI_PROVIDER` is configured *and* the user ticks the AI consent for that
+  upload. Proposals are `source: LLM`, low confidence, never confirmed automatically.
+- **Confirmation is mandatory.** „Potwierdź i oblicz” stays disabled until every
+  required field is filled, valid and confirmed; a placeholder such as
+  „Do uzupełnienia” is never a valid amount.
+- **Basis vs gross.** „Podstawa wymiaru zasiłku” (Z-3/Z-3a) → `KNOWN_BASIS`;
+  gross pay → `GROSS_MONTHLY` (13,71% deducted by the engine); an amount of
+  unclear nature is shown but never transferred.
+- **Privacy.** File names and content are never logged; only a form-code hint
+  derived from the name is stored. Files and rows are purged at the TTL
+  (`DOCUMENT_TTL_HOURS`, default 24) by the next upload or `POST /documents/cleanup`.
+- **Sample cases.** Four synthetic cases (SC-SYN-01…04) are generated in code
+  (`packages/documents/src/samples`). Real ZUS cases are never committed: put
+  them in `fixtures/private/sample-cases/` (git-ignored) with a `manifest.json`
+  (`{"cases":[{"id","code","label","formCode","file","expected":{…}}]}`) and set
+  `SAMPLE_CASES_DIR`; the golden harness runs them too.
 
 ### Simulated mObywatel login
 
@@ -174,8 +216,11 @@ curl -s -X POST http://localhost:3000/api/v1/calculations \
   -H 'content-type: application/json' \
   -d '{"input":{"grossMonthlyIncomeGrosze":800000,"childrenCount":1,"secondParentParentalWeeks":9,"paternityDays":14}}' | jq
 
-curl -s -X POST http://localhost:3000/api/v1/documents/analyze \
-  -F 'sampleCase=anna-zam' | jq
+# Documents: upload (consent required), extract, confirm (cookie jar keeps the session)
+curl -s -c /tmp/zpr -b /tmp/zpr -X POST http://localhost:3000/api/v1/documents \
+  -F 'file=@zaswiadczenie.pdf;type=application/pdf' -F 'consent=DOCUMENT_PROCESSING' | jq
+curl -s -c /tmp/zpr -b /tmp/zpr -X POST http://localhost:3000/api/v1/documents/<id>/extract | jq
+curl -s -c /tmp/zpr -b /tmp/zpr -X POST http://localhost:3000/api/v1/sample-cases/anna-zam/load | jq
 
 curl -s -X POST http://localhost:3000/api/v1/assistant/messages \
   -H 'content-type: application/json' \
@@ -202,6 +247,7 @@ packages/
 ├── ai/                  # @zpr/ai — assistant orchestration, tools, guards, provider factory, rules model
 ├── contracts/           # @zpr/contracts — env, API, onboarding, calculator, data-import Zod schemas
 ├── data-sources/        # @zpr/data-sources — demo scenarios, per-institution providers, mapping engine
+├── documents/           # @zpr/documents — PDF reading, form detection, R1316 templates, validators, facts mapping, synthetic samples
 ├── db/                  # @zpr/db — Drizzle schema, repos, seed, migrations, health
 ├── rag/                 # @zpr/rag — ingestion pipeline, embeddings, hybrid retrieval
 │   ├── knowledge/       #   committed (redistributable) curated sources
@@ -319,7 +365,7 @@ ollama | openai-compatible`. With `none` (default) an offline rules model
 
 ### Database layout
 
-One PostgreSQL database, four schemas:
+One PostgreSQL database, five schemas:
 
 | Schema  | Contents                                                                                     |
 | ------- | -------------------------------------------------------------------------------------------- |
@@ -327,6 +373,7 @@ One PostgreSQL database, four schemas:
 | `legal` | legal rules and versioned rule sets                                      |
 | `kb`    | knowledge sources/documents/chunks, ingestion jobs, embedding models, Centrum wiedzy content (`content_*`) |
 | `chat`  | conversations, messages, tool calls, retrieved evidence                   |
+| `docs`  | uploads (24 h TTL), extractions (fields as one JSON snapshot), validation findings; `app.checklist_items` holds the generated checklist |
 
 `kb.knowledge_chunks` stores model-independent text and metadata (`content`,
 page range, `section_identifier`, `heading_path`, `legal_reference`,
@@ -483,7 +530,7 @@ official public pages but the application never calls a government API.
 pnpm typecheck
 pnpm lint
 pnpm test
-TEST_DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5435/zpr pnpm test   # + pgvector integration
+TEST_DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5435/zpr pnpm test   # + pgvector and docs integration
 pnpm kb:verify
 pnpm build
 pnpm --filter web e2e
@@ -502,6 +549,14 @@ validation (including production secret rejection), timeline milestones, documen
 problem responses, all route headings, calculator/assistant flows, and axe
 accessibility checks on `/`, `/kalkulator`, `/asystent`, `/mobywatel` and `/dane` at desktop and
 mobile sizes.
+
+Document tests (`packages/documents`, `apps/api/tests/documents*.test.ts`,
+`apps/web/tests/document-prefill.test.ts`, `apps/web/e2e/documents.spec.ts`):
+form detection (whole-token codes, `ZAMOWIENIE.pdf`, Z-3b/ZUR/ZAO/ZAS-53),
+AcroForm and template extraction on synthetic PDFs, validators, LLM fallback
+scrubbing, golden SC-SYN cases through the engine, API status codes
+(400/403/404/413/415/429), consent, TTL purge on PostgreSQL, the basis-vs-gross
+regression, and the E2E flows with axe.
 
 Data-retrieval tests (`packages/data-sources`): scenario consistency (payer,
 employment and insurance dates, contribution bases vs benefit basis, USC birth
@@ -547,8 +602,11 @@ the same `evaluate`. See [docs/calculation-engine.md](docs/calculation-engine.md
   leave with work), so some questions honestly end in "no evidence".
 - Sessions are demo-grade: onboarding with an e-mail binds that synthetic user
   to the browser; there is no real authentication.
-- Document analysis checks PDF signatures and returns deterministic sample
-  fields; it does not perform OCR.
+- Document templates follow the data scope of R1316 annexes 2, 3 and 6, but
+  the exact ZUS print layouts (Q-20) and real sample cases (Q-19) were not
+  available: extraction is verified on synthetic PDFs only. OCR needs
+  `pdftoppm` + `tesseract -l pol` and is off by default; parsing runs in-process
+  with a timeout (no separate worker yet).
 - The admin area is a read-only skeleton with a demo login.
 - Government integrations, applications, and PZ/eZUS flows are not implemented.
   `/dane` simulates them locally; no request leaves the application.

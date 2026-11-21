@@ -60,7 +60,9 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table"
+import { takeDocumentPrefill } from "@/lib/document-prefill"
 import { formatPln, formatPercent } from "@/lib/format"
+import { calculator as calculatorCopy } from "@/messages/pl"
 import { mapSampleCaseToCalculatorInput } from "@/lib/sample-case"
 
 type ResponseBody = {
@@ -205,6 +207,7 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
   const [monthlyBasis, setMonthlyBasis] = useState<number | undefined>()
   const [useImportedBasis, setUseImportedBasis] = useState(true)
   const [importLoaded, setImportLoaded] = useState(false)
+  const [basisSource, setBasisSource] = useState<"IMPORT" | "DOCUMENT">("IMPORT")
 
   const childCounts = Object.keys(ruleSet.maternity.weeksByChildren)
     .map(Number)
@@ -258,18 +261,26 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
       }
     }
 
-    const raw = window.sessionStorage.getItem("zpr:document-prefill")
-    if (!raw) return
-    window.sessionStorage.removeItem("zpr:document-prefill")
-    try {
-      const parsed = JSON.parse(raw) as { income?: string }
-      if (parsed.income && Number.isFinite(Number(parsed.income))) {
-        setIncome(parsed.income)
+    // A payer's basis is an override used as-is, never treated as gross pay.
+    const fromDocument = takeDocumentPrefill(window.sessionStorage)
+    if (fromDocument) {
+      if (fromDocument.monthlyBasisGrosze !== undefined) {
+        setMonthlyBasis(fromDocument.monthlyBasisGrosze)
+        setUseImportedBasis(true)
+      } else if (fromDocument.incomePln !== undefined) {
+        setIncome(fromDocument.incomePln)
+        setIncomeMode("SIMPLE")
         setMonthlyBasis(undefined)
       }
-    } catch {
-      // Ignore a stale or malformed prefill.
+      if (fromDocument.employmentType) setMotherEmploymentType(fromDocument.employmentType)
+      if (fromDocument.childrenCount) {
+        setChildren(String(Math.min(ruleSet.maternity.maxChildren, fromDocument.childrenCount)))
+      }
+      if (fromDocument.paymentOption) setPaymentOption(fromDocument.paymentOption)
+      setBasisSource("DOCUMENT")
+      setImportLoaded(true)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- read once on mount
   }, [])
 
   function onTabChange(value: string) {
@@ -677,11 +688,15 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
             {importLoaded && (
               <Alert variant="info">
                 <Info aria-hidden="true" />
-                <AlertTitle>Dane z symulowanych źródeł</AlertTitle>
+                <AlertTitle>
+                  {basisSource === "DOCUMENT"
+                    ? calculatorCopy.documentPrefillTitle
+                    : "Dane z symulowanych źródeł"}
+                </AlertTitle>
                 <AlertDescription>
-                  Dochód i liczba dzieci pochodzą z zaakceptowanego raportu
-                  pobrania. Możesz je zmienić — kalkulator nadal liczy
-                  deterministycznie.
+                  {basisSource === "DOCUMENT"
+                    ? calculatorCopy.documentPrefillText
+                    : "Dochód i liczba dzieci pochodzą z zaakceptowanego raportu pobrania. Możesz je zmienić — kalkulator nadal liczy deterministycznie."}
                 </AlertDescription>
               </Alert>
             )}
@@ -828,11 +843,18 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
                   />
                   <span>
                     <span className="font-medium">
-                      Użyj podstawy wymiaru z ZUS (symulacja)
+                      {basisSource === "DOCUMENT"
+                        ? calculatorCopy.documentBasisLabel
+                        : "Użyj podstawy wymiaru z ZUS (symulacja)"}
                     </span>
-                    <span className="block text-xs text-muted-foreground">
-                      {formatPln(monthlyBasis)} miesięcznie. Odznacz, aby
-                      wyliczyć podstawę z podanego wynagrodzenia.
+                    <span
+                      className="block text-xs text-muted-foreground"
+                      data-testid="imported-basis"
+                    >
+                      {formatPln(monthlyBasis)} miesięcznie.{" "}
+                      {basisSource === "DOCUMENT"
+                        ? calculatorCopy.documentBasisHelp
+                        : "Odznacz, aby wyliczyć podstawę z podanego wynagrodzenia."}
                     </span>
                   </span>
                 </label>
