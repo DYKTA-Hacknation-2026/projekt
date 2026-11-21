@@ -39,6 +39,13 @@ All calculations, eligibility decisions, routing and deadlines are **determinist
 
 Legal acts are law and generally not subject to copyright (art. 4 of the Polish copyright act). ZUS guides and forms need confirmation before they are reproduced verbatim in a public demo; this is tracked under Q-19 and Q-23.
 
+> **Implementation status (2026-11-21).** Sections 3, 4 and 6 (ingestion, hybrid retrieval and the embedding port) are implemented in `packages/rag` (`@zpr/rag`). How to add and update sources: [knowledge-sources.md](knowledge-sources.md). Differences from this design:
+> - Lexical ranking is BM25 computed over GIN-filtered candidates (stems with `simple` FTS), not `websearch_to_tsquery('polish')`. Exact domain terms (ZAM, e-ZLA, Z-3/Z-3a, „Za życiem”) and multi-word phrases (urlop rodzicielski, zasiłek macierzyński) are additional RRF lists.
+> - Relevance is thresholded on a calibrated 0–1 score (IDF-weighted query coverage + normalised cosine + exact-term floor), and the API returns `status: NO_EVIDENCE` with a reason.
+> - Access is enforced per source and document (`PUBLIC`/`INTERNAL`/`RESTRICTED`, plus redistribution policy). RESTRICTED material is refused at ingestion.
+> - Benefit tagging is rule-based (`src/text/vocabulary.ts`). LR-id linking is still to do.
+> - The eval set is `packages/rag/evals/retrieval.jsonl`, run by `pnpm kb:verify` (recall gate 80 %).
+
 ## 3. Ingestion pipeline
 
 ```

@@ -33,10 +33,10 @@ pnpm install
 # Start PostgreSQL + pgvector only (host port 5435)
 docker compose up -d db
 
-# Apply schema, seed synthetic demo data, verify vector search
+# Apply schema, seed synthetic demo data, build and verify the knowledge base
 pnpm --filter @zpr/db db:migrate
 pnpm --filter @zpr/db db:seed
-pnpm --filter @zpr/db db:smoke
+pnpm kb:seed            # ingest committed sources + run kb:verify (idempotent)
 
 # Start the web app
 pnpm dev
@@ -49,7 +49,8 @@ The defaults in `.env.example` match the Compose database, so no `.env` file is
 required for the standard local setup. To override values, create:
 
 - `apps/web/.env.local` for the Next.js app, and
-- `packages/db/.env` for migration/seed/smoke scripts.
+- `packages/db/.env` for migration/seed scripts, and
+- `packages/rag/.env` for knowledge-base scripts (`kb:*`).
 
 `.env.example` lists every supported variable. Never commit a real `.env` or
 production secret.
@@ -60,8 +61,8 @@ production secret.
 docker compose up --build -d
 ```
 
-This builds the web image, waits for a healthy database, runs migrations and the
-seed, then starts Next.js on <http://localhost:3000>. The database is exposed on
+This builds the web image, waits for a healthy database, runs migrations, the
+demo seed and the knowledge-base seed, then starts Next.js on <http://localhost:3000>. The database is exposed on
 `${POSTGRES_PORT:-5435}`.
 
 ### Host port already in use?
@@ -99,7 +100,7 @@ machine-readable contract.
 | ------------------------------ | ------ | -------------------------------------------------------- |
 | `/api/health`                  | GET    | Liveness plus DB, pgvector, and migration checks         |
 | `/api/v1/health`               | GET    | Versioned health, table checks, and demo row counts      |
-| `/api/v1/knowledge/search`     | GET    | Hybrid pgvector + full-text search (`q`, `limit`, `asOf`) |
+| `/api/v1/knowledge/search`     | GET    | Hybrid retrieval (`q`, `limit`, `asOf`, `source`, `sourceType`, `tag`, `minRelevance`) |
 | `/api/v1/assistant/chat`       | POST   | Grounded answer with `[S1]` citations and AI disclosure  |
 | `/api/v1/onboarding`           | POST   | Create a household, user profile, and benefit case       |
 | `/api/v1/calculations`         | GET    | Recent calculations                                      |
@@ -115,6 +116,9 @@ Examples:
 curl -s http://localhost:3000/api/v1/health | jq
 
 curl -s 'http://localhost:3000/api/v1/knowledge/search?q=zasi%C5%82ek%20macierzy%C5%84ski&limit=3' | jq
+
+# Exact form code, valid on a given date, legal sources only
+curl -s 'http://localhost:3000/api/v1/knowledge/search?q=Z-3a&asOf=2027-02-01&sourceType=FORM_INSTRUCTION,LEGAL_ACT' | jq
 
 curl -s -X POST http://localhost:3000/api/v1/calculations \
   -H 'content-type: application/json' \
@@ -149,11 +153,14 @@ packages/
 ├── domain/              # @zpr/domain — pure calculator and money helpers
 ├── contracts/           # @zpr/contracts — env, API, onboarding, calculator Zod schemas
 ├── db/                  # @zpr/db — Drizzle schema, repos, seed, migrations, health
+├── rag/                 # @zpr/rag — ingestion pipeline, embeddings, hybrid retrieval
+│   ├── knowledge/       #   committed (redistributable) curated sources
+│   └── evals/           #   retrieval eval set used by kb:verify
 └── ui/                  # @workspace/ui — shadcn/ui primitives and theme
 ```
 
-Dependency direction: `apps/web → @zpr/contracts → @zpr/domain` and
-`apps/web → @zpr/db`. `@zpr/domain` is pure and performs no I/O.
+Dependency direction: `apps/web → @zpr/contracts → @zpr/domain`,
+`apps/web → @zpr/rag → @zpr/db`. `@zpr/domain` is pure and performs no I/O.
 
 ### Database layout
 
@@ -166,31 +173,64 @@ One PostgreSQL database, four schemas:
 | `kb`    | knowledge sources/documents/chunks, ingestion jobs, embedding models      |
 | `chat`  | conversations, messages, tool calls, retrieved evidence                   |
 
-The initial model contains the 20 required tables. `kb.knowledge_chunks` stores
-`content`, `embedding`, `source_title`, `source_url`, `source_type`,
-`page_number`, `section_identifier`, `legal_reference`, `valid_from`,
-`valid_to`, `content_hash`, `metadata`, and `created_at` (plus relational keys).
+`kb.knowledge_chunks` stores model-independent text and metadata (`content`,
+page range, `section_identifier`, `heading_path`, `legal_reference`,
+`valid_from`/`valid_to`, `content_hash`, benefit tags) plus two app-computed
+search columns (`search_text`, `stem_text`) with generated `tsvector`s.
+Vectors live in `kb.chunk_embeddings`, one row per (chunk, embedding model).
 
-Indexes created by the migration:
+Indexes:
 
-- HNSW cosine index on `kb.knowledge_chunks.embedding`
-- GIN full-text index on `to_tsvector('simple', content)`
-- GIN `jsonb_path_ops` index on chunk metadata
-- B-tree indexes for document, model, legal reference, and validity lookups
+- a **partial HNSW index per embedding model** (`kb.ensure_embedding_index`),
+  created by the ingestion pipeline for that model's dimension
+- GIN indexes on `search_tsv` (exact codes such as `Z-3a`) and `stem_tsv`
+  (Polish inflection-tolerant keywords)
+- GIN `jsonb_path_ops` on chunk metadata; B-tree on validity and references
+
+### Knowledge base (RAG)
+
+`@zpr/rag` implements the ingestion pipeline and hybrid retrieval. Read
+[docs/knowledge-sources.md](docs/knowledge-sources.md) before adding or
+updating a source.
+
+- **Ingestion** — register → extract (PDF/HTML/Markdown, page-aware) →
+  boundaries → normalise → section-aware chunking (Polish legal grammar:
+  Rozdział/Art./§/ust./pkt/lit.; guide headings from the TOC) → embed →
+  store → index → verify. Idempotent (source key + content hash), retried,
+  and verified inside the store transaction.
+- **Versions** — document versions carry effective dates; provision-level
+  dates come from amendment notes (e.g. art. 9 ust. 4 from 2027-01-01).
+- **Retrieval** — pgvector + BM25-ranked full text + exact domain terms
+  (ZAM, e-ZLA, Z-3/Z-3a, „Za życiem”) + phrase matches, fused with RRF, with
+  access/metadata/date filters, an authority prior, a calibrated relevance
+  threshold and an explicit `NO_EVIDENCE` outcome.
+- **Access** — PUBLIC / INTERNAL / RESTRICTED per source and document.
+  Competition PDFs are INTERNAL and citation-only; ZUS sample cases are
+  RESTRICTED and refused by the pipeline.
+
+| Command                                   | Purpose                                                   |
+| ----------------------------------------- | --------------------------------------------------------- |
+| `pnpm kb:seed`                            | Reproducible KB from committed sources, then `kb:verify`  |
+| `pnpm kb:seed -- --with-local`            | Also ingest local competition PDFs (`KB_LOCAL_SOURCES_DIR`)|
+| `pnpm kb:verify`                          | Integrity checks + retrieval eval set (recall gate)        |
+| `pnpm --filter @zpr/rag kb:ingest …`      | Ingest / re-ingest one manifest document or source         |
+| `pnpm --filter @zpr/rag kb:inspect <file>`| Dry-run extraction and chunking, no database               |
+| `pnpm --filter @zpr/rag kb:search "<q>"`  | Debug ranking (ranks per list, relevance, dates)           |
+| `pnpm --filter @zpr/rag kb:reembed`       | Re-embed with a new `EMBEDDING_*` configuration            |
 
 ### Embeddings
 
-The scaffold uses a deterministic offline feature-hashing model so retrieval
-works without API keys:
+`EmbeddingProvider` (`embedDocument()`, `embedQuery()`) has two adapters:
 
-- provider `local-demo`, model `zpr-hash-1024`, **1024 dimensions**, cosine
-- stored in `kb.embedding_models`; every chunk references its model
-- a dimension check constraint prevents vectors of the wrong size
-- changing model or dimensions requires a full re-embedding and a new index;
-  incompatible vectors must never share a retrieval index
+- `local-demo` — deterministic offline feature hashing (default, 1024 dims).
+  It is lexical, not semantic; it keeps the demo and tests reproducible.
+- OpenAI-compatible `/embeddings` (`openai`, `ollama`, `openai-compatible`)
+  for production, e.g. a multilingual model such as `bge-m3`.
 
-The hashing model is a demo stand-in, not a semantic model. Production must
-replace it through the embedding-provider boundary and re-embed the corpus.
+The same `EMBEDDING_*` configuration drives ingestion and retrieval. Each
+configuration has its own fingerprinted `kb.embedding_models` row and index,
+so changing provider, model, dimensions or prefixes never mixes vectors —
+run `pnpm --filter @zpr/rag kb:reembed` after a change.
 
 ### Database roles
 
@@ -224,11 +264,12 @@ credential flow before any real deployment.
 | `pnpm build`                         | Build all workspaces                     |
 | `pnpm typecheck`                     | Type-check all workspaces                |
 | `pnpm lint`                          | Lint all workspaces                      |
-| `pnpm test`                          | Run Vitest across workspaces             |
+| `pnpm test`                          | Run Vitest across workspaces (set `TEST_DATABASE_URL` to include pgvector integration tests) |
 | `pnpm e2e`                           | Run Playwright (builds first via Turbo)  |
 | `pnpm --filter @zpr/db db:migrate`   | Apply Drizzle migrations                 |
 | `pnpm --filter @zpr/db db:seed`      | Seed synthetic demo data (idempotent)    |
-| `pnpm --filter @zpr/db db:smoke`     | Insert + similarity-search a test vector |
+| `pnpm kb:seed` / `pnpm kb:verify`    | Build / verify the knowledge base        |
+| `pnpm db:setup`                      | migrate + demo seed + knowledge base     |
 | `pnpm --filter @zpr/db db:generate`  | Generate a migration after schema edits  |
 | `pnpm --filter @zpr/db db:studio`    | Open Drizzle Studio                      |
 | `pnpm --filter web e2e`              | Run Playwright against a running server  |
@@ -241,14 +282,16 @@ pnpm --filter web exec playwright install chromium
 
 ## Demo data
 
-The seed inserts synthetic personas and knowledge sources only — no real ZUS
-sample cases or personal data:
+The seeds insert synthetic personas and redistributable knowledge only — no
+real ZUS sample cases or personal data:
 
 - **Anna Kowalska** — employed, one child, standard 100%/70% variant
 - **Tomasz Kowalski** — employed father, paternity/parental split
 - **Kasia Nowak** — mandate contract ending before birth
-- Polish legal extracts (Kodeks pracy, ustawa zasiłkowa, ZUS guide) chunked and
-  embedded for hybrid retrieval
+- `kb:seed`: curated sources in `packages/rag/knowledge/` (statute excerpts in
+  two dated versions, Kodeks pracy, form instructions, benefit table, „Za
+  życiem”, guide summary, support organisations), chunked and embedded; the
+  competition PDFs are added only with `--with-local` and stay INTERNAL
 - Versioned legal rules, a demo rule set, and a seeded calculation
 
 The demo credentials and all names are fictional. Government links point to
@@ -260,13 +303,22 @@ official public pages but the application never calls a government API.
 pnpm typecheck
 pnpm lint
 pnpm test
+TEST_DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5435/zpr pnpm test   # + pgvector integration
+pnpm kb:verify
 pnpm build
 pnpm --filter web e2e
 ```
 
-The suite covers calculator normalization and amounts, money rounding, env
-validation (including production secret rejection), embedding determinism and
-similarity, timeline milestones, document warnings, assistant grounding, API
+Knowledge-base tests (`packages/rag`): unit tests for normalisation, legal and
+guide structure detection, chunking, embedding compatibility, fusion, PII
+redaction and BM25; integration tests (each in its own throw-away database)
+for ingestion stages, idempotency, updates, deduplication, retries, rollback,
+restricted-source refusal, vector search, exact keyword retrieval (ZAM, e-ZLA,
+Z-3 vs Z-3a, „Za życiem”, urlop rodzicielski, zasiłek macierzyński), metadata
+and access filters, versioned legal sources and no-result outcomes.
+
+The suite also covers calculator normalization and amounts, money rounding, env
+validation (including production secret rejection), timeline milestones, document warnings, assistant grounding, API
 problem responses, all route headings, calculator/assistant flows, and axe
 accessibility checks on `/`, `/kalkulator`, and `/asystent` at desktop and
 mobile sizes.

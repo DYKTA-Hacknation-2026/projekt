@@ -13,3 +13,6 @@ node_modules
 test-results
 playwright-report
 coverage
+
+# ZUS-provided materials (competition PDFs, sample cases) never enter images
+fixtures/private

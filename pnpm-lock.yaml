@@ -41,6 +41,9 @@ importers:
       '@zpr/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@zpr/rag':
+        specifier: workspace:*
+        version: link:../../packages/rag
       lucide-react:
         specifier: ^1.77.0
         version: 1.77.0(@types/react@19.3.0)(react@19.3.1)
@@ -224,6 +227,49 @@ importers:
       globals:
         specifier: ^17.14.0
         version: 17.14.0
+
+  packages/rag:
+    dependencies:
+      '@zpr/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@zpr/db':
+        specifier: workspace:*
+        version: link:../db
+      drizzle-orm:
+        specifier: ^0.45.4
+        version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
+      unpdf:
+        specifier: 1.4.0
+        version: 1.4.0
+      zod:
+        specifier: ^4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: ^20
+        version: 20.19.43
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@workspace/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      dotenv:
+        specifier: ^18.0.10
+        version: 18.0.10
+      eslint:
+        specifier: ^10
+        version: 10.15.0(jiti@2.7.0)(supports-color@7.2.0)
+      tsx:
+        specifier: ^4.23.15
+        version: 4.23.15
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^5.1.1
+        version: 5.1.1(@types/node@20.19.43)(vite@8.3.8(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
 
   packages/typescript-config: {}
 
@@ -4060,6 +4106,14 @@ packages:
     resolution: {integrity: sha512-gptHNQghINnc/vTGIk0SOFGFNXw7JVrlRUtConJRlvaw6DuX0wO5Jeko9sWrMBhh+PsYAZ7oXAiOnf/UKogyiw==}
     engines: {node: '>= 10.0.0'}
 
+  unpdf@1.4.0:
+    resolution: {integrity: sha512-TahIk0xdH/4jh/MxfclzU79g40OyxtP00VnEUZdEkJoYtXAHWLiir6t3FC6z3vDqQTzc2ZHcla6uEiVTNjejuA==}
+    peerDependencies:
+      '@napi-rs/canvas': ^0.1.69
+    peerDependenciesMeta:
+      '@napi-rs/canvas':
+        optional: true
+
   update-browserslist-db@1.4.0:
     resolution: {integrity: sha512-WPJuOnjI9FWDct4fB+ej4Mz8opLaw5CDcZ2t44tFZ0vIQVYWzBhWR3mkixuUj/A7+vY4V9+ApOZ2YYLwdgq46w==}
     hasBin: true
@@ -6315,7 +6369,7 @@ snapshots:
 
   '@types/validate-npm-package-name@4.0.2': {}
 
-  '@vitest/mocker@5.1.1(vite@8.3.8(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))':
+  '@vitest/mocker@5.1.1(vite@8.3.8(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       '@vitest/spy': 5.1.1
@@ -7692,6 +7746,8 @@ snapshots:
 
   universalify@2.0.1: {}
 
+  unpdf@1.4.0: {}
+
   update-browserslist-db@1.4.0(browserslist@4.29.6):
     dependencies:
       browserslist: 4.29.6
@@ -7742,7 +7798,7 @@ snapshots:
   vitest@5.1.1(@types/node@20.19.43)(vite@8.3.8(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)):
     dependencies:
       '@types/chai': 5.2.3
-      '@vitest/mocker': 5.1.1(vite@8.3.8(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+      '@vitest/mocker': 5.1.1(vite@8.3.8(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
       chai: 6.3.0
       es-module-lexer: 2.3.2
       expect-type: 1.4.0

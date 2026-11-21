@@ -11,6 +11,7 @@ COPY packages/ui/package.json packages/ui/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/domain/package.json packages/domain/package.json
 COPY packages/db/package.json packages/db/package.json
+COPY packages/rag/package.json packages/rag/package.json
 COPY packages/eslint-config/package.json packages/eslint-config/package.json
 COPY packages/typescript-config/package.json packages/typescript-config/package.json
 RUN pnpm install --frozen-lockfile
@@ -21,6 +22,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=deps /app/packages/ui/node_modules ./packages/ui/node_modules
 COPY --from=deps /app/packages/db/node_modules ./packages/db/node_modules
+COPY --from=deps /app/packages/rag/node_modules ./packages/rag/node_modules
 COPY --from=deps /app/packages/contracts/node_modules ./packages/contracts/node_modules
 COPY --from=deps /app/packages/domain/node_modules ./packages/domain/node_modules
 COPY . .

@@ -15,7 +15,10 @@ const document = {
     "/health": {
       get: {
         summary: "Stan aplikacji, bazy, migracji i pgvector",
-        responses: { "200": { description: "OK" }, "503": { description: "Degraded" } },
+        responses: {
+          "200": { description: "OK" },
+          "503": { description: "Degraded" },
+        },
       },
     },
     "/calculations": {
@@ -38,9 +41,17 @@ const document = {
     },
     "/knowledge/search": {
       get: {
-        summary: "Hybrydowe wyszukiwanie (pgvector + FTS)",
+        summary:
+          "Hybrydowe wyszukiwanie (pgvector + FTS + dokładne terminy, fuzja RRF)",
+        description:
+          "Zwraca fragmenty źródeł obowiązujące w dniu `asOf` (domyślnie dziś) z odwołaniem do strony/przepisu, URL i metadanymi trafności. Gdy brak wystarczających dowodów: `status: NO_EVIDENCE` i `noEvidence.reason`. Dane osobowe w pytaniu są usuwane przed wyszukiwaniem.",
         parameters: [
-          { name: "q", in: "query", required: true, schema: { type: "string" } },
+          {
+            name: "q",
+            in: "query",
+            required: true,
+            schema: { type: "string", minLength: 2, maxLength: 500 },
+          },
           {
             name: "limit",
             in: "query",
@@ -49,10 +60,42 @@ const document = {
           {
             name: "asOf",
             in: "query",
+            description:
+              "Data, na którą przepisy mają obowiązywać (np. termin porodu).",
             schema: { type: "string", format: "date" },
           },
+          {
+            name: "source",
+            in: "query",
+            description:
+              "Slugi źródeł rozdzielone przecinkami, np. kodeks-pracy,ustawa-zasilkowa.",
+            schema: { type: "string" },
+          },
+          {
+            name: "sourceType",
+            in: "query",
+            description: "Typy źródeł, np. LEGAL_ACT,FORM_INSTRUCTION.",
+            schema: { type: "string" },
+          },
+          {
+            name: "tag",
+            in: "query",
+            description: "Tagi świadczeń, np. PARENTAL,MATERNITY.",
+            schema: { type: "string" },
+          },
+          {
+            name: "minRelevance",
+            in: "query",
+            description: "Minimalna skalibrowana trafność 0–1.",
+            schema: { type: "number", minimum: 0, maximum: 1 },
+          },
         ],
-        responses: { "200": { description: "Fragmenty źródeł z oceną" } },
+        responses: {
+          "200": {
+            description: "Status OK/NO_EVIDENCE, fragmenty źródeł z oceną",
+          },
+          "422": { description: "Błąd walidacji" },
+        },
       },
     },
     "/assistant/chat": {
@@ -97,9 +140,21 @@ const document = {
                 type: "string",
                 enum: ["STANDARD_100_70", "FLAT_81_5"],
               },
-              maternityWeeksBeforeBirth: { type: "integer", minimum: 0, maximum: 6 },
-              secondParentParentalWeeks: { type: "integer", minimum: 0, maximum: 9 },
-              parentalWorkFraction: { type: "number", minimum: 0, maximum: 0.5 },
+              maternityWeeksBeforeBirth: {
+                type: "integer",
+                minimum: 0,
+                maximum: 6,
+              },
+              secondParentParentalWeeks: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9,
+              },
+              parentalWorkFraction: {
+                type: "number",
+                minimum: 0,
+                maximum: 0.5,
+              },
               paternityDays: { type: "integer", minimum: 0, maximum: 14 },
             },
           },

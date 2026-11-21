@@ -31,6 +31,8 @@ Trigger: `UPDATE` and `DELETE` on parameters of a `PUBLISHED` set → `RAISE EXC
 
 ### 2.2 `kb`: knowledge base for RAG (FR-PRD-08)
 
+> **Implemented (migration `0001_rag_knowledge_ingestion`).** The physical names differ from this design: `knowledge_sources` (+ `access_level`, `redistribution`, `authority_rank`), `knowledge_documents` (= document versions; `document_key` + `version`, effective dates, `content_hash`, `raw_hash`, status `PENDING/INDEXED/FAILED/SUPERSEDED/ARCHIVED`, optional stricter per-document access), `knowledge_chunks` (model-independent text, `heading_path`, page range, legal reference, validity, `search_tsv`/`stem_tsv`, `is_active`), `chunk_embeddings` (dimension-less `vector`, partial HNSW per model via `kb.ensure_embedding_index`), `embedding_models` (config fingerprint) and `ingestion_jobs` (stage, attempts). Polish FTS uses app-computed diacritic-free text and light stems over the `simple` configuration instead of an ispell dictionary — no custom image is needed. See [knowledge-sources.md](knowledge-sources.md).
+
 | Table | Key columns | Notes |
 |-------|-------------|-------|
 | `sources` | `id`, `code` (e.g. `T`, `USTAWA_ZASILKOWA`, `KP`, `PORADNIK_2026`, `ZUS_WWW_…`), `title`, `publisher`, `kind` enum(`LEGAL_ACT`,`GUIDE`,`TASK_DOC`,`WEB_PAGE`,`FORM_TEMPLATE`), `canonical_url`, `license_note`, `confidential bool` | `confidential` = never shown verbatim to the public (e.g. sample cases) |

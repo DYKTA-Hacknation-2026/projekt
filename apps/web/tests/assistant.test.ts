@@ -18,6 +18,26 @@ const chunk: KnowledgeChunkResult = {
   validFrom: "2026-11-01",
   validTo: null,
   score: 0.03,
+  sourceId: "01900000-0000-7000-8000-000000000101",
+  sourceSlug: "kodeks-pracy",
+  documentTitle: "Kodeks pracy — urlopy",
+  documentVersion: "2026",
+  externalId: null,
+  headingPath: "Art. 180",
+  pageEnd: 52,
+  accessLevel: "PUBLIC",
+  redistribution: "ALLOWED",
+  authorityRank: 100,
+  benefitTags: ["MATERNITY"],
+  relevance: {
+    score: 0.03,
+    relevance: 0.8,
+    vectorSimilarity: 0.4,
+    lexicalScore: 2,
+    coverage: 0.9,
+    exactTerms: [],
+    ranks: { vector: 1, lexical: 1 },
+  },
 }
 
 describe("grounded assistant answer", () => {
@@ -39,6 +59,32 @@ describe("grounded assistant answer", () => {
     const answer = buildGroundedAnswer("Pytanie bez źródła", [])
     expect(answer.citations).toEqual([])
     expect(answer.content).toContain("Nie znalazłem")
+  })
+
+  it("cites citation-only sources without quoting them", () => {
+    const internal: KnowledgeChunkResult = {
+      ...chunk,
+      accessLevel: "INTERNAL",
+      redistribution: "CITATION_ONLY",
+      content:
+        "Tekst z materiałów konkursowych, którego nie wolno rozpowszechniać.",
+    }
+    const answer = buildGroundedAnswer("urlop macierzyński", [internal])
+    expect(answer.content).not.toContain("nie wolno rozpowszechniać")
+    expect(answer.content).toContain("KP art. 180")
+    expect(answer.citations[0]?.quote).not.toContain(
+      "nie wolno rozpowszechniać"
+    )
+  })
+
+  it("passes the retrieval no-evidence message through", () => {
+    const answer = buildGroundedAnswer(
+      "sernik",
+      [],
+      "W bazie wiedzy nie ma fragmentu, który dotyczy tego pytania."
+    )
+    expect(answer.content).toContain("nie ma fragmentu")
+    expect(answer.citations).toEqual([])
   })
 
   it("adds the amount guard without inventing a number", () => {

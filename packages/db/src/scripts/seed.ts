@@ -4,16 +4,6 @@ import { sql } from "drizzle-orm"
 
 import { closeDatabase, getDatabaseConnection } from "../client"
 import {
-  contentHash,
-  embedText,
-} from "../embeddings"
-import {
-  EMBEDDING_DIMENSIONS,
-  EMBEDDING_DISTANCE_METRIC,
-  EMBEDDING_MODEL,
-  EMBEDDING_PROVIDER,
-} from "../constants"
-import {
   applicationDrafts,
   assistantToolCalls,
   benefitCalculations,
@@ -21,235 +11,18 @@ import {
   benefitScenarios,
   conversationMessages,
   conversations,
-  embeddingModels,
   employmentRecords,
   familyEvents,
-  ingestionJobs,
   insurancePeriods,
-  knowledgeChunks,
-  knowledgeDocuments,
-  knowledgeSources,
   legalRules,
   legalRuleVersions,
-  retrievedEvidence,
   userProfiles,
   users,
 } from "../schema"
 
-const DEMO_MODEL_ID = "01900000-0000-7000-8000-000000000001"
-
 function id(sequence: number): string {
   return `01900000-0000-7000-8000-${sequence.toString().padStart(12, "0")}`
 }
-
-const SOURCES = [
-  {
-    id: id(101),
-    slug: "kp",
-    title: "Kodeks pracy — wyciąg ZUS (2026)",
-    publisher: "ZUS / Sejm RP",
-    sourceType: "LEGAL_ACT" as const,
-    url: "https://isap.sejm.gov.pl/",
-    description: "Wyciąg z Kodeksu pracy dotyczący urlopów związanych z rodzicielstwem.",
-    isConfidential: false,
-  },
-  {
-    id: id(102),
-    slug: "ustawa-zasilkowa",
-    title: "Ustawa zasiłkowa — wyciąg ZUS (Dz.U. 2026 poz. 854)",
-    publisher: "ZUS / Sejm RP",
-    sourceType: "LEGAL_ACT" as const,
-    url: "https://www.zus.pl/",
-    description: "Zasiłek chorobowy i macierzyński, podstawa wymiaru, terminy.",
-    isConfidential: false,
-  },
-  {
-    id: id(103),
-    slug: "poradnik-2026",
-    title: "Poradnik ZUS dla rodziców i opiekunów dzieci 2026",
-    publisher: "Zakład Ubezpieczeń Społecznych",
-    sourceType: "GUIDE" as const,
-    url: "https://www.zus.pl/",
-    description: "Praktyczne objaśnienia, dokumenty i terminy (stan prawny 2026-04-01).",
-    isConfidential: false,
-  },
-  {
-    id: id(104),
-    slug: "zus-www",
-    title: "Oficjalne strony ZUS i gov.pl",
-    publisher: "ZUS / gov.pl",
-    sourceType: "WEB_PAGE" as const,
-    url: "https://www.zus.pl/",
-    description: "Odnośniki do oficjalnych informacji i wniosków.",
-    isConfidential: false,
-  },
-]
-
-const DOCUMENTS = [
-  {
-    id: id(201),
-    sourceId: id(101),
-    title: "Kodeks pracy — urlopy macierzyński i rodzicielski",
-    version: "2026.11",
-    documentType: "LEGAL_EXTRACT",
-    effectiveFrom: "2026-11-01",
-    effectiveTo: null,
-    status: "INDEXED" as const,
-  },
-  {
-    id: id(202),
-    sourceId: id(102),
-    title: "Ustawa zasiłkowa — wysokość i podstawa zasiłku",
-    version: "2026.11",
-    documentType: "LEGAL_EXTRACT",
-    effectiveFrom: "2026-11-01",
-    effectiveTo: null,
-    status: "INDEXED" as const,
-  },
-  {
-    id: id(203),
-    sourceId: id(103),
-    title: "Poradnik ZUS — Dokumenty i terminy",
-    version: "2026.04",
-    documentType: "GUIDE",
-    effectiveFrom: "2026-04-01",
-    effectiveTo: null,
-    status: "INDEXED" as const,
-  },
-  {
-    id: id(204),
-    sourceId: id(104),
-    title: "Wnioski i kontakt — oficjalne źródła",
-    version: "2026.11",
-    documentType: "WEB_PAGE",
-    effectiveFrom: "2026-11-01",
-    effectiveTo: null,
-    status: "INDEXED" as const,
-  },
-]
-
-const CHUNKS = [
-  {
-    id: id(301),
-    documentId: id(201),
-    content:
-      "Wymiar urlopu macierzyńskiego zależy od liczby dzieci urodzonych przy jednym porodzie: 20 tygodni przy jednym dziecku, 31 tygodni przy dwojgu, 33 tygodnie przy trojgu, 35 tygodni przy czworgu i 37 tygodni przy pięciorgu lub więcej dzieci. Tydzień odpowiada siedmiu dniom kalendarzowym. Maksymalnie sześć tygodni urlopu można wykorzystać przed przewidywanym terminem porodu.",
-    sourceTitle: "Kodeks pracy — art. 180",
-    sourceUrl: "https://isap.sejm.gov.pl/",
-    sourceType: "LEGAL_ACT",
-    pageNumber: 52,
-    sectionIdentifier: "Art. 180 § 1–2",
-    legalReference: "KP art. 180 § 1–2",
-    validFrom: "2026-11-01",
-    validTo: null,
-    metadata: { benefitTags: ["MATERNITY"], ruleIds: ["LR-123"] },
-  },
-  {
-    id: id(302),
-    documentId: id(201),
-    content:
-      "Urlop rodzicielski wynosi 41 tygodni w przypadku jednego dziecka albo 43 tygodnie w przypadku dwojga lub więcej dzieci. Każdemu z rodziców przysługuje dziewięć tygodni, których nie można przenieść na drugiego rodzica. Urlop rodzicielski można wykorzystać jednorazowo albo w maksymalnie pięciu częściach, nie później niż do końca roku kalendarzowego, w którym dziecko kończy szósty rok życia.",
-    sourceTitle: "Kodeks pracy — art. 182¹a",
-    sourceUrl: "https://isap.sejm.gov.pl/",
-    sourceType: "LEGAL_ACT",
-    pageNumber: 54,
-    sectionIdentifier: "Art. 182¹a § 1–4",
-    legalReference: "KP art. 182¹a § 1–4",
-    validFrom: "2026-11-01",
-    validTo: null,
-    metadata: { benefitTags: ["PARENTAL"], ruleIds: ["LR-127"] },
-  },
-  {
-    id: id(303),
-    documentId: id(202),
-    content:
-      "Zasiłek macierzyński wynosi 100% podstawy wymiaru za okres urlopu macierzyńskiego, uzupełniającego urlopu macierzyńskiego, urlopu na warunkach urlopu macierzyńskiego i urlopu ojcowskiego. Za okres urlopu rodzicielskiego stawka wynosi 70%. Jeżeli matka złoży pisemny wniosek w ciągu 21 dni od porodu, zasiłek za cały okres macierzyński i rodzicielski wynosi 81,5%, z wyjątkiem dziewięciu tygodni drugiego rodzica, które pozostają na poziomie 70%.",
-    sourceTitle: "Ustawa zasiłkowa — art. 31",
-    sourceUrl: "https://www.zus.pl/",
-    sourceType: "LEGAL_ACT",
-    pageNumber: 18,
-    sectionIdentifier: "Art. 31 ust. 1–4",
-    legalReference: "U art. 30a, 31 ust. 1–4",
-    validFrom: "2026-11-01",
-    validTo: null,
-    metadata: { benefitTags: ["MATERNITY", "PARENTAL"], ruleIds: ["LR-130"] },
-  },
-  {
-    id: id(304),
-    documentId: id(202),
-    content:
-      "Podstawa wymiaru zasiłku dla pracownika to średnie miesięczne wynagrodzenie za dwanaście miesięcy kalendarzowych poprzedzających miesiąc powstania prawa do zasiłku. Wynagrodzenie przyjmuje się w wysokości brutto po potrąceniu składki na ubezpieczenie chorobowe wynoszącej 13,71%. Podstawa dzienna stanowi 1/30 podstawy miesięcznej. Miesiące, w których przepracowano mniej niż połowę wymaganego czasu, wyłącza się i uzupełnia.",
-    sourceTitle: "Ustawa zasiłkowa — art. 36 i 38",
-    sourceUrl: "https://www.zus.pl/",
-    sourceType: "LEGAL_ACT",
-    pageNumber: 20,
-    sectionIdentifier: "Art. 36–38",
-    legalReference: "U art. 36, 38",
-    validFrom: "2026-11-01",
-    validTo: null,
-    metadata: { benefitTags: ["BASIS"], ruleIds: ["LR-112"] },
-  },
-  {
-    id: id(305),
-    documentId: id(202),
-    content:
-      "Prawo do zasiłku chorobowego powstaje po 30 dniach nieprzerwanego ubezpieczenia chorobowego obowiązkowego albo po 90 dniach ubezpieczenia dobrowolnego. Do okresu ubezpieczenia wlicza się poprzednie okresy, jeżeli przerwa nie przekroczyła 30 dni. Niektóre osoby mają prawo do zasiłku od pierwszego dnia, na przykład absolwenci, którzy ubezpieczyli się w ciągu 90 dni od ukończenia nauki, oraz osoby z co najmniej 10-letnim wcześniejszym ubezpieczeniem obowiązkowym.",
-    sourceTitle: "Ustawa zasiłkowa — art. 4",
-    sourceUrl: "https://www.zus.pl/",
-    sourceType: "LEGAL_ACT",
-    pageNumber: 14,
-    sectionIdentifier: "Art. 4 ust. 1–3",
-    legalReference: "U art. 4 ust. 1–3",
-    validFrom: "2026-11-01",
-    validTo: null,
-    metadata: { benefitTags: ["SICKNESS"], ruleIds: ["LR-100", "LR-101"] },
-  },
-  {
-    id: id(306),
-    documentId: id(203),
-    content:
-      "Do wniosku o zasiłek macierzyński dołącza się dokumenty wymagane dla danego przypadku: zaświadczenie o przewidywanym terminie porodu, skrócony odpis aktu urodzenia albo zaświadczenie o urodzeniu dziecka, zaświadczenie szpitalne przy uzupełniającym urlopie macierzyńskim, dokumenty sądowe przy przysposobieniu oraz oświadczenie drugiego rodzica. Gdy zasiłek wypłaca ZUS, odpis aktu urodzenia nie jest wymagany, ponieważ ZUS pozyskuje go z rejestru stanu cywilnego.",
-    sourceTitle: "Poradnik ZUS 2026 — dokumenty",
-    sourceUrl: "https://www.zus.pl/",
-    sourceType: "GUIDE",
-    pageNumber: 27,
-    sectionIdentifier: "Dokumenty i terminy",
-    legalReference: "R1316 § 12–33",
-    validFrom: "2026-04-01",
-    validTo: null,
-    metadata: { benefitTags: ["DOCUMENTS", "ROUTING"], ruleIds: ["LR-135"] },
-  },
-  {
-    id: id(307),
-    documentId: id(201),
-    content:
-      "Urlop ojcowski przysługuje pracownikowi i obejmuje maksymalnie 14 dni kalendarzowych. Można go wykorzystać jednorazowo albo w dwóch częściach, z których każda trwa co najmniej 7 dni. Urlop ojcowski trzeba wykorzystać do ukończenia przez dziecko 12. miesiąca życia, a w przypadku przysposobienia w ciągu 12 miesięcy od uprawomocnienia się postanowienia o przysposobieniu, nie później niż do 14. urodzin dziecka.",
-    sourceTitle: "Kodeks pracy — art. 182³",
-    sourceUrl: "https://isap.sejm.gov.pl/",
-    sourceType: "LEGAL_ACT",
-    pageNumber: 55,
-    sectionIdentifier: "Art. 182³",
-    legalReference: "KP art. 182³",
-    validFrom: "2026-11-01",
-    validTo: null,
-    metadata: { benefitTags: ["PATERNITY"], ruleIds: ["LR-133"] },
-  },
-  {
-    id: id(308),
-    documentId: id(204),
-    content:
-      "Oficjalne informacje i wnioski są dostępne na stronach zus.pl oraz gov.pl. Pytania można kierować przez PUE/eZUS. Wnioski można składać papierowo albo elektronicznie, między innymi przez PUE/eZUS, podpisem kwalifikowanym lub profilem zaufanym. Strona gov.pl udostępnia informacje o urlopie rodzicielskim, a PIP publikuje porady prawne dla pracodawców i pracowników.",
-    sourceTitle: "ZUS i gov.pl — oficjalne źródła",
-    sourceUrl: "https://www.zus.pl/",
-    sourceType: "WEB_PAGE",
-    pageNumber: null,
-    sectionIdentifier: "Kontakt i wnioski",
-    legalReference: "U art. 61b",
-    validFrom: "2026-11-01",
-    validTo: null,
-    metadata: { benefitTags: ["ROUTING"], ruleIds: ["LR-111"] },
-  },
-]
 
 const LEGAL_RULES = [
   {
@@ -292,8 +65,7 @@ const LEGAL_RULES = [
     id: id(404),
     code: "LR-112",
     title: "Podstawa wymiaru zasiłku",
-    description:
-      "12 miesięcy, potrącenie 13,71%, podstawa dzienna 1/30.",
+    description: "12 miesięcy, potrącenie 13,71%, podstawa dzienna 1/30.",
     category: "BASIS",
     legalReference: "U art. 36, 38",
     version: "2026.11-Z1",
@@ -367,20 +139,6 @@ async function seed(): Promise<void> {
   const { db } = getDatabaseConnection()
 
   await db.transaction(async (tx) => {
-    await tx
-      .insert(embeddingModels)
-      .values({
-        id: DEMO_MODEL_ID,
-        name: EMBEDDING_MODEL,
-        provider: EMBEDDING_PROVIDER,
-        dimensions: EMBEDDING_DIMENSIONS,
-        distanceMetric: EMBEDDING_DISTANCE_METRIC,
-        isActive: true,
-        description:
-          "Deterministyczny model demo (feature hashing, 1024 wymiary). Produkcyjnie należy podmienić adapter i ponownie zaindeksować KB.",
-      })
-      .onConflictDoNothing()
-
     await tx
       .insert(users)
       .values(
@@ -711,66 +469,9 @@ async function seed(): Promise<void> {
       )
       .onConflictDoNothing()
 
-    await tx
-      .insert(knowledgeSources)
-      .values(SOURCES)
-      .onConflictDoNothing()
-
-    await tx
-      .insert(knowledgeDocuments)
-      .values(
-        DOCUMENTS.map((document) => ({
-          ...document,
-          language: "pl",
-          publishedAt: document.effectiveFrom,
-          contentHash: contentHash(document.title),
-          metadata: { seeded: true },
-        }))
-      )
-      .onConflictDoNothing()
-
-    await tx
-      .insert(knowledgeChunks)
-      .values(
-        CHUNKS.map((chunk) => ({
-          id: chunk.id,
-          documentId: chunk.documentId,
-          embeddingModelId: DEMO_MODEL_ID,
-          content: chunk.content,
-          embedding: embedText(chunk.content),
-          sourceTitle: chunk.sourceTitle,
-          sourceUrl: chunk.sourceUrl,
-          sourceType: chunk.sourceType,
-          pageNumber: chunk.pageNumber,
-          sectionIdentifier: chunk.sectionIdentifier,
-          legalReference: chunk.legalReference,
-          validFrom: chunk.validFrom,
-          validTo: chunk.validTo,
-          contentHash: contentHash(chunk.content),
-          metadata: chunk.metadata,
-          tokenCount: Math.ceil(chunk.content.length / 4),
-        }))
-      )
-      .onConflictDoNothing()
-
-    await tx
-      .insert(ingestionJobs)
-      .values(
-        DOCUMENTS.map((document, index) => ({
-          id: id(1501 + index),
-          documentId: document.id,
-          status: "SUCCEEDED" as const,
-          chunksCreated: CHUNKS.filter(
-            (chunk) => chunk.documentId === document.id
-          ).length,
-          startedAt: new Date(),
-          finishedAt: new Date(),
-          stats: { embeddingModel: EMBEDDING_MODEL, seeded: true },
-        }))
-      )
-      .onConflictDoNothing()
-
-    // A seeded conversation demonstrates the assistant evidence trail.
+    // A seeded conversation demonstrates the assistant trail. Knowledge
+    // sources, chunks and embeddings are produced by the real ingestion
+    // pipeline: run `pnpm --filter @zpr/rag kb:seed` after this script.
     await tx
       .insert(conversations)
       .values({
@@ -802,34 +503,23 @@ async function seed(): Promise<void> {
       .onConflictDoNothing()
 
     await tx
-      .insert(retrievedEvidence)
-      .values({
-        id: id(1604),
-        messageId: id(1603),
-        chunkId: id(301),
-        rank: 1,
-        score: "0.03100",
-        quote:
-          "Wymiar urlopu macierzyńskiego zależy od liczby dzieci urodzonych przy jednym porodzie: 20 tygodni przy jednym dziecku…",
-      })
-      .onConflictDoNothing()
-
-    await tx
       .insert(assistantToolCalls)
       .values({
         id: id(1605),
         messageId: id(1603),
         toolName: "searchKnowledge",
         arguments: { query: "wymiar urlopu macierzyńskiego" },
-        result: { citations: 1, model: EMBEDDING_MODEL },
+        result: { citations: 1, model: "local-demo" },
         latencyMs: 42,
       })
       .onConflictDoNothing()
   })
 
-  console.info("[db:seed] Dane demonstracyjne zostały zapisane (idempotentnie).")
   console.info(
-    `[db:seed] Model embeddingów: ${EMBEDDING_MODEL}, ${EMBEDDING_DIMENSIONS} wymiarów.`
+    "[db:seed] Dane demonstracyjne zostały zapisane (idempotentnie)."
+  )
+  console.info(
+    "[db:seed] Baza wiedzy: uruchom `pnpm --filter @zpr/rag kb:seed`, aby zaindeksować źródła."
   )
 }
 
