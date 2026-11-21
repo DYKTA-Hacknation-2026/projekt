@@ -123,6 +123,38 @@ const document = {
         },
       },
     },
+    "/sim/mobywatel/personas": {
+      get: {
+        summary: "Profile testowe do symulacji logowania przez mObywatel",
+        responses: {
+          "200": { description: "Lista syntetycznych profili i zakres danych" },
+        },
+      },
+    },
+    "/sim/mobywatel/authorize": {
+      post: {
+        summary: "Symulowane potwierdzenie logowania i ustawienie sesji",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/MobywatelAuthorizeRequest" },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Sesja symulowana i przekierowanie do /start" },
+          "404": { description: "Nieznany profil testowy" },
+          "422": { description: "Błąd walidacji (zgoda, PIN)" },
+        },
+      },
+    },
+    "/sim/mobywatel/logout": {
+      post: {
+        summary: "Usunięcie symulowanej sesji mObywatel",
+        responses: { "200": { description: "Sesja usunięta" } },
+      },
+    },
   },
   components: {
     schemas: {
@@ -172,6 +204,20 @@ const document = {
           code: { type: "string" },
           detail: { type: "string" },
           instance: { type: "string" },
+        },
+      },
+      MobywatelAuthorizeRequest: {
+        type: "object",
+        required: ["personaId", "method", "consent"],
+        properties: {
+          personaId: { type: "string" },
+          method: { type: "string", enum: ["PIN", "BIOMETRY"] },
+          pin: {
+            type: "string",
+            description: "Wymagany dla metody PIN; dowolne 4 cyfry w demo.",
+            pattern: "^\\d{4}$",
+          },
+          consent: { type: "boolean", const: true },
         },
       },
     },

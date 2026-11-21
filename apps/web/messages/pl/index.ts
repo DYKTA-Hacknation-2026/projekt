@@ -26,6 +26,7 @@ export const navItems = [
 
 export const footerLinks = [
   { href: "/start", label: "Kreator startowy" },
+  { href: "/mobywatel", label: "Logowanie mObywatel (symulacja)" },
   { href: "/o-projekcie", label: "O projekcie i AI" },
   { href: "/admin", label: "Panel administratora" },
 ] as const
@@ -142,4 +143,88 @@ export const documents = {
 export const timeline = {
   title: "Oś czasu",
   lead: "Terminy urlopów, wniosków i wypłat dla obojga rodziców. Zmień termin porodu, aby zobaczyć plan od nowa.",
+} as const
+
+export const mobywatel = {
+  title: "Logowanie przez mObywatel",
+  lead: "Symulacja logowania przez login.gov.pl. Wybierz profil testowy, zaakceptuj zakres danych i potwierdź tożsamość — kreator wypełni się automatycznie.",
+  simulationTitle: "To jest symulacja",
+  simulationText:
+    "Ten ekran nie łączy się z login.gov.pl ani aplikacją mObywatel. Dane są syntetyczne, a logowanie nie ma mocy prawnej.",
+  providerStep: "Wybierz sposób logowania",
+  providerLead: "W symulacji dostępna jest tylko metoda mObywatel.",
+  providerName: "Aplikacja mObywatel",
+  providerRecommended: "Polecany",
+  providerDescription: "Potwierdź tożsamość w aplikacji mObywatel.",
+  providerUnavailable: "Niedostępne w symulacji",
+  personaStep: "Wybierz profil testowy",
+  personaLead:
+    "W prawdziwym mObywatelu dane pochodzą z aplikacji na telefonie. Tutaj wybierasz osobę, którą symulujesz.",
+  personaBirth: "Data urodzenia",
+  personaCity: "Miejscowość",
+  consentStep: "Zgoda na przekazanie danych",
+  consentLead:
+    "Zasiłkowy Przewodnik (projekt demonstracyjny) prosi o następujące dane:",
+  consentCheckbox:
+    "Wyrażam zgodę na przekazanie powyższych danych do Zasiłkowego Przewodnika.",
+  consentNote:
+    "W symulacji nie przekazujemy numeru PESEL. Aplikacja go nie potrzebuje — zbieramy tylko dane potrzebne do wypełnienia formularza.",
+  consentSubmit: "Udostępnij dane",
+  pinStep: "Potwierdź tożsamość",
+  pinLead:
+    "W aplikacji mObywatel potwierdź logowanie kodem PIN lub biometrią.",
+  pinLabel: "Kod PIN",
+  pinHint: "Demo: dowolne 4 cyfry, np. 1234.",
+  pinSubmit: "Potwierdź w aplikacji",
+  biometrics: "Użyj biometrii",
+  successTitle: "Dane zostały przekazane",
+  successText:
+    "Kreator otworzy się z uzupełnionymi danymi. Możesz je poprawić przed zapisaniem sprawy.",
+  successCta: "Przejdź do kreatora",
+  back: "Wróć",
+  cancel: "Anuluj",
+  next: "Dalej",
+  stepLabel: "Krok",
+  of: "z",
+  scopeLabels: {
+    firstName: "Imię",
+    lastName: "Nazwisko",
+    birthDate: "Data urodzenia",
+    city: "Miejscowość",
+    email: "Adres e-mail",
+  },
+  providers: [
+    {
+      id: "mobywatel",
+      label: "Aplikacja mObywatel",
+      description: "Potwierdź tożsamość w aplikacji mObywatel.",
+      enabled: true,
+    },
+    {
+      id: "bank",
+      label: "Bankowość elektroniczna",
+      description: "Zaloguj się przez swój bank.",
+      enabled: false,
+    },
+    {
+      id: "edowod",
+      label: "e-Dowód",
+      description: "Użyj dowodu osobistego z warstwą elektroniczną.",
+      enabled: false,
+    },
+    {
+      id: "profil-zaufany",
+      label: "Profil zaufany",
+      description: "Użyj loginu i hasła lub bankowości elektronicznej.",
+      enabled: false,
+    },
+  ],
+  startCalloutTitle: "Masz mObywatel?",
+  startCalloutText:
+    "Zaloguj się w symulacji, a imię, nazwisko, data urodzenia, e-mail i miejscowość uzupełnią się same.",
+  startCalloutCta: "Zaloguj się przez mObywatel",
+  sessionTitle: "Zalogowano przez mObywatel (symulacja)",
+  sessionText:
+    "Dane osobowe zostały wstępnie uzupełnione. Sprawdź je i możesz poprawić przed zapisaniem sprawy.",
+  sessionChange: "Zmień profil",
 } as const

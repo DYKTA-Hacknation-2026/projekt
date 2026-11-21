@@ -16,6 +16,7 @@ export default defineConfig({
       "@zpr/contracts/calculator": `${workspace}/packages/contracts/src/calculator.ts`,
       "@zpr/contracts/assistant": `${workspace}/packages/contracts/src/assistant.ts`,
       "@zpr/contracts/knowledge": `${workspace}/packages/contracts/src/knowledge.ts`,
+      "@zpr/contracts/mobywatel": `${workspace}/packages/contracts/src/mobywatel.ts`,
       "@zpr/contracts/common": `${workspace}/packages/contracts/src/common.ts`,
       "@zpr/contracts": `${workspace}/packages/contracts/src/index.ts`,
       "@zpr/db/client": `${workspace}/packages/db/src/client.ts`,

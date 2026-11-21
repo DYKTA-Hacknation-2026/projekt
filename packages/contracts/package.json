@@ -10,6 +10,7 @@
     "./calculator": "./src/calculator.ts",
     "./assistant": "./src/assistant.ts",
     "./knowledge": "./src/knowledge.ts",
+    "./mobywatel": "./src/mobywatel.ts",
     "./common": "./src/common.ts"
   },
   "scripts": {

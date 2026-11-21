@@ -82,6 +82,7 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 | `/`              | Landing page, roadmap, safety and simulation disclosures                  |
 | `/panel`         | Dashboard: case, nearest deadlines, calculations, knowledge base status   |
 | `/start`         | Guided onboarding wizard that creates a synthetic household and case      |
+| `/mobywatel`     | Simulated mObywatel / login.gov.pl flow that prefills the onboarding wizard |
 | `/kalkulator`    | Unified calculator with assumptions, trace, and persisted result          |
 | `/asystent`      | Retrieval-grounded assistant with source citations                        |
 | `/dokumenty`     | Document analysis demo (sample ZUS forms or a PDF signature check)        |
@@ -107,8 +108,19 @@ machine-readable contract.
 | `/api/v1/calculations`         | POST   | Deterministic calculation; persists input and trace      |
 | `/api/v1/documents/analyze`    | GET    | Available synthetic sample documents                     |
 | `/api/v1/documents/analyze`    | POST   | Analyze a PDF or `sampleCase` multipart field            |
+| `/api/v1/sim/mobywatel/personas` | GET  | Synthetic profiles for the simulated login              |
+| `/api/v1/sim/mobywatel/authorize` | POST | Set a short-lived signed prefill session                |
+| `/api/v1/sim/mobywatel/logout` | POST   | Clear the simulated mObywatel session                    |
 | `/api/v1/admin/login`          | POST   | Demo admin login, sets an HMAC-signed HttpOnly cookie    |
 | `/api/v1/admin/logout`         | POST   | Clears the admin cookie                                  |
+
+### Simulated mObywatel login
+
+`/mobywatel` mimics the real login.gov.pl → mObywatel flow: choose the method,
+confirm the synthetic persona, review the data scope and confirm with PIN or
+biometrics. The API stores only a persona id in a signed, HttpOnly cookie
+(`zpr_mobywatel`, 10 minutes); `/start` reads it and prefills the wizard. No
+PESEL is requested or stored, and every screen is labelled **SYMULACJA**.
 
 Examples:
 
