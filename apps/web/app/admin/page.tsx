@@ -379,11 +379,19 @@ export default async function AdminPage() {
         title="Panel administratora"
         lead="Szkielet operacyjny: podgląd wersji reguł, modeli embeddingów, źródeł i jobów. Zapis zmian jest przygotowany w schemacie, ale nie w tym etapie."
         actions={
-          session.gateEnabled ? (
-            <AdminLogout />
-          ) : (
-            <Badge variant="warning">Tryb demo bez logowania</Badge>
-          )
+          <>
+            <Button asChild variant="outline">
+              <Link href="/admin/wiedza">
+                <BookOpen data-icon="inline-start" aria-hidden="true" />
+                Centrum wiedzy
+              </Link>
+            </Button>
+            {session.gateEnabled ? (
+              <AdminLogout />
+            ) : (
+              <Badge variant="warning">Tryb demo bez logowania</Badge>
+            )}
+          </>
         }
       />
 

@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     "@zpr/db",
     "@zpr/rag",
     "@zpr/ai",
+    "@zpr/documents",
   ],
   serverExternalPackages: ["unpdf"],
 }

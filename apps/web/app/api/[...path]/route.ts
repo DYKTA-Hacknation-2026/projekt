@@ -14,6 +14,12 @@ const responseHeaders = [
   "x-vercel-ai-ui-message-stream",
   "x-conversation-id",
   "x-accel-buffering",
+  // Document preview and deprecation notices (/api/v1/documents/*).
+  "content-disposition",
+  "content-security-policy",
+  "x-content-type-options",
+  "cross-origin-resource-policy",
+  "deprecation",
 ]
 
 function copyHeaders(source: Headers, names: string[]): Headers {

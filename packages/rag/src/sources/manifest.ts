@@ -105,7 +105,7 @@ export const SOURCES: SourceDefinition[] = [
     title: "Program „Za życiem” — informacje rządowe",
     publisher: "gov.pl",
     sourceType: "GOVERNMENT_PAGE",
-    url: "https://www.gov.pl/web/rodzina/za-zyciem",
+    url: "https://www.gov.pl/web/rodzina/program-za-zyciem1",
     accessLevel: "PUBLIC",
     redistribution: "ATTRIBUTION",
     authorityRank: 60,

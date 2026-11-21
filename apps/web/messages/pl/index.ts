@@ -19,12 +19,14 @@ export const LEGAL_DISCLOSURE =
 export const navItems = [
   { href: "/panel", label: "Moja sytuacja" },
   { href: "/kalkulator", label: "Świadczenia" },
+  { href: "/wiedza", label: "Wiedza" },
   { href: "/asystent", label: "Asystent" },
   { href: "/dokumenty", label: "Dokumenty" },
   { href: "/os-czasu", label: "Plan urlopów" },
 ] as const
 
 export const footerLinks = [
+  { href: "/wiedza", label: "Centrum wiedzy" },
   { href: "/start", label: "Kreator analizy" },
   { href: "/dane", label: "Pobierz dane (symulacja)" },
   { href: "/mobywatel", label: "Logowanie mObywatel (symulacja)" },
@@ -49,6 +51,8 @@ export const statusLabels = {
   QUEUED: "W kolejce",
   RUNNING: "W toku",
   SUCCEEDED: "Zakończone",
+  PUBLISHED: "Opublikowany",
+  ARCHIVED: "Zarchiwizowany",
   ELIGIBLE: "Wstępnie spełnia",
   NOT_ELIGIBLE: "Nie spełnia",
   NEEDS_INPUT: "Brakuje danych",
@@ -185,6 +189,12 @@ export const dashboard = {
 export const calculator = {
   title: "Kalkulator zasiłków",
   lead: "Jeden kalkulator, wiele wariantów. Wynik jest deterministyczny i pokazuje założenia, braki danych oraz podstawę prawną.",
+  documentBasisLabel: "Użyj podstawy wymiaru z potwierdzonego dokumentu",
+  documentBasisHelp:
+    "To podstawa ustalona przez płatnika (Z-3/Z-3a) — nie odliczamy od niej ponownie składek. Odznacz, aby liczyć z wynagrodzenia brutto.",
+  documentPrefillTitle: "Dane z potwierdzonego dokumentu",
+  documentPrefillText:
+    "Wartości pochodzą z pól, które potwierdziłaś lub potwierdziłeś na stronie Dokumenty. Możesz je zmienić — kalkulator liczy deterministycznie.",
 } as const
 
 export const assistant = {
@@ -195,6 +205,150 @@ export const assistant = {
 export const documents = {
   title: "Analiza dokumentów",
   lead: "Wybierz przykładowy formularz ZUS albo wgraj PDF. Analiza jest deterministyczna, a pola zawsze wymagają potwierdzenia.",
+  rules: [
+    {
+      title: "Deterministycznie najpierw",
+      text: "Najpierw pola formularza (AcroForm), potem układ i etykiety tekstu. OCR i propozycje AI są opcjonalne i wyłączone w demo.",
+    },
+    {
+      title: "Pola do potwierdzenia",
+      text: "Każde pole ma źródło, stronę i pewność odczytu. Nic nie trafia do obliczeń bez Twojego potwierdzenia.",
+    },
+    {
+      title: "Limit, typ i czas przechowywania",
+      text: "Maks. 10 MB, tylko PDF sprawdzany po sygnaturze. Plik nie jest wykonywany i jest usuwany po 24 godzinach.",
+    },
+    {
+      title: "Formularze po zmianach",
+      text: "ZAM zastępuje ZUR i ZAO, a Z-3b jest zniesiony od 24 października 2026 r. Stare druki oznaczamy ostrzeżeniem.",
+    },
+  ],
+  samplesTitle: "Przykładowe sprawy",
+  samplesLead:
+    "Syntetyczne dokumenty odwzorowujące zakres danych formularzy. Nie zawierają danych prawdziwych osób i nie są dokumentami ZUS.",
+  samplesLoading: "Wczytuję listę przykładów…",
+  samplesError: "Nie udało się pobrać listy przykładów.",
+  sampleChoose: "Wczytaj przykład",
+  uploadTitle: "Wgraj własny PDF",
+  uploadLead:
+    "Maks. 10 MB, tylko PDF. Plik trafia do prywatnego magazynu i jest usuwany po 24 godzinach albo od razu, gdy klikniesz „Usuń dokument”.",
+  fileLabel: "Plik PDF",
+  fileChosen: "Wybrano",
+  consentLabel: "Zgadzam się na przetwarzanie dokumentu w celu odczytu pól",
+  consentHelp:
+    "Dokument może zawierać dane o zdrowiu (ciąża). Analizujemy go lokalnie, bez wysyłania do zewnętrznego dostawcy AI. Zgoda jest wymagana do analizy (RODO art. 9 ust. 2 lit. a).",
+  aiAssistLabel: "Pozwól AI zaproponować brakujące pola (dane osobowe są usuwane przed wysłaniem)",
+  analyze: "Analizuj dokument",
+  analyzing: "Analizuję…",
+  errorTitle: "Nie udało się przeanalizować",
+  errors: {
+    noFile: "Wybierz plik PDF.",
+    tooLarge: "Maksymalny rozmiar pliku to 10 MB.",
+    notPdf: "Obsługiwane są wyłącznie pliki PDF.",
+    noConsent: "Zaznacz zgodę na przetwarzanie dokumentu.",
+    generic: "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
+  },
+  emptyTitle: "Wynik analizy pojawi się tutaj",
+  emptyLead:
+    "Wybierz przykład albo wgraj PDF. Zobaczysz podgląd dokumentu, rozpoznany formularz, pola z pewnością odczytu i ostrzeżenia.",
+  previewTitle: "Podgląd dokumentu",
+  previewFallback: "Twoja przeglądarka nie wyświetla PDF w ramce.",
+  previewOpen: "Otwórz podgląd w nowej karcie",
+  pagesLabel: "Liczba stron",
+  formLabel: "Formularz",
+  methodLabel: "Metoda odczytu",
+  methods: {
+    ACROFORM: "pola formularza (AcroForm)",
+    TEMPLATE: "układ i etykiety tekstu",
+    OCR: "OCR (skan)",
+    LLM_ASSISTED: "propozycje AI do potwierdzenia",
+    DEMO: "przykład demonstracyjny",
+  },
+  sources: {
+    ACROFORM: "pole formularza",
+    TEMPLATE: "tekst dokumentu",
+    OCR: "OCR",
+    LLM: "propozycja AI",
+    USER: "wpisane przez Ciebie",
+  },
+  legacyTitle: "Formularz wycofany",
+  legacyBadge: "Formularz wycofany",
+  needsReviewBadge: "Wymaga potwierdzenia",
+  confirmedBadge: "Potwierdzono",
+  sampleBadge: "Przykład syntetyczny",
+  fieldsCaption: "Pola odczytane z dokumentu. Popraw wartości i potwierdź każde pole wymagane.",
+  colField: "Pole",
+  colValue: "Wartość",
+  colSource: "Źródło",
+  colConfidence: "Pewność",
+  colConfirm: "Potwierdź",
+  requiredMark: "wymagane",
+  editedMark: "zmienione przez Ciebie",
+  reviewMark: "sprawdź",
+  page: "str.",
+  emptyValue: "nie odczytano",
+  confirmAll: "Potwierdź wszystkie wypełnione pola",
+  findingsTitle: "Ustalenia walidacji",
+  severity: { ERROR: "Błąd", WARNING: "Ostrzeżenie", INFO: "Informacja" },
+  legalBasis: "Podstawa",
+  blockersTitle: "Zanim zastosujesz dane",
+  blockerReasons: {
+    MISSING: "uzupełnij",
+    INVALID: "popraw format",
+    NOT_CONFIRMED: "potwierdź",
+  },
+  apply: "Potwierdź i oblicz",
+  applying: "Liczę…",
+  toCalculator: "Otwórz kalkulator z tymi danymi",
+  clear: "Wyczyść",
+  delete: "Usuń dokument",
+  deleted: "Dokument usunięto.",
+  localNote:
+    "Analiza jest deterministyczna i wykonywana na serwerze aplikacji. Plik nie jest wysyłany do zewnętrznego dostawcy AI.",
+  aiNote: "Część pól zaproponowało AI na tekście bez danych osobowych. Sprawdź je szczególnie uważnie.",
+  resultTitle: "Wynik dla potwierdzonych danych",
+  verdict: "Uprawnienie",
+  amount: "Kwota brutto",
+  basis: "Podstawa wymiaru",
+  payer: "Kto wypłaca",
+  payers: { EMPLOYER: "pracodawca (płatnik)", ZUS: "ZUS", UNKNOWN: "do ustalenia", NONE: "—" },
+  statuses: {
+    ELIGIBLE: "przysługuje",
+    CONDITIONAL: "przysługuje warunkowo",
+    NOT_ELIGIBLE: "nie przysługuje",
+    NEEDS_INPUT: "brakuje danych",
+    MANUAL_REVIEW: "wymaga oceny ZUS",
+  },
+  amountUnknown: "nie wyliczono",
+  missingTitle: "Brakuje danych do obliczenia",
+  notesTitle: "Uwagi do mapowania",
+  checklistTitle: "Wymagane dokumenty",
+  checklistLead: "Lista zapisana dla tej sesji. Miejsce złożenia zależy od tego, kto wypłaca zasiłek.",
+  checklistCols: { document: "Dokument", who: "Kto przygotowuje", where: "Gdzie złożyć", when: "Termin" },
+  preparedBy: {
+    YOU: "Ty",
+    OTHER_PARENT: "drugi rodzic",
+    EMPLOYER: "pracodawca",
+    PAYER: "płatnik składek",
+    DOCTOR: "lekarz",
+    HOSPITAL: "szpital",
+    COURT: "sąd",
+    CIVIL_REGISTRY: "urząd stanu cywilnego",
+    ZUS: "ZUS",
+  } as Record<string, string>,
+  submitTo: {
+    EMPLOYER: "u pracodawcy",
+    PAYER: "u płatnika",
+    ZUS: "w ZUS (eZUS lub placówka)",
+    PAYER_OR_ZUS: "u płatnika albo w ZUS — zależnie od tego, kto wypłaca",
+    NONE: "nie składasz",
+  } as Record<string, string>,
+  deadlinesTitle: "Terminy",
+  routingTitle: "Gdzie złożyć dokumenty",
+  comparisonTitle: "Porównanie z oczekiwanym wynikiem (tryb demo)",
+  comparisonOk: "Zgodne z oczekiwanym wynikiem",
+  comparisonFail: "Niezgodne z oczekiwanym wynikiem",
+  parents: { MOTHER: "matka", FATHER: "ojciec", BOTH: "oboje" } as Record<string, string>,
 } as const
 
 export const timeline = {
@@ -283,4 +437,9 @@ export const mobywatel = {
   sessionText:
     "Dane osobowe zostały wstępnie uzupełnione. Sprawdź je i możesz poprawić przed zapisaniem sprawy.",
   sessionChange: "Zmień profil",
+} as const
+
+export const knowledge = {
+  title: "Centrum wiedzy",
+  lead: "Świadczenia, prawa rodziców, ubezpieczenia i formalności — po ludzku, z datą weryfikacji i odnośnikiem do oficjalnego źródła.",
 } as const

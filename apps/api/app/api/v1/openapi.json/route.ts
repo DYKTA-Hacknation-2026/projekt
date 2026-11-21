@@ -5,6 +5,7 @@ import {
   assistantReplySchema,
   assistantStreamRequestSchema,
 } from "@zpr/contracts/assistant"
+import { confirmFieldsRequestSchema, extractRequestSchema } from "@zpr/contracts/documents"
 import {
   assessmentInputSchema,
   scenarioComparisonSchema,
@@ -361,13 +362,59 @@ const document = {
         responses: { "200": { description: "Sesja oznaczona jako pominięta" } },
       },
     },
-    "/documents/analyze": {
-      get: { summary: "Lista przykładów dokumentów" },
+    "/documents": {
       post: {
-        summary: "Analiza PDF (multipart) lub przykładu ZUS",
+        summary: "Wgranie PDF (multipart: file, consent=DOCUMENT_PROCESSING) do prywatnego magazynu z TTL",
         responses: {
-          "200": { description: "Pola do potwierdzenia" },
+          "201": { description: "Identyfikator dokumentu i status" },
+          "400": { description: "Brak pliku albo pusty plik" },
+          "403": { description: "Brak zgody DOCUMENT_PROCESSING" },
           "413": { description: "Plik powyżej 10 MB" },
+          "415": { description: "Nie PDF (typ albo sygnatura %PDF-)" },
+          "429": { description: "Limit żądań" },
+        },
+      },
+    },
+    "/documents/{id}": {
+      get: { summary: "Metadane i status dokumentu", responses: { "200": { description: "OK" }, "404": { description: "Brak dokumentu lub upłynął TTL" } } },
+      delete: { summary: "Natychmiastowe usunięcie pliku, ekstrakcji i ustaleń", responses: { "204": { description: "Usunięto" }, "404": { description: "Brak dokumentu" } } },
+    },
+    "/documents/{id}/file": {
+      get: { summary: "Podgląd własnego PDF (sesja, bez cache, sandbox)", responses: { "200": { description: "application/pdf" }, "404": { description: "Brak dokumentu" } } },
+    },
+    "/documents/{id}/extract": {
+      post: {
+        summary: "Ekstrakcja: AcroForm → szablon/regex → OCR (opcjonalnie) → propozycje LLM (opcjonalnie, za zgodą)",
+        requestBody: { required: false, content: { "application/json": { schema: z.toJSONSchema(extractRequestSchema, { io: "input" }) } } },
+        responses: { "200": { description: "Pola z pochodzeniem i pewnością, ustalenia walidatorów" }, "422": { description: "Nieczytelny PDF" }, "504": { description: "Przekroczono czas analizy" } },
+      },
+    },
+    "/documents/{id}/extraction": {
+      get: { summary: "Ostatni wynik ekstrakcji, mapowanie na fakty i zapisana lista kontrolna", responses: { "200": { description: "OK" }, "404": { description: "Brak ekstrakcji" } } },
+    },
+    "/documents/{id}/fields": {
+      put: {
+        summary: "Potwierdzenie i poprawki pól; po potwierdzeniu: uprawnienia, kwoty, dokumenty, terminy, lista kontrolna",
+        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(confirmFieldsRequestSchema, { io: "input" }) } } },
+        responses: { "200": { description: "Wynik silnika albo lista braków" }, "409": { description: "Brak ekstrakcji" }, "422": { description: "Nieznane pole" } },
+      },
+    },
+    "/sample-cases": {
+      get: { summary: "Przykładowe sprawy (syntetyczne + prywatne z manifestu)", responses: { "200": { description: "Lista z oczekiwanym wynikiem w trybie demo" } } },
+    },
+    "/sample-cases/{id}/load": {
+      post: { summary: "Wczytanie przykładu jako dokumentu sesji i ekstrakcja", responses: { "201": { description: "Dokument i ekstrakcja" }, "404": { description: "Nieznany przykład" } } },
+    },
+    "/documents/analyze": {
+      get: { summary: "(przestarzałe) Lista przykładów", deprecated: true },
+      post: {
+        summary: "(przestarzałe) Analiza PDF lub przykładu w jednym kroku — alias nowych endpointów",
+        deprecated: true,
+        responses: {
+          "200": { description: "Pola do potwierdzenia (stary kształt + pole extraction)" },
+          "403": { description: "Brak zgody dla wgranego pliku" },
+          "413": { description: "Plik powyżej 10 MB" },
+          "415": { description: "Nie PDF" },
         },
       },
     },

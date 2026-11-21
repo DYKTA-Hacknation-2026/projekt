@@ -17,6 +17,13 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core"
 import { sql, type SQL } from "drizzle-orm"
+import type {
+  GuideDocumentRef,
+  GuideProblem,
+  GuideStep,
+  KnowledgeBlock,
+  KnowledgeKeyPoint,
+} from "@zpr/contracts/content"
 
 import { uuidv7 } from "../ids"
 
@@ -201,6 +208,35 @@ export const distanceMetricEnum = kbSchema.enum("distance_metric", [
   "COSINE",
   "L2",
   "INNER_PRODUCT",
+])
+
+/* Centrum wiedzy — editorial content status and taxonomy. */
+export const contentStatusEnum = kbSchema.enum("content_status", [
+  "DRAFT",
+  "IN_REVIEW",
+  "PUBLISHED",
+  "ARCHIVED",
+])
+export const contentItemTypeEnum = kbSchema.enum("content_item_type", [
+  "ARTICLE",
+  "FAQ",
+  "DOCUMENT",
+  "GUIDE",
+  "GLOSSARY",
+])
+export const contentSourceKindEnum = kbSchema.enum("content_source_kind", [
+  "LEGAL_ACT",
+  "OFFICIAL_GUIDANCE",
+  "OFFICIAL_FORM",
+  "GOVERNMENT_PAGE",
+  "EDITORIAL",
+  "OTHER",
+])
+export const documentKindEnum = kbSchema.enum("document_kind", [
+  "FORM",
+  "CERTIFICATE",
+  "ATTACHMENT",
+  "DEMO",
 ])
 
 export const conversationStatusEnum = chatSchema.enum("conversation_status", [
@@ -1028,6 +1064,349 @@ export const ingestionJobs = kbSchema.table(
   (table) => [
     index("ingestion_jobs_document_idx").on(table.documentId),
     index("ingestion_jobs_status_idx").on(table.status),
+  ]
+)
+
+/* -------------------------------------------------------------------------- */
+/* kb — Centrum wiedzy: editorial categories, articles, FAQ, documents,       */
+/* guides, glossary, sources and cross-links                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Editorial content is separate from the RAG corpus above. Articles are read
+ * by people; chunks are retrieved for the assistant. Both can reference the
+ * same official sources, but they have different lifecycles: a curated article
+ * is reviewed and published, a RAG document is extracted and indexed.
+ */
+
+export const contentCategories = kbSchema.table(
+  "content_categories",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    /** Lucide icon key rendered by the web app. */
+    icon: text("icon").notNull().default("BookOpen"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    status: contentStatusEnum("status").notNull().default("PUBLISHED"),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_categories_slug_uq").on(table.slug),
+    index("content_categories_order_idx").on(table.sortOrder),
+  ]
+)
+
+export const contentSources = kbSchema.table(
+  "content_sources",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    publisher: text("publisher").notNull(),
+    kind: contentSourceKindEnum("kind").notNull().default("OFFICIAL_GUIDANCE"),
+    url: text("url"),
+    description: text("description"),
+    /** Date the source was last opened and checked by an editor. */
+    accessedAt: date("accessed_at"),
+    lastVerifiedAt: date("last_verified_at").notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_sources_slug_uq").on(table.slug),
+    index("content_sources_kind_idx").on(table.kind),
+  ]
+)
+
+export const contentLegalReferences = kbSchema.table(
+  "content_legal_references",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    /** Short citation used in the UI, e.g. "KP art. 180 § 1". */
+    citation: text("citation").notNull(),
+    title: text("title").notNull(),
+    actTitle: text("act_title").notNull(),
+    url: text("url"),
+    effectiveFrom: date("effective_from"),
+    notes: text("notes"),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_legal_references_citation_uq").on(table.citation),
+  ]
+)
+
+export const contentArticles = kbSchema.table(
+  "content_articles",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => contentCategories.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    summary: text("summary").notNull(),
+    /** Structured sections; rendered without dangerouslySetInnerHTML. */
+    blocks: jsonb("blocks").$type<KnowledgeBlock[]>().notNull().default([]),
+    keyPoints: jsonb("key_points")
+      .$type<KnowledgeKeyPoint[]>()
+      .notNull()
+      .default([]),
+    practicalTips: jsonb("practical_tips")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    keywords: jsonb("keywords").$type<string[]>().notNull().default([]),
+    readingMinutes: integer("reading_minutes").notNull().default(5),
+    isFeatured: boolean("is_featured").notNull().default(false),
+    /** Editorial popularity used for "popularne pytania" ordering. */
+    popularity: integer("popularity").notNull().default(0),
+    status: contentStatusEnum("status").notNull().default("DRAFT"),
+    lastReviewedAt: date("last_reviewed_at").notNull(),
+    publishedAt: date("published_at"),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_articles_slug_uq").on(table.slug),
+    index("content_articles_category_idx").on(table.categoryId),
+    index("content_articles_status_idx").on(table.status),
+    index("content_articles_featured_idx").on(table.isFeatured),
+    index("content_articles_updated_idx").on(table.updatedAt),
+  ]
+)
+
+export const contentFaqItems = kbSchema.table(
+  "content_faq_items",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => contentCategories.id, { onDelete: "restrict" }),
+    question: text("question").notNull(),
+    /** The one-sentence answer shown before expanding. */
+    shortAnswer: text("short_answer").notNull(),
+    /** Fuller explanation; plain text, may contain several paragraphs. */
+    explanation: text("explanation").notNull(),
+    conditions: text("conditions"),
+    whatToDo: text("what_to_do"),
+    isImportant: boolean("is_important").notNull().default(false),
+    popularity: integer("popularity").notNull().default(0),
+    articleId: uuid("article_id").references(() => contentArticles.id, {
+      onDelete: "set null",
+    }),
+    calculatorHref: text("calculator_href"),
+    guideHref: text("guide_href"),
+    status: contentStatusEnum("status").notNull().default("DRAFT"),
+    lastReviewedAt: date("last_reviewed_at").notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_faq_items_slug_uq").on(table.slug),
+    index("content_faq_category_idx").on(table.categoryId),
+    index("content_faq_status_idx").on(table.status),
+    index("content_faq_popularity_idx").on(table.popularity),
+  ]
+)
+
+export const contentDocuments = kbSchema.table(
+  "content_documents",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => contentCategories.id, { onDelete: "restrict" }),
+    /** Official form code, e.g. "Z-3", if the item has one. */
+    code: text("code"),
+    name: text("name").notNull(),
+    kind: documentKindEnum("kind").notNull().default("FORM"),
+    purpose: text("purpose").notNull(),
+    whenRequired: text("when_required").notNull(),
+    filledBy: text("filled_by").notNull(),
+    submittedBy: text("submitted_by").notNull(),
+    informationNeeded: jsonb("information_needed")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    additionalDocuments: jsonb("additional_documents")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    submissionChannels: jsonb("submission_channels")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    officialUrl: text("official_url"),
+    officialSourceLabel: text("official_source_label"),
+    /** Link to an in-app generator or calculator, when one exists. */
+    generatorHref: text("generator_href"),
+    generatorLabel: text("generator_label"),
+    note: text("note"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    status: contentStatusEnum("status").notNull().default("DRAFT"),
+    lastReviewedAt: date("last_reviewed_at").notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_documents_slug_uq").on(table.slug),
+    index("content_documents_category_idx").on(table.categoryId),
+    index("content_documents_code_idx").on(table.code),
+    index("content_documents_status_idx").on(table.status),
+  ]
+)
+
+export const contentGuides = kbSchema.table(
+  "content_guides",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => contentCategories.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    summary: text("summary").notNull(),
+    audience: text("audience").notNull(),
+    conditions: jsonb("conditions").$type<string[]>().notNull().default([]),
+    documents: jsonb("documents")
+      .$type<GuideDocumentRef[]>()
+      .notNull()
+      .default([]),
+    steps: jsonb("steps").$type<GuideStep[]>().notNull().default([]),
+    deadlines: jsonb("deadlines").$type<string[]>().notNull().default([]),
+    places: jsonb("places").$type<string[]>().notNull().default([]),
+    problems: jsonb("problems").$type<GuideProblem[]>().notNull().default([]),
+    calculatorHref: text("calculator_href"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    status: contentStatusEnum("status").notNull().default("DRAFT"),
+    lastReviewedAt: date("last_reviewed_at").notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_guides_slug_uq").on(table.slug),
+    index("content_guides_category_idx").on(table.categoryId),
+    index("content_guides_status_idx").on(table.status),
+  ]
+)
+
+export const contentGlossaryTerms = kbSchema.table(
+  "content_glossary_terms",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    term: text("term").notNull(),
+    /** Uppercase first letter used for the alphabetical filter. */
+    letter: char("letter", { length: 1 }).notNull(),
+    definition: text("definition").notNull(),
+    explanation: text("explanation"),
+    example: text("example"),
+    status: contentStatusEnum("status").notNull().default("DRAFT"),
+    lastReviewedAt: date("last_reviewed_at").notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_glossary_slug_uq").on(table.slug),
+    index("content_glossary_letter_idx").on(table.letter),
+    index("content_glossary_status_idx").on(table.status),
+  ]
+)
+
+export const contentArticleSources = kbSchema.table(
+  "content_article_sources",
+  {
+    articleId: uuid("article_id")
+      .notNull()
+      .references(() => contentArticles.id, { onDelete: "cascade" }),
+    sourceId: uuid("source_id")
+      .notNull()
+      .references(() => contentSources.id, { onDelete: "cascade" }),
+    /** Where in the source the statement can be checked, e.g. "s. 30". */
+    locator: text("locator"),
+    isPrimary: boolean("is_primary").notNull().default(false),
+    createdAt,
+  },
+  (table) => [
+    primaryKey({
+      name: "content_article_sources_pk",
+      columns: [table.articleId, table.sourceId],
+    }),
+    index("content_article_sources_source_idx").on(table.sourceId),
+  ]
+)
+
+export const contentArticleLegalReferences = kbSchema.table(
+  "content_article_legal_references",
+  {
+    articleId: uuid("article_id")
+      .notNull()
+      .references(() => contentArticles.id, { onDelete: "cascade" }),
+    legalReferenceId: uuid("legal_reference_id")
+      .notNull()
+      .references(() => contentLegalReferences.id, { onDelete: "cascade" }),
+    locator: text("locator"),
+    createdAt,
+  },
+  (table) => [
+    primaryKey({
+      name: "content_article_legal_refs_pk",
+      columns: [table.articleId, table.legalReferenceId],
+    }),
+  ]
+)
+
+/**
+ * Generic cross-links between editorial items (article ↔ document, article ↔
+ * guide, glossary ↔ article, …). A generic table keeps the model extensible
+ * without adding a join table for every pair.
+ */
+export const contentRelations = kbSchema.table(
+  "content_relations",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    fromType: contentItemTypeEnum("from_type").notNull(),
+    fromId: uuid("from_id").notNull(),
+    toType: contentItemTypeEnum("to_type").notNull(),
+    toId: uuid("to_id").notNull(),
+    label: text("label"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt,
+  },
+  (table) => [
+    uniqueIndex("content_relations_pair_uq").on(
+      table.fromType,
+      table.fromId,
+      table.toType,
+      table.toId
+    ),
+    index("content_relations_from_idx").on(table.fromType, table.fromId),
+    index("content_relations_to_idx").on(table.toType, table.toId),
   ]
 )
 

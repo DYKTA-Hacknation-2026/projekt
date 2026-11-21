@@ -208,10 +208,11 @@ describe("adoption and foster care (FR-CALC-04)", () => {
     expect(nearly.parentalPoolWeeks).toBe(38)
 
     const half = adoption({ childAgeYears: 13.5 })
-    expect(half.guaranteeApplied).toBe(true)
-    expect(half.maternityWeeks).toBeGreaterThanOrEqual(9)
-    expect(half.parentalPoolWeeks).toBe(38)
-    expect(half.trace.map((s) => s.ruleId)).toContain("LR-141")
+    expect(half.guaranteeApplied).toBe(false)
+    expect(half.maternityWeeks).toBe(20)
+    expect(half.parentalPoolWeeks).toBe(41)
+    expect(half.motherParentalWeeks).toBe(6)
+    expect(half.trace.map((s) => s.ruleId)).toContain("LR-129")
 
     expect(
       adoption({ childAgeYears: 13.9, hasZaZyciem: true }).parentalPoolWeeks
@@ -223,7 +224,10 @@ describe("adoption and foster care (FR-CALC-04)", () => {
       childBirthDate: "2012-09-01",
       placementDate: "2026-03-01",
     })
-    expect(near.guaranteeApplied).toBe(true)
+    expect(near.guaranteeApplied).toBe(false)
+    expect(near.maternityWeeks).toBe(20)
+    expect(near.parentalPoolWeeks).toBe(41)
+    expect(near.motherParentalWeeks).toBeLessThan(10)
     expect(near.ageAtPlacementYears).toBeCloseTo(13.5, 1)
 
     const over = adoption({ childAgeYears: 14 })
@@ -309,7 +313,7 @@ describe("independent incomes and flexible split (FR-CALC-03)", () => {
       input({ motherParentalWeeks: 35, secondParentParentalWeeks: 20 })
     )
     expect(result.motherParentalWeeks + result.secondParentWeeks).toBe(41)
-    expect(result.warnings.join(" ")).toContain("pul")
+    expect(result.warnings.join(" ")).toContain("41 tygodni")
   })
 
   it("warns when the mother waives her non-transferable weeks", () => {
@@ -384,7 +388,7 @@ describe("supplementary maternity and special cases (FR-CALC-01)", () => {
           childHospitalDaysDay5To28: 4,
         })
       ).supplementaryWeeks
-    ).toBe(3)
+    ).toBe(1)
     expect(
       calculateBenefits(
         input({
@@ -403,7 +407,10 @@ describe("supplementary maternity and special cases (FR-CALC-01)", () => {
     expect(result.maternityWeeks).toBe(8)
     expect(result.parentalPoolWeeks).toBe(0)
     expect(result.paternityDays).toBe(0)
-    expect(result.lines.map((l) => l.days)).toEqual([56])
+    expect(result.lines[0]?.days).toBe(56)
+    expect(result.lines.some((line) => line.leaveType === "Zasiłek pogrzebowy")).toBe(
+      true
+    )
   })
 
   it("keeps at least 7 days after a death shortly before the 8th week", () => {
@@ -418,8 +425,8 @@ describe("supplementary maternity and special cases (FR-CALC-01)", () => {
       input({ specialCase: "CHILD_DEATH_AFTER_8W" })
     )
     expect(result.lines).toHaveLength(1)
-    expect(result.lines[0]?.days).toBe(7)
-    expect(result.lines[0]?.amountGrosze).toBe(daysAmount(862_900, 1, 7))
+    expect(result.lines[0]?.days).toBe(64)
+    expect(result.lines[0]?.amountGrosze).toBe(daysAmount(862_900, 1, 64))
   })
 })
 
@@ -454,7 +461,7 @@ describe("working during parental leave (FR-CALC-02)", () => {
         workCombinedWeeks: 20,
       })
     )
-    expect(quarter.extensionWeeks).toBe(Math.floor(20 / 0.75) - 20)
+    expect(quarter.extensionWeeks).toBeCloseTo(46 / 7, 5)
 
     expect(
       calculateBenefits(input({ childrenCount: 2, hasZaZyciem: true }))
@@ -513,6 +520,118 @@ describe("individual basis (FR-CALC-05)", () => {
     const parental = contractor.lines.find((l) => l.kind === "PARENTAL")
     expect(parental?.minimumApplied).toBe(true)
     expect(parental?.amountGrosze).toBe(Math.round((100_000 * 32 * 7) / 30))
+  })
+})
+
+describe("insurance, both parents and ZUS correctness", () => {
+  it("does not transfer the nine non-transferable weeks between parents", () => {
+    const result = calculateBenefits(
+      input({ motherParentalWeeks: 5, secondParentParentalWeeks: 36 })
+    )
+    expect(result.motherParentalWeeks).toBe(5)
+    expect(result.secondParentWeeks).toBe(32)
+    expect(result.motherParentalWeeks + result.secondParentWeeks).toBe(37)
+    expect(result.warnings.join(" ")).toContain("32")
+  })
+
+  it("pays 100% after a stillbirth even when 81.5% was selected", () => {
+    const result = calculateBenefits(
+      input({ paymentOption: "FLAT_81_5", specialCase: "STILLBIRTH" })
+    )
+    expect(result.lines).toHaveLength(2)
+    expect(result.lines[0]?.rate).toBe(1)
+    expect(result.lines[0]?.amountGrosze).toBe(
+      daysAmount(862_900, 1, 56)
+    )
+    expect(result.warnings.join(" ")).toContain("81,5%")
+  })
+
+  it("uses 81.5% for the father's maternity takeover", () => {
+    const result = calculateBenefits(
+      input({
+        paymentOption: "FLAT_81_5",
+        fatherMaternityTakeoverWeeks: 6,
+        secondParentMonthlyIncomeGrosze: 800_000,
+      })
+    )
+    const takeover = result.lines.find((line) => line.kind === "MATERNITY_TAKEOVER")
+    expect(takeover?.rate).toBe(0.815)
+  })
+
+  it("applies work combination only to employees", () => {
+    const result = calculateBenefits(
+      input({
+        motherEmploymentType: "CONTRACTOR",
+        parentalWorkFraction: 0.5,
+      })
+    )
+    expect(result.extensionWeeks).toBe(0)
+    expect(result.warnings.join(" ")).toContain("pracownik")
+  })
+
+  it("does not pay an uninsured mother", () => {
+    const result = calculateBenefits(
+      input({ motherSicknessInsurance: "NONE" })
+    )
+    expect(result.motherEligible).toBe(false)
+    expect(result.lines.filter((line) => line.beneficiary === "MOTHER")).toHaveLength(
+      0
+    )
+  })
+
+  it("supports a father-only case", () => {
+    const result = calculateBenefits(
+      input({
+        motherEnabled: false,
+        secondParentParentalWeeks: 32,
+        paternityDays: 14,
+      })
+    )
+    expect(result.motherEligible).toBe(false)
+    expect(result.fatherEligible).toBe(true)
+    expect(result.motherParentalWeeks).toBe(0)
+    expect(result.secondParentWeeks).toBe(32)
+    expect(result.totalGrosze).toBeGreaterThan(0)
+    expect(
+      result.lines.every((line) => line.beneficiary === "SECOND_PARENT")
+    ).toBe(true)
+  })
+
+  it("uses a known basis without deducting 13.71% again", () => {
+    const result = calculateBenefits(
+      input({
+        incomeMode: "KNOWN_BASIS",
+        grossMonthlyIncomeGrosze: 0,
+        knownBasisGrosze: 500_000,
+      })
+    )
+    expect(result.basisGrosze).toBe(500_000)
+    expect(result.lines[0]?.amountGrosze).toBe(daysAmount(500_000, 1, 140))
+  })
+
+  it("does not invent a 1 000 zł floor without a basis", () => {
+    const result = calculateBenefits(input({ grossMonthlyIncomeGrosze: 0 }))
+    expect(result.totalGrosze).toBe(0)
+    expect(result.lines).toHaveLength(0)
+    expect(result.warnings.join(" ")).toContain("Brak podstawy")
+  })
+
+  it("reports totals per beneficiary", () => {
+    const result = calculateBenefits(
+      input({
+        grossMonthlyIncomeGrosze: 800_000,
+        secondParentParentalWeeks: 9,
+        paternityDays: 14,
+      })
+    )
+    const mother = result.totalsByBeneficiary.find(
+      (entry) => entry.beneficiary === "MOTHER"
+    )
+    const father = result.totalsByBeneficiary.find(
+      (entry) => entry.beneficiary === "SECOND_PARENT"
+    )
+    expect(mother?.totalGrosze).toBe(6_829_566)
+    expect(father?.totalGrosze).toBe(1_336_919)
   })
 })
 

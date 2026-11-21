@@ -66,8 +66,7 @@ export default function HomePage() {
           <div className="home-tools__intro">
             <h2 id="tools-title" data-reveal="heading">
               Świadczenia
-              <br />
-              i dokumenty.
+              <br />i dokumenty.
             </h2>
             <p data-reveal="copy">
               Wybierz to, czego potrzebujesz. Możesz zacząć od swojej sytuacji
@@ -183,8 +182,7 @@ export default function HomePage() {
           <div>
             <h2 id="questions-title" data-reveal="heading">
               Pytania
-              <br />
-              i odpowiedzi.
+              <br />i odpowiedzi.
             </h2>
             <p data-reveal="copy">
               Jasne zasady i źródła. Zanim podasz informacje o swojej sytuacji,
@@ -218,6 +216,29 @@ export default function HomePage() {
                 <p>{a}</p>
               </details>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="home-section" aria-labelledby="knowledge-title">
+        <div className="home-shell home-questions__grid">
+          <div>
+            <h2 id="knowledge-title" data-reveal="heading">
+              Centrum wiedzy.
+            </h2>
+            <p data-reveal="copy">
+              Artykuły, najczęstsze pytania, karty dokumentów, przewodniki i
+              słownik pojęć. Wszystko prostym językiem, z datą weryfikacji i
+              odnośnikiem do oficjalnego źródła.
+            </p>
+          </div>
+          <div className="flex flex-col items-start gap-4" data-reveal="copy">
+            <Link href="/wiedza" className="home-text-link">
+              Przeglądaj wiedzę <ArrowUpRight size={19} aria-hidden="true" />
+            </Link>
+            <Link href="/wiedza/faq" className="home-text-link">
+              Najczęstsze pytania <ArrowUpRight size={19} aria-hidden="true" />
+            </Link>
           </div>
         </div>
       </section>
