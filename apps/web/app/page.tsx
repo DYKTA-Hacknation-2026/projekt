@@ -11,7 +11,8 @@ export const metadata: Metadata = { title: "Świadczenia i urlopy dla rodziców"
 
 export default function HomePage() {
   return (
-    <HomeMotion>
+    <div className="home">
+      <HomeMotion />
       <section className="home-hero home-shell" aria-labelledby="home-title">
         <div className="home-hero__copy">
           <h1 id="home-title" data-reveal="heading">
@@ -260,6 +261,6 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-    </HomeMotion>
+    </div>
   )
 }
