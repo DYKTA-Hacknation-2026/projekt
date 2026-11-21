@@ -90,7 +90,7 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 | `/kalkulator`    | Unified calculator with assumptions, trace, and persisted result          |
 | `/asystent`      | Streaming conversational assistant: tools, citations, history, deletion   |
 | `/dokumenty`     | Document analysis demo (sample ZUS forms or a PDF signature check)        |
-| `/os-czasu`      | Two-parent leave/application/payment timeline planner                     |
+| `/os-czasu`      | Plan Rodzicielstwa: interactive three-track leave timeline, stages, details and table view |
 | `/o-projekcie`   | What is real, what is simulated, legal caveats, and architecture          |
 | `/admin`         | Admin skeleton: counts, rules, sources, ingestion jobs                    |
 | `/admin/login`   | Demo admin login (only enforced when `ADMIN_GATE_ENABLED=true`)           |

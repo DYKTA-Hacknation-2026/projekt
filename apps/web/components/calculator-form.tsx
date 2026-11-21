@@ -43,7 +43,7 @@ import {
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
 import { Select } from "@workspace/ui/components/select"
-import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
 import {
   Table,
   TableBody,
@@ -458,6 +458,11 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
                   Przykłady ze spraw ZUS (Zestawy)
                 </TabsTrigger>
               </TabsList>
+              {/* The form itself is rendered below; the panels exist so every
+                  tab's aria-controls points at a real element. */}
+              <TabsContent value="BIRTH" forceMount className="hidden" />
+              <TabsContent value="ADOPTION" forceMount className="hidden" />
+              <TabsContent value="PRESETS" forceMount className="hidden" />
             </Tabs>
 
             {tab === "PRESETS" && (

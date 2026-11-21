@@ -21,7 +21,7 @@ export const navItems = [
   { href: "/kalkulator", label: "Kalkulator" },
   { href: "/asystent", label: "Asystent" },
   { href: "/dokumenty", label: "Dokumenty" },
-  { href: "/os-czasu", label: "Oś czasu" },
+  { href: "/os-czasu", label: "Plan rodzicielstwa" },
 ] as const
 
 export const footerLinks = [
@@ -145,8 +145,8 @@ export const documents = {
 } as const
 
 export const timeline = {
-  title: "Oś czasu",
-  lead: "Terminy urlopów, wniosków i wypłat dla obojga rodziców. Zmień termin porodu, aby zobaczyć plan od nowa.",
+  title: "Wasza droga przez rodzicielstwo",
+  lead: "Zobacz, jakie urlopy i świadczenia mogą Wam przysługiwać, kiedy przypadają najważniejsze terminy i co warto przygotować na kolejnych etapach.",
 } as const
 
 export const mobywatel = {

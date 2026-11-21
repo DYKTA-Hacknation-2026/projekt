@@ -1,26 +1,21 @@
 import type { Metadata } from "next"
-import { Baby, CalendarClock, Users } from "lucide-react"
 
+import { warsawToday } from "@zpr/ai"
 import type { RuleSet } from "@zpr/domain"
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@workspace/ui/components/alert"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
 import { DbOffline } from "@/components/db-offline"
 import { PageHeader } from "@/components/page-header"
 import { TimelinePlanner } from "@/components/timeline-planner"
 import { timeline } from "@/messages/pl"
-import { getActiveRuleSet } from "@/server/api-client"
+import {
+  buildTimelineSeed,
+  DEMO_SEED,
+} from "@/lib/plan-seed"
+import {
+  getActiveRuleSet,
+  getLatestImportForUser,
+} from "@/server/api-client"
 
-export const metadata: Metadata = { title: "Oś czasu" }
+export const metadata: Metadata = { title: "Plan Rodzicielstwa" }
 export const dynamic = "force-dynamic"
 
 export default async function TimelinePage() {
@@ -40,58 +35,21 @@ export default async function TimelinePage() {
     )
   }
 
+  // Prefill from the last accepted data import when one exists. Without it the
+  // planner starts with an explicitly labelled demo scenario.
+  let seed = DEMO_SEED
+  try {
+    const latest = await getLatestImportForUser()
+    if (latest) {
+      seed = buildTimelineSeed(latest.preview.data, latest.scenarioLabel)
+    }
+  } catch {
+    seed = DEMO_SEED
+  }
+
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
-      <PageHeader
-        eyebrow="Planer"
-        title={timeline.title}
-        lead={timeline.lead}
-      />
-
-      <Alert variant="info">
-        <CalendarClock aria-hidden="true" />
-        <AlertTitle>Wersja demonstracyjna planera</AlertTitle>
-        <AlertDescription>
-          Dni są liczone kalendarzowo. Rzeczywiste terminy zależą od daty
-          porodu, decyzji pracodawcy i dokumentów. Plan nie zastępuje wniosku
-          ani decyzji ZUS.
-        </AlertDescription>
-      </Alert>
-
-      <TimelinePlanner ruleSet={ruleSet} />
-
-      <section className="grid gap-3 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Users aria-hidden="true" className="size-4 text-primary" />
-              Dla obojga rodziców
-            </CardTitle>
-            <CardDescription>
-              Plan pokazuje osobno część mamy, część taty i terminy wspólne.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Baby aria-hidden="true" className="size-4 text-primary" />
-              Warianty rodzinne
-            </CardTitle>
-            <CardDescription>
-              Zmień liczbę dzieci i „Za życiem”, aby zobaczyć{" "}
-              {Object.entries(ruleSet.maternity.weeksByChildren)
-                .sort(([a], [b]) => Number(a) - Number(b))
-                .slice(1)
-                .map(([, weeks]) => weeks)
-                .join("/")}{" "}
-              tygodni macierzyńskiego oraz {ruleSet.parental.poolWeeks.multiple}
-              /{ruleSet.parental.poolWeeks.zaZyciemMultiple} tygodni
-              rodzicielskiego.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </section>
+      <TimelinePlanner ruleSet={ruleSet} today={warsawToday()} initial={seed} />
     </div>
   )
 }

@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     template: `%s · ${APP_NAME}`,
   },
   description:
-    "Sprawdź uprawnienia do zasiłku macierzyńskiego, rodzicielskiego i ojcowskiego. Kalkulator, oś czasu, analiza dokumentów i asystent z cytatami. Projekt demonstracyjny.",
+    "Sprawdź uprawnienia do zasiłku macierzyńskiego, rodzicielskiego i ojcowskiego. Kalkulator, plan rodzicielstwa, analiza dokumentów i asystent z cytatami. Projekt demonstracyjny.",
   applicationName: APP_NAME,
   robots: { index: false, follow: false },
   openGraph: {

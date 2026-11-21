@@ -7,7 +7,7 @@ const routes = [
   ["/kalkulator", /Kalkulator zasiłków/i],
   ["/asystent", /Asystent zasiłkowy/i],
   ["/dokumenty", /Analiza dokumentów/i],
-  ["/os-czasu", /Oś czasu/i],
+  ["/os-czasu", /Wasza droga przez rodzicielstwo/i],
   ["/o-projekcie", /Co jest prawdziwe/i],
   ["/mobywatel", /Logowanie przez mObywatel/i],
   ["/dane", /Uzupełnij dane automatycznie/i],
