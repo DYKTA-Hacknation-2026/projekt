@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto"
 import { readFile } from "node:fs/promises"
-import path from "node:path"
 
 import { warsawToday } from "@zpr/ai"
 import {
@@ -396,8 +395,9 @@ export function createDocumentService(deps: DocumentServiceDeps) {
 
 export type DocumentService = ReturnType<typeof createDocumentService>
 
+/** Private upload directory; relative paths resolve against the API's working directory at runtime. */
 export function defaultStorageDir(env: { DOCUMENT_STORAGE_DIR?: string }): string {
-  return path.resolve(env.DOCUMENT_STORAGE_DIR ?? path.join(process.cwd(), "var", "uploads"))
+  return env.DOCUMENT_STORAGE_DIR ?? "var/uploads"
 }
 
 export function createLocalStorage(env: { DOCUMENT_STORAGE_DIR?: string }): DocumentStorage {

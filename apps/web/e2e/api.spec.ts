@@ -2,6 +2,9 @@ import { randomUUID } from "node:crypto"
 
 import { expect, test } from "@playwright/test"
 
+// Synthetic test PDF writer (no ZUS documents in the repository).
+import { formPage, writePdf } from "../../../packages/documents/src/pdf/writer"
+
 test("forwards health, OpenAPI, and knowledge search", async ({ request }) => {
   for (const path of ["/api/health", "/api/v1/health"]) {
     const response = await request.get(path)
@@ -81,6 +84,11 @@ test("persists onboarding and calculations through the public API", async ({
 test("forwards sample and uploaded PDF multipart requests", async ({
   request,
 }) => {
+  const pdf = Buffer.from(
+    writePdf({ pages: [formPage(["Z-3", "ZAŚWIADCZENIE PŁATNIKA SKŁADEK — DOKUMENT TESTOWY"], [["Podstawa wymiaru zasiłku", "6000,00"]])] })
+  )
+
+  // Deprecated one-step alias, kept during the UI migration.
   const path = "/api/v1/documents/analyze"
   const samples = await request.get(path)
   expect(samples.status()).toBe(200)
@@ -93,22 +101,42 @@ test("forwards sample and uploaded PDF multipart requests", async ({
   expect(await sample.json()).toMatchObject({
     formCode: "ZAM",
     simulated: true,
+    extraction: { detectedForm: "ZAM", requiresConfirmation: true },
   })
 
+  const file = { name: "example.pdf", mimeType: "application/pdf", buffer: pdf }
+  const withoutConsent = await request.post(path, { multipart: { file } })
+  expect(withoutConsent.status()).toBe(403)
+
   const upload = await request.post(path, {
-    multipart: {
-      file: {
-        name: "example.pdf",
-        mimeType: "application/pdf",
-        buffer: Buffer.from("%PDF-1.7"),
-      },
-    },
+    multipart: { file, consent: "DOCUMENT_PROCESSING" },
   })
   expect(upload.status()).toBe(200)
   expect(await upload.json()).toMatchObject({
-    fileName: "example.pdf",
+    formCode: "Z-3",
     requiresConfirmation: true,
   })
+
+  // New endpoints through the web proxy: upload, extract, preview, delete.
+  const created = await request.post("/api/v1/documents", {
+    multipart: { file, consent: "DOCUMENT_PROCESSING" },
+  })
+  expect(created.status()).toBe(201)
+  const { documentId } = await created.json()
+  const extracted = await request.post(`/api/v1/documents/${documentId}/extract`, { data: {} })
+  expect(extracted.status()).toBe(200)
+  expect(await extracted.json()).toMatchObject({ detectedForm: "Z-3" })
+  const preview = await request.get(`/api/v1/documents/${documentId}/file`)
+  expect(preview.status()).toBe(200)
+  expect(preview.headers()["content-type"]).toBe("application/pdf")
+  expect(preview.headers()["x-content-type-options"]).toBe("nosniff")
+  expect((await request.delete(`/api/v1/documents/${documentId}`)).status()).toBe(204)
+  expect((await request.get(`/api/v1/documents/${documentId}`)).status()).toBe(404)
+
+  const notPdf = await request.post("/api/v1/documents", {
+    multipart: { file: { name: "x.pdf", mimeType: "application/pdf", buffer: Buffer.from("MZ") }, consent: "DOCUMENT_PROCESSING" },
+  })
+  expect(notPdf.status()).toBe(415)
 })
 
 test("forwards admin session cookies and keeps internal reads private", async ({

@@ -11,6 +11,7 @@ for (const path of [
   "/wiedza/faq",
   "/wiedza/artykul/zasilek-macierzynski",
   "/wiedza/dokumenty/wniosek-zam",
+  "/dokumenty",
 ]) {
   test(`has no detectable accessibility violations on ${path}`, async ({
     page,

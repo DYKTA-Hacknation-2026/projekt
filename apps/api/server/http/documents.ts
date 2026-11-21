@@ -9,10 +9,11 @@ import { clientKey, enforceRateLimit } from "@/server/http/rate-limit"
 
 export type IdContext = { params: Promise<{ id: string }> }
 
+/** Per client address (the global limit) and per session (at most 30/min). */
 export function enforceDocumentRateLimit(request: Request, sid?: string): void {
-  const perMinute = Math.min(getEnv().RATE_LIMIT_REQUESTS_PER_MINUTE, 30)
+  const perMinute = getEnv().RATE_LIMIT_REQUESTS_PER_MINUTE
   enforceRateLimit(clientKey(request, "documents"), perMinute)
-  if (sid) enforceRateLimit(`documents-session:${sid}`, perMinute)
+  if (sid) enforceRateLimit(`documents-session:${sid}`, Math.min(perMinute, 30))
 }
 
 export async function documentId(context: IdContext): Promise<string> {

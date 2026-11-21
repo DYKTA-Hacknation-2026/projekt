@@ -142,7 +142,17 @@ describe("POST /documents — upload validation", () => {
 
   it("rate-limits /documents/*", async () => {
     let last = 0
-    for (let index = 0; index < 35; index += 1) last = (await call(upload, { body: pdfForm(z3Pdf, { consent: null }) })).status
+    for (let index = 0; index < 65; index += 1) last = (await call(upload, { body: pdfForm(z3Pdf, { consent: null }) })).status
+    expect(last).toBe(429)
+  })
+
+  it("rate-limits a single session at 30 requests per minute", async () => {
+    const { document } = await (await call(loadSample, { id: "kasia-z3a" })).json()
+    let last = 0
+    for (let index = 0; index < 31; index += 1) {
+      client += 1 // a new address each time: only the session limit applies
+      last = (await call(documentRoute.GET, { method: "GET", id: document.documentId })).status
+    }
     expect(last).toBe(429)
   })
 })

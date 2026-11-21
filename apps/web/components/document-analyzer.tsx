@@ -479,7 +479,7 @@ function FieldsTable({
   onPage: (page: number) => void
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div>
       <Table>
         <TableCaption>{t.fieldsCaption}</TableCaption>
         <TableHeader>
@@ -703,35 +703,27 @@ function AssessmentView({ assessment }: { assessment: DocumentAssessment }) {
           </CardTitle>
           <CardDescription>{t.checklistLead}</CardDescription>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table aria-labelledby="checklist-title" data-testid="document-checklist">
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.checklistCols.document}</TableHead>
-                <TableHead>{t.checklistCols.who}</TableHead>
-                <TableHead>{t.checklistCols.where}</TableHead>
-                <TableHead>{t.checklistCols.when}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {assessment.checklist.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="min-w-56 whitespace-normal">
-                    {item.title}
-                    <span className="block text-[11px] text-muted-foreground">
-                      {t.legalBasis}: {item.legalBasis}
-                    </span>
-                  </TableCell>
-                  <TableCell className="whitespace-normal">{t.preparedBy[item.preparedBy] ?? item.preparedBy}</TableCell>
-                  <TableCell className="whitespace-normal">{t.submitTo[item.submitTo] ?? item.submitTo}</TableCell>
-                  <TableCell className="min-w-40 whitespace-normal">
+        <CardContent>
+          <ul aria-labelledby="checklist-title" data-testid="document-checklist" className="divide-y divide-border/70">
+            {assessment.checklist.map((item) => (
+              <li key={item.id} className="space-y-1 py-3 text-sm first:pt-0 last:pb-0">
+                <p className="font-medium text-pretty">{item.title}</p>
+                <dl className="grid gap-x-4 gap-y-0.5 text-xs sm:grid-cols-[auto_1fr]">
+                  <dt className="text-muted-foreground">{t.checklistCols.who}</dt>
+                  <dd>{t.preparedBy[item.preparedBy] ?? item.preparedBy}</dd>
+                  <dt className="text-muted-foreground">{t.checklistCols.where}</dt>
+                  <dd>{t.submitTo[item.submitTo] ?? item.submitTo}</dd>
+                  <dt className="text-muted-foreground">{t.checklistCols.when}</dt>
+                  <dd>
                     {item.dueDate ? <span className="font-medium">{formatDate(item.dueDate)}. </span> : null}
                     {item.when}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </dd>
+                  <dt className="text-muted-foreground">{t.legalBasis}</dt>
+                  <dd>{item.legalBasis}</dd>
+                </dl>
+              </li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
 
