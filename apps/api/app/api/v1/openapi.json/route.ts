@@ -5,7 +5,10 @@ import {
   assistantReplySchema,
   assistantStreamRequestSchema,
 } from "@zpr/contracts/assistant"
-import { assessmentInputSchema, scenarioComparisonSchema } from "@zpr/contracts/engine"
+import {
+  assessmentInputSchema,
+  scenarioComparisonSchema,
+} from "@zpr/contracts/engine"
 
 import { apiRoute, json } from "@/server/http/route"
 
@@ -13,13 +16,24 @@ export const dynamic = "force-static"
 
 const engineRequestBody = {
   required: true,
-  content: { "application/json": { schema: z.toJSONSchema(assessmentInputSchema, { io: "input" }) } },
+  content: {
+    "application/json": {
+      schema: z.toJSONSchema(assessmentInputSchema, { io: "input" }),
+    },
+  },
 }
 
 function engineResponses(description: string) {
   return {
     "200": { description },
-    "422": { description: "Błąd walidacji lub niespójne dane wejściowe", content: { "application/problem+json": { schema: { $ref: "#/components/schemas/Problem" } } } },
+    "422": {
+      description: "Błąd walidacji lub niespójne dane wejściowe",
+      content: {
+        "application/problem+json": {
+          schema: { $ref: "#/components/schemas/Problem" },
+        },
+      },
+    },
     "429": { description: "Limit żądań" },
   }
 }
@@ -205,18 +219,30 @@ const document = {
     },
     "/benefits/calculate": {
       post: {
-        summary: "Pełne wyliczenie świadczeń (okresy, kwoty, podział między rodziców)",
+        summary:
+          "Pełne wyliczenie świadczeń (okresy, kwoty, podział między rodziców)",
         description:
           "Dokładna arytmetyka wymierna, jedno zaokrąglenie na pozycję (do grosza, połówki w górę). Brak podstawy wymiaru → kwota `null` i status BASIS_UNKNOWN zamiast szacunku.",
         requestBody: engineRequestBody,
-        responses: engineResponses("Pełna ocena: breakdown, totals, periods, allocation, appliedRules, sources, assumptions, missingEvidence, warnings, nextSteps"),
+        responses: engineResponses(
+          "Pełna ocena: breakdown, totals, periods, allocation, appliedRules, sources, assumptions, missingEvidence, warnings, nextSteps"
+        ),
       },
     },
     "/scenarios/compare": {
       post: {
         summary: "Porównanie planów urlopowych dla tych samych faktów",
-        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(scenarioComparisonSchema, { io: "input" }) } } },
-        responses: engineResponses("Wyniki scenariuszy z różnicą względem pierwszego"),
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(scenarioComparisonSchema, { io: "input" }),
+            },
+          },
+        },
+        responses: engineResponses(
+          "Wyniki scenariuszy z różnicą względem pierwszego"
+        ),
       },
     },
     "/timeline": {
@@ -228,14 +254,18 @@ const document = {
     },
     "/documents/required": {
       post: {
-        summary: "Wymagane dokumenty i miejsce złożenia dla każdego świadczenia",
+        summary:
+          "Wymagane dokumenty i miejsce złożenia dla każdego świadczenia",
         requestBody: engineRequestBody,
-        responses: engineResponses("Lista dokumentów (R1316, R322), płatnik i wersja formularzy"),
+        responses: engineResponses(
+          "Lista dokumentów (R1316, R322), płatnik i wersja formularzy"
+        ),
       },
     },
     "/rulesets": {
       get: {
-        summary: "Wersje reguł, parametry ze statusem weryfikacji, katalog reguł ze źródłami, założenia i scenariusze nieobsługiwane",
+        summary:
+          "Wersje reguł, parametry ze statusem weryfikacji, katalog reguł ze źródłami, założenia i scenariusze nieobsługiwane",
         responses: { "200": { description: "OK" } },
       },
     },
@@ -243,6 +273,92 @@ const document = {
       post: {
         summary: "Utworzenie sprawy z kreatora startowego",
         responses: { "201": { description: "Sprawa utworzona" } },
+      },
+    },
+    "/data-import/sources": {
+      get: {
+        summary: "Dostępne symulowane źródła, zakresy zgody i kroki pobierania",
+        responses: {
+          "200": { description: "Katalog źródeł bez danych osobowych" },
+        },
+      },
+    },
+    "/data-import/sessions": {
+      post: {
+        summary: "Rozpoczęcie pobierania po zgodzie na wybrane zakresy danych",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["scopes"],
+                properties: {
+                  scopes: {
+                    type: "array",
+                    minItems: 1,
+                    items: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Sesja pobierania i puste wyniki źródeł" },
+          "401": { description: "Brak sesji mObywatel (symulacja)" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}": {
+      get: {
+        summary: "Stan sesji, wyniki źródeł i podsumowanie",
+        responses: {
+          "200": { description: "Sesja z wynikami i proweniencją" },
+          "404": { description: "Brak lub cudza sesja" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}/summary": {
+      get: {
+        summary:
+          "Podsumowanie pobrania: pobrane, niedostępne, ręczne, niespójności",
+        responses: { "200": { description: "Raport podsumowania" } },
+      },
+    },
+    "/data-import/sessions/{sessionId}/sources/{sourceId}": {
+      post: {
+        summary: "Pobranie danych z jednego symulowanego źródła",
+        responses: {
+          "200": { description: "Wynik źródła i zaktualizowana sesja" },
+          "409": { description: "Sesja już zakończona" },
+          "422": { description: "Zakres zgody nie obejmuje źródła" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}/preview": {
+      post: {
+        summary:
+          "Mapowanie danych, analiza uprawnień i podgląd kalkulacji bez zapisu",
+        responses: { "200": { description: "Podgląd danych i wyników reguł" } },
+      },
+    },
+    "/data-import/sessions/{sessionId}/accept": {
+      post: {
+        summary:
+          "Zapis zaakceptowanych danych i przygotowanie prefillu formularza",
+        responses: {
+          "200": {
+            description: "Zaakceptowana sesja, prefill i wynik analizy",
+          },
+          "422": { description: "Brak wymaganych pól" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}/skip": {
+      post: {
+        summary: "Rezygnacja z pobierania i przejście do ręcznego formularza",
+        responses: { "200": { description: "Sesja oznaczona jako pominięta" } },
       },
     },
     "/documents/analyze": {
@@ -253,6 +369,40 @@ const document = {
           "200": { description: "Pola do potwierdzenia" },
           "413": { description: "Plik powyżej 10 MB" },
         },
+      },
+    },
+    "/sim/mobywatel/personas": {
+      get: {
+        summary: "Profile testowe do symulacji logowania przez mObywatel",
+        responses: {
+          "200": { description: "Lista syntetycznych profili i zakres danych" },
+        },
+      },
+    },
+    "/sim/mobywatel/authorize": {
+      post: {
+        summary: "Symulowane potwierdzenie logowania i ustawienie sesji",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/MobywatelAuthorizeRequest",
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Sesja symulowana i przekierowanie do /start" },
+          "404": { description: "Nieznany profil testowy" },
+          "422": { description: "Błąd walidacji (zgoda, PIN)" },
+        },
+      },
+    },
+    "/sim/mobywatel/logout": {
+      post: {
+        summary: "Usunięcie symulowanej sesji mObywatel",
+        responses: { "200": { description: "Sesja usunięta" } },
       },
     },
   },
@@ -266,6 +416,7 @@ const document = {
             type: "object",
             properties: {
               grossMonthlyIncomeGrosze: { type: "integer", minimum: 0 },
+              monthlyBasisOverrideGrosze: { type: "integer", minimum: 0 },
               childrenCount: { type: "integer", minimum: 1, maximum: 20 },
               hasZaZyciem: { type: "boolean" },
               paymentOption: {
@@ -304,6 +455,20 @@ const document = {
           code: { type: "string" },
           detail: { type: "string" },
           instance: { type: "string" },
+        },
+      },
+      MobywatelAuthorizeRequest: {
+        type: "object",
+        required: ["personaId", "method", "consent"],
+        properties: {
+          personaId: { type: "string" },
+          method: { type: "string", enum: ["PIN", "BIOMETRY"] },
+          pin: {
+            type: "string",
+            description: "Wymagany dla metody PIN; dowolne 4 cyfry w demo.",
+            pattern: "^\\d{4}$",
+          },
+          consent: { type: "boolean", const: true },
         },
       },
     },

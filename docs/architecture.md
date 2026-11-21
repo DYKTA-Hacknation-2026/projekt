@@ -236,3 +236,28 @@ All UI copy is in Polish and lives in `apps/web/messages/pl`. A plain typed obje
 | LLM hallucinating amounts or law | Trust and correctness | Tools-only numbers, a post-generation numeric guard, mandatory citations, refusal policy |
 | Scope too big for the hackathon timebox | Incomplete demo | Roadmap phases with an "MVP cut line" (see `implementation-roadmap.md`) |
 | Next 16 API differences | Build breaks | Read `node_modules/next/dist/docs` before coding (AGENTS.md) |
+
+## 11. Implemented simulated data retrieval (`/dane`)
+
+The retrieval flow is a vertical slice behind production-shaped ports:
+
+```
+apps/web/app/dane + components/data-import-wizard.tsx   # 4-step UI
+apps/api/app/api/v1/data-import/**                      # REST endpoints
+apps/api/server/services/data-import.ts                 # orchestration + sessions
+apps/api/server/sim/mobywatel.ts                        # existing login personas
+packages/data-sources/
+  scenarios/                                            # Anna, Marek, Kasia demo data
+  providers/                                            # ZUS, employer, e-ZLA, USC, PUE
+  mapping.ts                                            # prefill + eligibility + calculator
+packages/contracts/src/data-import.ts                   # Zod entities and API contracts
+packages/db/src/repositories/imports.ts                 # sessions, snapshots, projection
+```
+
+Each provider implements `DataSourceProvider.fetch(context)` and returns a typed
+`SourceFetchResult` with status, activities, issues, records and simulated
+provenance. A real integration replaces only that provider. The mapping layer
+uses only fetched records; missing or failed sources leave the form field empty
+and produce a manual-completion item. Eligibility (`assessEligibility`) and the
+calculator (`calculateBenefits`) run before acceptance, so the user sees the
+consequences of the data and can correct it.

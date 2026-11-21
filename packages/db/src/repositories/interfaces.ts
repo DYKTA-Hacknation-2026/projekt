@@ -11,17 +11,28 @@ import type {
 import type {
   conversationMessages,
   conversations,
+  dataImportSessions,
+  dataImportSnapshots,
   knowledgeChunks,
   legalRuleVersions,
   users,
 } from "../schema"
 import type { OnboardingInput } from "@zpr/contracts/onboarding"
+import type {
+  DataScope,
+  ImportedCaseData,
+  ImportSummary,
+  SourceFetchResult,
+  SourceIssue,
+} from "@zpr/contracts/data-import"
 
 export type UserRecord = typeof users.$inferSelect
 export type ConversationRecord = typeof conversations.$inferSelect
 export type ConversationMessageRecord = typeof conversationMessages.$inferSelect
 export type KnowledgeChunkRecord = typeof knowledgeChunks.$inferSelect
 export type LegalRuleVersionRecord = typeof legalRuleVersions.$inferSelect
+export type ImportSessionRecord = typeof dataImportSessions.$inferSelect
+export type ImportSnapshotRecord = typeof dataImportSnapshots.$inferSelect
 
 export type UserSummary = UserSummaryPayload<Date>
 
@@ -190,6 +201,10 @@ export interface AssistantProfileRecord {
   employmentType: "EMPLOYMENT" | "MANDATE" | "SELF_EMPLOYMENT" | "OTHER" | null
   coverageMode: "COMPULSORY" | "VOLUNTARY" | null
   insuranceStartDate: string | null
+  insuranceEndDate: string | null
+  contributionArrears: boolean | null
+  pregnancySickLeave: boolean | null
+  sickLeaveDays: number | null
   grossMonthlyAmountGrosze: number | null
   familyEvent: "PREGNANCY" | "BIRTH" | "ADOPTION" | "FOSTER_CARE" | null
   eventDate: string | null
@@ -198,4 +213,44 @@ export interface AssistantProfileRecord {
   hasZaZyciem: boolean | null
   caseNumber: string | null
   updatedAt: Date | null
+}
+
+export interface CreateImportSessionInput {
+  ownerKey: string
+  personaId: string
+  scenarioId: string
+  scopes: DataScope[]
+  engineVersion?: string
+}
+
+export interface SaveImportSnapshotInput {
+  sessionId: string
+  result: SourceFetchResult
+  issues: SourceIssue[]
+}
+
+export interface AcceptImportSessionInput {
+  sessionId: string
+  ownerKey: string
+  data: ImportedCaseData
+  fieldSources: Record<string, unknown>
+  summary: ImportSummary
+}
+
+export interface ImportRepository {
+  createSession(input: CreateImportSessionInput): Promise<ImportSessionRecord>
+  getOwnedSession(
+    sessionId: string,
+    ownerKey: string
+  ): Promise<ImportSessionRecord | null>
+  listSnapshots(sessionId: string): Promise<ImportSnapshotRecord[]>
+  saveSnapshot(input: SaveImportSnapshotInput): Promise<ImportSnapshotRecord>
+  markRunning(sessionId: string): Promise<void>
+  markCompleted(sessionId: string): Promise<void>
+  markSkipped(sessionId: string, ownerKey: string): Promise<boolean>
+  acceptSession(input: AcceptImportSessionInput): Promise<ImportSessionRecord>
+  findLatestAcceptedForUser(
+    userId: string
+  ): Promise<ImportSessionRecord | null>
+  applyToUser(input: { sessionId: string; userId: string }): Promise<void>
 }

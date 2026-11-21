@@ -63,6 +63,10 @@ function normalizeInput(
       1,
       ruleSet.maternity.maxChildren
     ),
+    monthlyBasisOverrideGrosze:
+      input.monthlyBasisOverrideGrosze === undefined
+        ? undefined
+        : Math.max(0, Math.round(finite(input.monthlyBasisOverrideGrosze))),
     maternityWeeksBeforeBirth: clamp(
       Math.round(finite(input.maternityWeeksBeforeBirth)),
       0,
@@ -242,12 +246,14 @@ export function calculateBenefits(
       )
     }
   }
-  const mother = resolveBasis(
-    motherGross,
-    employmentType,
-    employmentFraction,
-    ruleSet
-  )
+  const mother =
+    n.monthlyBasisOverrideGrosze !== undefined
+      ? {
+          grossGrosze: motherGross,
+          basisGrosze: n.monthlyBasisOverrideGrosze,
+          minimumApplied: false,
+        }
+      : resolveBasis(motherGross, employmentType, employmentFraction, ruleSet)
   const secondGross = n.secondParentMonthlyIncomeGrosze ?? motherGross
   const second =
     n.secondParentMonthlyIncomeGrosze === undefined
@@ -781,6 +787,11 @@ export function calculateBenefits(
       "Przy adopcji i rodzinie zastępczej urlop nie może być wykorzystany przed przyjęciem dziecka — pominięto tygodnie „przed porodem”."
     )
   }
+  if (n.monthlyBasisOverrideGrosze !== undefined) {
+    warnings.push(
+      "Podstawa wymiaru pochodzi z danych pobranych z symulowanego ZUS. Jeśli poprawiłeś wynagrodzenie, sprawdź, czy podstawa nadal jest aktualna."
+    )
+  }
 
   // ---- Trace ----
   trace.unshift(
@@ -807,7 +818,10 @@ export function calculateBenefits(
     {
       ruleId: "LR-112",
       label: "Podstawa wymiaru po potrąceniu składki chorobowej",
-      detail: `Podstawa miesięczna = wynagrodzenie brutto × (1 − ${(ruleSet.basis.contributionDeduction * 100).toFixed(2).replace(".", ",")}%) = ${basisGrosze / 100} zł. Podstawa dzienna = 1/${ruleSet.basis.dailyDivisor} podstawy miesięcznej.`,
+      detail:
+        n.monthlyBasisOverrideGrosze !== undefined
+          ? "Podstawa miesięczna pochodzi z pobranych podstaw wymiaru składek ZUS (symulacja). Sprawdź ją przed złożeniem wniosku."
+          : `Podstawa miesięczna = wynagrodzenie brutto × (1 − ${(ruleSet.basis.contributionDeduction * 100).toFixed(2).replace(".", ",")}%) = ${basisGrosze / 100} zł. Podstawa dzienna = 1/${ruleSet.basis.dailyDivisor} podstawy miesięcznej.`,
       legalReference: "U art. 36, 38; P s. 24",
     },
     {

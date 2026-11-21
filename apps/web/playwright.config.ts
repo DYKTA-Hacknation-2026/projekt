@@ -1,4 +1,4 @@
-import { defineConfig, devices } from "@playwright/test"
+﻿import { defineConfig, devices } from "@playwright/test"
 
 const webURL = "http://127.0.0.1:3100"
 const apiURL = "http://127.0.0.1:3101"

@@ -21,6 +21,12 @@ export const calculatorInputSchema = z.object({
     .int()
     .min(0)
     .max(100_000_000, "Kwota jest zbyt duża"),
+  monthlyBasisOverrideGrosze: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(100_000_000, "Kwota jest zbyt duża")
+    .optional(),
   // These are technical sanity limits only. The legal maxima (weeks, days,
   // work fraction) come from the active rule set in the database.
   childrenCount: z.coerce.number().int().min(1).max(20).default(1),

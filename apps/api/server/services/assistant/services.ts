@@ -29,6 +29,14 @@ export function toProfileSnapshot(
   }
   if (record.insuranceStartDate)
     facts.insuranceStartDate = record.insuranceStartDate
+  if (record.insuranceEndDate) facts.insuranceEndDate = record.insuranceEndDate
+  if (record.contributionArrears !== null) {
+    facts.contributionArrears = record.contributionArrears
+  }
+  if (record.pregnancySickLeave !== null) {
+    facts.pregnancySickLeave = record.pregnancySickLeave
+  }
+  if (record.sickLeaveDays !== null) facts.sickLeaveDays = record.sickLeaveDays
   if (record.familyEvent) facts.familyEvent = record.familyEvent
   if (record.eventDate) facts.eventDate = record.eventDate
   if (record.expectedDueDate) facts.expectedDueDate = record.expectedDueDate

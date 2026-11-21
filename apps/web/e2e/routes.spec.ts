@@ -5,10 +5,12 @@ const routes = [
   ["/panel", /Panel sprawy/i],
   ["/start", /Opisz swoją sytuację/i],
   ["/kalkulator", /Kalkulator zasiłków/i],
-  ["/asystent", /Asystent wiedzy/i],
+  ["/asystent", /Asystent zasiłkowy/i],
   ["/dokumenty", /Analiza dokumentów/i],
   ["/os-czasu", /Oś czasu/i],
   ["/o-projekcie", /Co jest prawdziwe/i],
+  ["/mobywatel", /Logowanie przez mObywatel/i],
+  ["/dane", /Uzupełnij dane automatycznie/i],
   ["/admin", /Panel administratora/i],
   ["/admin/login", /Dostęp do konfiguracji/i],
 ] as const

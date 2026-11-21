@@ -30,6 +30,7 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@workspace/ui/components/alert"
+import { importPrefillStorageSchema } from "@zpr/contracts/data-import"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -152,6 +153,9 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ResponseBody | null>(null)
+  const [monthlyBasis, setMonthlyBasis] = useState<number | undefined>()
+  const [useImportedBasis, setUseImportedBasis] = useState(true)
+  const [importLoaded, setImportLoaded] = useState(false)
 
   const childCounts = Object.keys(ruleSet.maternity.weeksByChildren)
     .map(Number)
@@ -170,6 +174,41 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
     .map((value) => ({ value, label: workLabel(value) }))
 
   useEffect(() => {
+    const rawImport = window.sessionStorage.getItem("zpr:import-prefill")
+    if (rawImport) {
+      try {
+        const parsed = importPrefillStorageSchema.safeParse(
+          JSON.parse(rawImport)
+        )
+        if (parsed.success) {
+          const data = parsed.data.data
+          if (data.grossMonthlyIncomePln !== undefined) {
+            setIncome(String(data.grossMonthlyIncomePln))
+          }
+          if (data.childrenCount !== undefined) {
+            setChildren(
+              String(
+                Math.min(
+                  ruleSet.maternity.maxChildren,
+                  Math.max(1, data.childrenCount)
+                )
+              )
+            )
+          }
+          if (data.hasZaZyciem !== undefined) {
+            setHasZaZyciem(data.hasZaZyciem)
+          }
+          if (data.monthlyBasisGrosze !== undefined) {
+            setMonthlyBasis(data.monthlyBasisGrosze)
+            setUseImportedBasis(true)
+          }
+          setImportLoaded(true)
+        }
+      } catch {
+        // Ignore a stale or malformed prefill.
+      }
+    }
+
     const raw = window.sessionStorage.getItem("zpr:document-prefill")
     if (!raw) return
     window.sessionStorage.removeItem("zpr:document-prefill")
@@ -177,6 +216,7 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
       const parsed = JSON.parse(raw) as { income?: string }
       if (parsed.income && Number.isFinite(Number(parsed.income))) {
         setIncome(parsed.income)
+        setMonthlyBasis(undefined)
       }
     } catch {
       // Ignore a stale or malformed prefill.
@@ -195,6 +235,8 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
     const preset = findPresetCase(id)
     if (!preset) return
     const p = preset.input
+    setMonthlyBasis(undefined)
+    setImportLoaded(false)
 
     setMode(p.mode ?? "BIRTH")
     setIncome(plnToString(p.grossMonthlyIncomeGrosze))
@@ -289,6 +331,7 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
       grossMonthlyIncomeGrosze: Math.round(
         (Number.isFinite(incomePln) ? incomePln : 0) * 100
       ),
+      monthlyBasisOverrideGrosze: useImportedBasis ? monthlyBasis : undefined,
       childrenCount: Number(children),
       hasZaZyciem,
       paymentOption,
@@ -391,6 +434,17 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
         </CardHeader>
         <form onSubmit={onSubmit} aria-busy={pending}>
           <CardContent className="space-y-5">
+            {importLoaded && (
+              <Alert variant="info">
+                <Info aria-hidden="true" />
+                <AlertTitle>Dane z symulowanych źródeł</AlertTitle>
+                <AlertDescription>
+                  Dochód i liczba dzieci pochodzą z zaakceptowanego raportu
+                  pobrania. Możesz je zmienić — kalkulator nadal liczy
+                  deterministycznie.
+                </AlertDescription>
+              </Alert>
+            )}
             <Tabs value={tab} onValueChange={onTabChange}>
               <TabsList
                 aria-label="Rodzaj sprawy"
@@ -473,6 +527,28 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
                   description="Każde z rodziców z własnej podstawy."
                 />
               </div>
+
+              {monthlyBasis !== undefined && (
+                <label className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-4 accent-[var(--primary)]"
+                    checked={useImportedBasis}
+                    onChange={(event) =>
+                      setUseImportedBasis(event.target.checked)
+                    }
+                  />
+                  <span>
+                    <span className="font-medium">
+                      Użyj podstawy wymiaru z ZUS (symulacja)
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {formatPln(monthlyBasis)} miesięcznie. Odznacz, aby
+                      wyliczyć podstawę z podanego wynagrodzenia.
+                    </span>
+                  </span>
+                </label>
+              )}
 
               <div
                 role="radiogroup"

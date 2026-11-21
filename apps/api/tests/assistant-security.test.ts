@@ -60,6 +60,10 @@ function profile(overrides: Partial<AssistantProfileRecord> = {}): AssistantProf
     employmentType: "EMPLOYMENT",
     coverageMode: "COMPULSORY",
     insuranceStartDate: "2024-01-01",
+    insuranceEndDate: null,
+    contributionArrears: false,
+    pregnancySickLeave: false,
+    sickLeaveDays: null,
     grossMonthlyAmountGrosze: 800_000,
     familyEvent: "PREGNANCY",
     eventDate: null,
@@ -130,6 +134,8 @@ describe("profile authorization", () => {
       expectedDueDate: "2027-03-10",
       childrenCount: 1,
       hasZaZyciem: false,
+      contributionArrears: false,
+      pregnancySickLeave: false,
     })
     expect(snapshot.grossMonthlyIncomePln).toBe(8000)
     expect(JSON.stringify(snapshot)).not.toMatch(/email|firstName|lastName|city/i)

@@ -42,6 +42,11 @@ export interface MonthlyIncomeEntry {
 export interface CalculatorInput {
   /** Gross monthly income of the mother (or main applicant), in grosze. */
   grossMonthlyIncomeGrosze: number
+  /**
+   * Monthly benefit basis retrieved from ZUS contribution bases. When set,
+   * it is used instead of deriving the basis from gross income.
+   */
+  monthlyBasisOverrideGrosze?: number
   /** Number of children born in one birth. Values above the highest configured rule use the 5+ rule. */
   childrenCount: number
   /** The child holds a "Za życiem" certificate. */
