@@ -19,12 +19,14 @@ export const LEGAL_DISCLOSURE =
 export const navItems = [
   { href: "/panel", label: "Panel" },
   { href: "/kalkulator", label: "Kalkulator" },
+  { href: "/wiedza", label: "Wiedza" },
   { href: "/asystent", label: "Asystent" },
   { href: "/dokumenty", label: "Dokumenty" },
   { href: "/os-czasu", label: "Oś czasu" },
 ] as const
 
 export const footerLinks = [
+  { href: "/wiedza", label: "Centrum wiedzy" },
   { href: "/start", label: "Kreator startowy" },
   { href: "/o-projekcie", label: "O projekcie i AI" },
   { href: "/admin", label: "Panel administratora" },
@@ -47,6 +49,8 @@ export const statusLabels = {
   QUEUED: "W kolejce",
   RUNNING: "W toku",
   SUCCEEDED: "Zakończone",
+  PUBLISHED: "Opublikowany",
+  ARCHIVED: "Zarchiwizowany",
 } as const
 
 export const home = {
@@ -142,4 +146,9 @@ export const documents = {
 export const timeline = {
   title: "Oś czasu",
   lead: "Terminy urlopów, wniosków i wypłat dla obojga rodziców. Zmień termin porodu, aby zobaczyć plan od nowa.",
+} as const
+
+export const knowledge = {
+  title: "Centrum wiedzy",
+  lead: "Świadczenia, prawa rodziców, ubezpieczenia i formalności — po ludzku, z datą weryfikacji i odnośnikiem do oficjalnego źródła.",
 } as const

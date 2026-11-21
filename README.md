@@ -86,6 +86,14 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 | `/asystent`      | Streaming conversational assistant: tools, citations, history, deletion   |
 | `/dokumenty`     | Document analysis demo (sample ZUS forms or a PDF signature check)        |
 | `/os-czasu`      | Two-parent leave/application/payment timeline planner                     |
+| `/wiedza`        | Centrum wiedzy: search, categories, FAQ, articles, documents, guides, glossary |
+| `/wiedza/faq`    | FAQ with category filter and full-text search                            |
+| `/wiedza/artykul/[slug]` | Article with sections, key points, related FAQ, documents, guides, sources and legal basis |
+| `/wiedza/dokumenty` | Document and form cards with official links and review dates          |
+| `/wiedza/przewodniki` | Step-by-step procedure guides                                     |
+| `/wiedza/slownik` | Glossary with alphabetical filter                                       |
+| `/wiedza/zrodla` | Registry of official sources and verification dates                      |
+| `/admin/wiedza`  | Knowledge content inventory, status control and review dates             |
 | `/o-projekcie`   | What is real, what is simulated, legal caveats, and architecture          |
 | `/admin`         | Admin skeleton: counts, rules, sources, ingestion jobs                    |
 | `/admin/login`   | Demo admin login (only enforced when `ADMIN_GATE_ENABLED=true`)           |
@@ -141,16 +149,17 @@ curl -s -X POST http://localhost:3000/api/v1/assistant/messages \
 ```
 apps/web
 ├── app/                 # Polish routes, RSC pages, route handlers, error/not-found
-├── components/          # calculator, assistant, timeline, onboarding, shell
+│   └── wiedza/          # Centrum wiedzy: home, FAQ, articles, documents, guides, glossary, sources
+├── components/          # calculator, assistant, timeline, onboarding, shell, knowledge
 ├── lib/                 # formatting and the pure timeline builder
 ├── messages/pl/         # all Polish copy and labels
 ├── server/
 │   ├── container.ts     # composition root (env + repositories)
-│   ├── services/        # dashboard, admin, assistant, calculations, documents…
+│   ├── services/        # dashboard, admin, assistant, calculations, documents, knowledge-center…
 │   ├── http/            # zod parsing, problem+json, rate limiting, route wrapper
 │   └── auth/            # admin cookie/session helpers
 ├── proxy.ts             # optional admin gate (Next 16 proxy, not middleware)
-├── e2e/                 # Playwright route, calculator, assistant, axe specs
+├── e2e/                 # Playwright route, knowledge, calculator, assistant, axe specs
 └── tests/               # Vitest unit tests
 
 packages/
@@ -168,6 +177,18 @@ Dependency direction: `apps/web → @zpr/contracts → @zpr/domain`,
 `apps/web → @zpr/rag → @zpr/db`, `apps/web → @zpr/ai → @zpr/contracts, @zpr/domain`.
 `@zpr/domain` is pure and performs no I/O; `@zpr/ai` has no database access —
 the web app injects application services through the `AssistantServices` port.
+
+### Centrum wiedzy
+
+The human-readable knowledge centre is a database-backed editorial layer in the
+`kb` schema (`content_*` tables), separate from the RAG corpus. Categories,
+articles (structured JSON blocks), FAQ, document cards, procedures, glossary
+terms, official sources, legal references and generic cross-links are seeded
+from `packages/db/src/content/` and editable without code changes. Article and
+guide pages render sources, legal basis and `lastReviewedAt`; `/admin/wiedza`
+is behind the existing admin gate and can hide or publish a record. Search is
+accent-insensitive and server-side; see
+[docs/knowledge-center.md](docs/knowledge-center.md).
 
 ### Conversational assistant
 
@@ -212,7 +233,7 @@ One PostgreSQL database, four schemas:
 | ------- | ------------------------------------------------------------------------ |
 | `app`   | users, profiles, insurance/employment, family events, cases, scenarios, calculations, drafts |
 | `legal` | legal rules and versioned rule sets                                      |
-| `kb`    | knowledge sources/documents/chunks, ingestion jobs, embedding models      |
+| `kb`    | knowledge sources/documents/chunks, ingestion jobs, embedding models, Centrum wiedzy content (`content_*`) |
 | `chat`  | conversations, messages, tool calls, retrieved evidence                   |
 
 `kb.knowledge_chunks` stores model-independent text and metadata (`content`,
