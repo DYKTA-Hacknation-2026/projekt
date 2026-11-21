@@ -7,6 +7,7 @@ for (const path of [
   "/asystent",
   "/mobywatel",
   "/dane",
+  "/os-czasu",
   "/wiedza",
   "/wiedza/faq",
   "/wiedza/artykul/zasilek-macierzynski",

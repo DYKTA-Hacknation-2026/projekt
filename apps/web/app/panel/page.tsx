@@ -278,7 +278,7 @@ export default async function PanelPage() {
             </Button>
             <Button asChild>
               <Link href="/os-czasu">
-                Oś czasu
+                Plan rodzicielstwa
                 <ArrowRight data-icon="inline-end" aria-hidden="true" />
               </Link>
             </Button>
