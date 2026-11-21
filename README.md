@@ -182,12 +182,26 @@ Dependency direction: `apps/api → @zpr/contracts → @zpr/domain`,
 `@zpr/domain` is pure and performs no I/O; `@zpr/ai` has no database access —
 the API injects application services through the `AssistantServices` port.
 
+### OpenRouter
+
+Set these values in your root `.env` (choose a model ID from OpenRouter):
+
+```dotenv
+AI_PROVIDER=openrouter
+AI_MODEL=provider/model-id
+AI_API_KEY=your-openrouter-api-key
+```
+
+Then run `docker compose up --build -d api`. OpenRouter uses
+`https://openrouter.ai/api/v1` by default; `AI_BASE_URL` can override it.
+The model must support tool calling for the assistant's retrieval and calculations.
+
 ### Conversational assistant
 
 One turn: **PII scrub → intent classification → tool policy → tool loop
 (`streamText`) → streamed answer → guards → persistence.**
 
-- **Provider-independent** (Vercel AI SDK 7): `AI_PROVIDER=anthropic | openai |
+- **Provider-independent** (Vercel AI SDK 7): `AI_PROVIDER=anthropic | openai | openrouter |
   ollama | openai-compatible`. With `none` (default) an offline rules model
   plugs into the same `streamText` loop: same tools, real retrieval, guards,
   streaming and persistence; the answer is composed only from tool results
