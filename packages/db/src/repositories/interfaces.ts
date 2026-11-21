@@ -1,4 +1,14 @@
 import type {
+  UserSummary as UserSummaryPayload,
+  BenefitCaseSummary as BenefitCaseSummaryPayload,
+  CalculationSummary as CalculationSummaryPayload,
+  LegalRuleSummary,
+  KnowledgeSourceSummary,
+  KnowledgeDocumentSummary,
+  IngestionJobSummary as IngestionJobSummaryPayload,
+  EmbeddingModelSummary,
+} from "@zpr/contracts/views"
+import type {
   conversationMessages,
   conversations,
   knowledgeChunks,
@@ -13,14 +23,7 @@ export type ConversationMessageRecord = typeof conversationMessages.$inferSelect
 export type KnowledgeChunkRecord = typeof knowledgeChunks.$inferSelect
 export type LegalRuleVersionRecord = typeof legalRuleVersions.$inferSelect
 
-export interface UserSummary {
-  id: string
-  displayName: string
-  email: string
-  role: UserRecord["role"]
-  isDemo: boolean
-  createdAt: Date
-}
+export type UserSummary = UserSummaryPayload<Date>
 
 export interface UserRepository {
   countUsers(): Promise<number>
@@ -35,24 +38,9 @@ export interface HouseholdRepository {
   ): Promise<{ userId: string; caseId: string; caseNumber: string }>
 }
 
-export interface BenefitCaseSummary {
-  id: string
-  caseNumber: string
-  title: string
-  status: "DRAFT" | "IN_REVIEW" | "READY" | "CLOSED"
-  dueDate: string | null
-  ownerName: string
-  createdAt: Date
-}
+export type BenefitCaseSummary = BenefitCaseSummaryPayload<Date>
 
-export interface CalculationSummary {
-  id: string
-  caseId: string | null
-  totalAmountGrosze: number
-  status: "OK" | "INDETERMINATE" | "ERROR"
-  engineVersion: string
-  createdAt: Date
-}
+export type CalculationSummary = CalculationSummaryPayload<Date>
 
 export interface SaveCalculationInput {
   caseId?: string
@@ -73,59 +61,20 @@ export interface BenefitRepository {
   saveCalculation(input: SaveCalculationInput): Promise<{ id: string }>
 }
 
-export interface LegalRuleSummary {
-  id: string
-  code: string
-  title: string
-  category: string
-  legalReference: string
-  verificationStatus: "VERIFIED" | "UNVERIFIED" | "PROPOSED"
-  version: string
-  effectiveFrom: string
-}
+export type { LegalRuleSummary } from "@zpr/contracts/views"
 
 export interface LegalRepository {
   countRules(): Promise<number>
   listRuleVersions(limit?: number): Promise<LegalRuleSummary[]>
 }
 
-export interface KnowledgeSourceSummary {
-  id: string
-  slug: string
-  title: string
-  publisher: string
-  sourceType: string
-  isConfidential: boolean
-  accessLevel: "PUBLIC" | "INTERNAL" | "RESTRICTED"
-  documentCount: number
-}
+export type { KnowledgeSourceSummary } from "@zpr/contracts/views"
 
-export interface KnowledgeDocumentSummary {
-  id: string
-  title: string
-  version: string
-  status: "PENDING" | "INDEXED" | "FAILED" | "SUPERSEDED" | "ARCHIVED"
-  effectiveFrom: string | null
-  effectiveTo: string | null
-  sourceTitle: string
-  chunkCount: number
-}
+export type { KnowledgeDocumentSummary } from "@zpr/contracts/views"
 
-export interface IngestionJobSummary {
-  id: string
-  status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED"
-  chunksCreated: number
-  documentTitle: string
-  createdAt: Date
-}
+export type IngestionJobSummary = IngestionJobSummaryPayload<Date>
 
-export interface EmbeddingModelSummary {
-  id: string
-  name: string
-  provider: string
-  dimensions: number
-  isActive: boolean
-}
+export type { EmbeddingModelSummary } from "@zpr/contracts/views"
 
 export interface KnowledgeRepository {
   getActiveEmbeddingModel(): Promise<EmbeddingModelSummary | null>
