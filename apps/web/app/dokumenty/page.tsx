@@ -8,28 +8,8 @@ import { documents } from "@/messages/pl"
 
 export const metadata: Metadata = { title: "Analiza dokumentów" }
 
-const rules = [
-  {
-    icon: FileSearch,
-    title: "Deterministycznie najpierw",
-    text: "Najpierw sygnatura i metadane, potem dopiero ewentualny OCR. Wersja demo nie udaje, że odczytała treść.",
-  },
-  {
-    icon: FileCheck2,
-    title: "Pola do potwierdzenia",
-    text: "Każde pole ma źródło i pewność. Użytkownik może je poprawić przed obliczeniem.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Limit i typ pliku",
-    text: "Maks. 10 MB, tylko PDF sprawdzany po magicznych bajtach. Plik nie jest wykonywany.",
-  },
-  {
-    icon: TriangleAlert,
-    title: "Formularze po zmianach",
-    text: "ZAM zastępuje ZUR i ZAO. Z-3b jest zniesiony od 24 października 2026 r.",
-  },
-]
+const icons = [FileSearch, FileCheck2, ShieldCheck, TriangleAlert]
+const rules = documents.rules.map((rule, index) => ({ ...rule, icon: icons[index]! }))
 
 export default function DocumentsPage() {
   return (
