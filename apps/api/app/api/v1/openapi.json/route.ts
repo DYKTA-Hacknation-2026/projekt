@@ -122,13 +122,23 @@ const document = {
     },
     "/assistant/chat": {
       post: {
-        summary: "Asystent — strumień wiadomości (AI SDK UI message stream, SSE)",
+        summary:
+          "Asystent — strumień wiadomości (AI SDK UI message stream, SSE)",
         description:
           "Treść: { id: uuid rozmowy, message: { id, role: 'user', parts: [{ type: 'text', text }] }, options?: { useProfile, asOf }, trigger? }. Historia jest wczytywana z bazy; klient wysyła tylko najnowszą wiadomość. Części strumienia: text-delta, tool-* (wyniki narzędzi), data-evidence, data-grounding, data-followups.",
-        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(assistantStreamRequestSchema) } } },
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(assistantStreamRequestSchema),
+            },
+          },
+        },
         responses: {
           "200": { description: "text/event-stream" },
-          "404": { description: "Rozmowa należy do innej sesji lub nie istnieje" },
+          "404": {
+            description: "Rozmowa należy do innej sesji lub nie istnieje",
+          },
           "422": { description: "Nieprawidłowa treść żądania" },
           "429": { description: "Limit żądań" },
         },
@@ -137,9 +147,22 @@ const document = {
     "/assistant/messages": {
       post: {
         summary: "Asystent — odpowiedź REST (bez strumienia)",
-        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(assistantChatSchema) } } },
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": { schema: z.toJSONSchema(assistantChatSchema) },
+          },
+        },
         responses: {
-          "200": { description: "Odpowiedź, źródła, wyniki narzędzi i raport ugruntowania", content: { "application/json": { schema: z.toJSONSchema(assistantReplySchema) } } },
+          "200": {
+            description:
+              "Odpowiedź, źródła, wyniki narzędzi i raport ugruntowania",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(assistantReplySchema),
+              },
+            },
+          },
           "429": { description: "Limit żądań" },
           "503": { description: "Model lub baza wiedzy chwilowo niedostępne" },
         },
@@ -147,14 +170,29 @@ const document = {
     },
     "/assistant/conversations": {
       get: { summary: "Rozmowy bieżącej sesji" },
-      delete: { summary: "Usunięcie wszystkich rozmów bieżącej sesji (z cytatami i wywołaniami narzędzi)" },
+      delete: {
+        summary:
+          "Usunięcie wszystkich rozmów bieżącej sesji (z cytatami i wywołaniami narzędzi)",
+      },
     },
     "/assistant/conversations/{id}": {
-      get: { summary: "Historia rozmowy z wynikami narzędzi i źródłami", responses: { "404": { description: "Brak lub cudza rozmowa" } } },
-      delete: { summary: "Usunięcie rozmowy", responses: { "204": { description: "Usunięto" }, "404": { description: "Brak lub cudza rozmowa" } } },
+      get: {
+        summary: "Historia rozmowy z wynikami narzędzi i źródłami",
+        responses: { "404": { description: "Brak lub cudza rozmowa" } },
+      },
+      delete: {
+        summary: "Usunięcie rozmowy",
+        responses: {
+          "204": { description: "Usunięto" },
+          "404": { description: "Brak lub cudza rozmowa" },
+        },
+      },
     },
     "/assistant/session": {
-      get: { summary: "Dostępność profilu dla asystenta i tryb odpowiedzi (bez danych osobowych)" },
+      get: {
+        summary:
+          "Dostępność profilu dla asystenta i tryb odpowiedzi (bez danych osobowych)",
+      },
     },
     "/eligibility/evaluate": {
       post: {
@@ -228,7 +266,7 @@ const document = {
             type: "object",
             properties: {
               grossMonthlyIncomeGrosze: { type: "integer", minimum: 0 },
-              childrenCount: { type: "integer", minimum: 1, maximum: 5 },
+              childrenCount: { type: "integer", minimum: 1, maximum: 20 },
               hasZaZyciem: { type: "boolean" },
               paymentOption: {
                 type: "string",
@@ -237,19 +275,19 @@ const document = {
               maternityWeeksBeforeBirth: {
                 type: "integer",
                 minimum: 0,
-                maximum: 6,
+                maximum: 52,
               },
               secondParentParentalWeeks: {
                 type: "integer",
                 minimum: 0,
-                maximum: 9,
+                maximum: 104,
               },
               parentalWorkFraction: {
                 type: "number",
                 minimum: 0,
-                maximum: 0.5,
+                maximum: 1,
               },
-              paternityDays: { type: "integer", minimum: 0, maximum: 14 },
+              paternityDays: { type: "integer", minimum: 0, maximum: 365 },
             },
           },
           caseId: { type: "string", format: "uuid" },

@@ -190,7 +190,7 @@ function unsupportedPeriodAssessment(input: AssessmentInput, selectedBy: string)
  * Deterministic assessment of eligibility and parental benefits.
  * Pure: no I/O, no clock (`asOf` comes from the caller), no randomness.
  */
-export function evaluate(input: AssessmentInput): EvaluationResult {
+export function evaluate(input: AssessmentInput, suppliedRuleSet?: RuleSet): EvaluationResult {
   assertStructurallyValid(input)
   const kind = input.event.kind
   const adoption = kind === "ADOPTION" || kind === "FOSTER_CARE"
@@ -199,7 +199,7 @@ export function evaluate(input: AssessmentInput): EvaluationResult {
     : ((kind === "BIRTH" ? input.event.birthDate : undefined) ?? input.event.expectedDueDate ?? null)
   const { ruleSet: baseRuleSet, selectedBy } = selectRuleSet(input, provisionalRightDate)
   if (!baseRuleSet) return unsupportedPeriodAssessment(input, selectedBy)
-  const ruleSet = withExternalParameters(baseRuleSet, input.externalParameters)
+  const ruleSet = withExternalParameters(suppliedRuleSet ?? baseRuleSet, input.externalParameters)
   const ctx = new EvaluationContext(input, ruleSet)
   ctx.assume("A-12")
 

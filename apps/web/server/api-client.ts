@@ -1,3 +1,5 @@
+import type { RuleSet } from "@zpr/domain"
+
 import { cookies } from "next/headers"
 
 import { ADMIN_COOKIE } from "@zpr/contracts/admin-token"
@@ -31,4 +33,8 @@ export function getDashboardData(): Promise<DashboardData> {
 export async function getAdminData(): Promise<AdminData> {
   const token = (await cookies()).get(ADMIN_COOKIE)?.value
   return readView("/internal/admin", token)
+}
+
+export function getActiveRuleSet(): Promise<RuleSet> {
+  return readView("/internal/rule-set")
 }

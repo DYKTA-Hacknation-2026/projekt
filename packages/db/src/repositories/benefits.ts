@@ -1,11 +1,7 @@
 import { desc, eq, sql } from "drizzle-orm"
 
 import type { Database } from "../client"
-import {
-  benefitCalculations,
-  benefitCases,
-  users,
-} from "../schema"
+import { benefitCalculations, benefitCases, users } from "../schema"
 import type {
   BenefitCaseSummary,
   BenefitRepository,
@@ -72,14 +68,13 @@ export class DrizzleBenefitRepository implements BenefitRepository {
     return row ?? null
   }
 
-  async saveCalculation(
-    input: SaveCalculationInput
-  ): Promise<{ id: string }> {
+  async saveCalculation(input: SaveCalculationInput): Promise<{ id: string }> {
     const [row] = await this.db
       .insert(benefitCalculations)
       .values({
         caseId: input.caseId,
         scenarioId: input.scenarioId,
+        ruleVersionId: input.ruleVersionId,
         input: input.input,
         result: input.result,
         totalAmountGrosze: Math.round(input.totalAmountGrosze),

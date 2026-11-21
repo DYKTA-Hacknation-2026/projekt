@@ -3,6 +3,7 @@ import { calculateBenefits } from "@zpr/domain"
 import { ENGINE_VERSION as CORE_ENGINE_VERSION } from "@zpr/domain/engine"
 
 import { getContainer } from "@/server/container"
+import { getActiveRuleSet } from "@/server/services/rule-set"
 
 export interface CalculationResponse {
   calculationId: string | null
@@ -19,13 +20,15 @@ export async function runCalculation(
   request: CalculationRequest
 ): Promise<CalculationResponse> {
   const { repositories } = getContainer()
-  const result = calculateBenefits(request.input)
+  const ruleSet = await getActiveRuleSet()
+  const result = calculateBenefits(request.input, ruleSet)
 
   let calculationId: string | null = null
 
   if (request.save) {
     const saved = await repositories.benefits.saveCalculation({
       caseId: request.caseId,
+      ruleVersionId: ruleSet.versionIds.rates,
       input: { ...request.input },
       result: JSON.parse(JSON.stringify(result)) as Record<string, unknown>,
       totalAmountGrosze: result.totalGrosze,

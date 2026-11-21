@@ -30,31 +30,46 @@ const LEGAL_RULES = [
     code: "LR-123",
     title: "Wymiar urlopu macierzyńskiego",
     description:
-      "20/31/33/35/37 tygodni w zależności od liczby dzieci; do 6 tygodni przed porodem.",
+      "Wymiar urlopu macierzyńskiego w zależności od liczby dzieci; limit urlopu przed porodem.",
     category: "MATERNITY",
     legalReference: "KP art. 180 § 1–2",
     version: "2026.11-Z1",
     verificationStatus: "VERIFIED" as const,
-    parameters: { weeksByChildren: { 1: 20, 2: 31, 3: 33, 4: 35, 5: 37 } },
+    parameters: {
+      weeksByChildren: { 1: 20, 2: 31, 3: 33, 4: 35, 5: 37 },
+      maxPreBirthWeeks: 6,
+      motherPersonalWeeks: 14,
+    },
   },
   {
     id: id(402),
     code: "LR-127",
     title: "Pula urlopu rodzicielskiego",
     description:
-      "41/43 tygodnie (65/67 z zaświadczeniem „Za życiem”), 9 tygodni niezbywalnych dla każdego rodzica.",
+      "Wspólna pula urlopu rodzicielskiego, w tym wariant „Za życiem”; część niezbywalna dla każdego rodzica.",
     category: "PARENTAL",
     legalReference: "KP art. 182¹a; KP art. 182¹c",
     version: "2026.11-Z1",
     verificationStatus: "VERIFIED" as const,
-    parameters: { pool: { single: 41, multiple: 43 }, nonTransferable: 9 },
+    parameters: {
+      pool: {
+        single: 41,
+        multiple: 43,
+        zaZyciemSingle: 65,
+        zaZyciemMultiple: 67,
+      },
+      nonTransferable: 9,
+      maxWorkFraction: 0.5,
+      maxParts: 5,
+      deadlineChildAgeYears: 6,
+    },
   },
   {
     id: id(403),
     code: "LR-130",
     title: "Stawki zasiłku macierzyńskiego",
     description:
-      "100% macierzyński, 70% rodzicielski, 81,5% w wariancie z wnioskiem w 21 dni.",
+      "Stawki zasiłku macierzyńskiego i rodzicielskiego oraz wariant ze stałą stawką.",
     category: "AMOUNTS",
     legalReference: "U art. 30a, 31 ust. 1–4",
     version: "2026.11-Z1",
@@ -65,34 +80,53 @@ const LEGAL_RULES = [
     id: id(404),
     code: "LR-112",
     title: "Podstawa wymiaru zasiłku",
-    description: "12 miesięcy, potrącenie 13,71%, podstawa dzienna 1/30.",
+    description:
+      "Okres odniesienia, potrącenie składki chorobowej i podstawa dzienna.",
     category: "BASIS",
     legalReference: "U art. 36, 38",
     version: "2026.11-Z1",
     verificationStatus: "VERIFIED" as const,
-    parameters: { referenceMonths: 12, contributionDeduction: 0.1371 },
+    parameters: {
+      referenceMonths: 12,
+      contributionDeduction: 0.1371,
+      dailyDivisor: 30,
+      roundingVerified: false,
+    },
   },
   {
     id: id(405),
     code: "LR-133",
     title: "Urlop ojcowski",
-    description: "14 dni, jedna lub dwie części, termin do 12. miesiąca życia.",
+    description: "Wymiar i zasady wykorzystania urlopu ojcowskiego.",
     category: "PATERNITY",
     legalReference: "KP art. 182³",
     version: "2026.11-Z1",
     verificationStatus: "VERIFIED" as const,
-    parameters: { days: 14, maxParts: 2, minPartDays: 7 },
+    parameters: {
+      days: 14,
+      maxParts: 2,
+      minPartDays: 7,
+      deadlineMonths: 12,
+    },
   },
   {
     id: id(406),
     code: "LR-100",
     title: "Okres wyczekiwania",
-    description: "30 dni ubezpieczenia obowiązkowego albo 90 dni dobrowolnego.",
+    description: "Okresy wyczekiwania i warunki ubezpieczenia chorobowego.",
     category: "COVERAGE",
     legalReference: "U art. 4 ust. 1–2",
     version: "2026.11-Z1",
     verificationStatus: "VERIFIED" as const,
-    parameters: { compulsoryDays: 30, voluntaryDays: 90 },
+    parameters: {
+      compulsoryDays: 30,
+      voluntaryDays: 90,
+      gapToleranceDays: 30,
+      dayOneGraduateDays: 90,
+      employerPaidDays: 33,
+      employerPaidDaysAfter50: 14,
+      sicknessMaxPeriodDays: 270,
+    },
   },
   {
     id: id(407),
@@ -105,6 +139,59 @@ const LEGAL_RULES = [
     version: "2026.11-Z1",
     verificationStatus: "UNVERIFIED" as const,
     parameters: { parentalBenefitAmountGrosze: null, blocking: true },
+  },
+  {
+    id: id(408),
+    code: "LR-134",
+    title: "Terminy wniosków i wypłaty",
+    description:
+      "Terminy składania wniosków urlopowych, wniosek o 81,5%, przekazanie dokumentów do ZUS i wypłata zasiłku.",
+    category: "DEADLINES",
+    legalReference:
+      "KP art. 180 § 2, 182¹d–e, 182³; U art. 30a, 31 ust. 4; P s. 26",
+    version: "2026.11-Z1",
+    verificationStatus: "VERIFIED" as const,
+    parameters: {
+      maternityPreBirthRequestDays: 14,
+      maternityResignationNoticeDays: 7,
+      flatRateApplicationDays: 21,
+      parentalRequestNoticeDays: 21,
+      workCombinationNoticeDays: 21,
+      paternityRequestNoticeDays: 7,
+      adoptionRequestDays: 7,
+      adoptionStartMaxDays: 21,
+      employerForwardingDays: 7,
+      zusPaymentDays: 30,
+      limitationMonths: 6,
+    },
+  },
+  {
+    id: id(409),
+    code: "LR-101",
+    title: "Zaległości składkowe",
+    description:
+      "Zadłużenie powyżej progu wstrzymuje wypłatę; brak spłaty w terminie wygasza prawo.",
+    category: "COVERAGE",
+    legalReference: "U art. 2a ust. 1–2",
+    version: "2026.11-Z1",
+    verificationStatus: "VERIFIED" as const,
+    parameters: {
+      thresholdShareOfMinWage: 0.01,
+      expiryMonths: 6,
+      payAfterRepaymentDays: 60,
+    },
+  },
+  {
+    id: id(410),
+    code: "LR-102",
+    title: "Płatnik wypłacający zasiłek",
+    description:
+      "Próg liczby ubezpieczonych decyduje o tym, czy zasiłek wypłaca płatnik, czy ZUS.",
+    category: "COVERAGE",
+    legalReference: "U art. 61 ust. 1",
+    version: "2026.11-Z1",
+    verificationStatus: "VERIFIED" as const,
+    parameters: { selfPayThreshold: 20 },
   },
 ]
 
@@ -448,7 +535,17 @@ async function seed(): Promise<void> {
           isActive: true,
         }))
       )
-      .onConflictDoNothing()
+      .onConflictDoUpdate({
+        target: legalRules.id,
+        set: {
+          title: sql`excluded.title`,
+          description: sql`excluded.description`,
+          category: sql`excluded.category`,
+          legalReference: sql`excluded.legal_reference`,
+          isActive: true,
+          updatedAt: new Date(),
+        },
+      })
 
     await tx
       .insert(legalRuleVersions)
@@ -467,7 +564,17 @@ async function seed(): Promise<void> {
               : null,
         }))
       )
-      .onConflictDoNothing()
+      .onConflictDoUpdate({
+        target: legalRuleVersions.id,
+        set: {
+          version: sql`excluded.version`,
+          effectiveFrom: sql`excluded.effective_from`,
+          parameters: sql`excluded.parameters`,
+          verificationStatus: sql`excluded.verification_status`,
+          sourceUrl: sql`excluded.source_url`,
+          notes: sql`excluded.notes`,
+        },
+      })
 
     // A seeded conversation demonstrates the assistant trail. Knowledge
     // sources, chunks and embeddings are produced by the real ingestion

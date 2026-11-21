@@ -10,10 +10,7 @@ export type PaymentOption = "STANDARD_100_70" | "FLAT_81_5"
 export type CalculatorMode = "BIRTH" | "ADOPTION" | "FOSTER_CARE"
 
 export type SpecialCase =
-  | "STANDARD"
-  | "STILLBIRTH"
-  | "CHILD_DEATH_BEFORE_8W"
-  | "CHILD_DEATH_AFTER_8W"
+  "STANDARD" | "STILLBIRTH" | "CHILD_DEATH_BEFORE_8W" | "CHILD_DEATH_AFTER_8W"
 
 export type EmploymentType = "EMPLOYEE" | "CONTRACTOR" | "BUSINESS"
 
@@ -45,18 +42,18 @@ export interface MonthlyIncomeEntry {
 export interface CalculatorInput {
   /** Gross monthly income of the mother (or main applicant), in grosze. */
   grossMonthlyIncomeGrosze: number
-  /** Number of children born/adopted at once. Values above 5 use the 5+ rule. */
+  /** Number of children born in one birth. Values above the highest configured rule use the 5+ rule. */
   childrenCount: number
   /** The child holds a "Za życiem" certificate. */
   hasZaZyciem: boolean
   paymentOption: PaymentOption
-  /** Maternity leave taken before the due date, 0–6 weeks. */
+  /** Maternity leave taken before the due date; capped by the active rule set. */
   maternityWeeksBeforeBirth: number
-  /** Weeks of the shared parental pool used by the second parent. */
+  /** Weeks of the shared parental pool used by the second parent; capped by the rule set. */
   secondParentParentalWeeks: number
-  /** Fraction of full-time work during parental leave (0–0.5). */
+  /** Fraction of full-time work during parental leave; capped by the rule set. */
   parentalWorkFraction: number
-  /** Paternity leave in days (0–14). */
+  /** Paternity leave in days; capped by the active rule set. */
   paternityDays: number
 
   // --- Mode: birth / adoption / foster care (FR-CALC-04) ---
@@ -154,6 +151,12 @@ export interface CalculatorResult {
   totalGrosze: number
   verified: boolean
   status: "OK" | "INDETERMINATE" | "NOT_ELIGIBLE"
+  /** Version label of the rule set that produced this result. */
+  ruleSetVersion: string
+  /** First day on which the rule set applies. */
+  ruleSetEffectiveFrom: string
+  /** True when every legal parameter was verified at calculation time. */
+  ruleSetVerified: boolean
   warnings: string[]
   trace: CalculationTraceStep[]
 }

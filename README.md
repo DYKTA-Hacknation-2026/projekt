@@ -80,18 +80,18 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 
 ## Routes
 
-| Route            | Purpose                                                                   |
-| ---------------- | ------------------------------------------------------------------------- |
-| `/`              | Landing page, roadmap, safety and simulation disclosures                  |
-| `/panel`         | Dashboard: case, nearest deadlines, calculations, knowledge base status   |
-| `/start`         | Guided onboarding wizard that creates a synthetic household and case      |
-| `/kalkulator`    | Unified calculator with assumptions, trace, and persisted result          |
-| `/asystent`      | Streaming conversational assistant: tools, citations, history, deletion   |
-| `/dokumenty`     | Document analysis demo (sample ZUS forms or a PDF signature check)        |
-| `/os-czasu`      | Two-parent leave/application/payment timeline planner                     |
-| `/o-projekcie`   | What is real, what is simulated, legal caveats, and architecture          |
-| `/admin`         | Admin skeleton: counts, rules, sources, ingestion jobs                    |
-| `/admin/login`   | Demo admin login (only enforced when `ADMIN_GATE_ENABLED=true`)           |
+| Route          | Purpose                                                                 |
+| -------------- | ----------------------------------------------------------------------- |
+| `/`            | Landing page, roadmap, safety and simulation disclosures                |
+| `/panel`       | Dashboard: case, nearest deadlines, calculations, knowledge base status |
+| `/start`       | Guided onboarding wizard that creates a synthetic household and case    |
+| `/kalkulator`  | Unified calculator with assumptions, trace, and persisted result        |
+| `/asystent`    | Streaming conversational assistant: tools, citations, history, deletion |
+| `/dokumenty`   | Document analysis demo (sample ZUS forms or a PDF signature check)      |
+| `/os-czasu`    | Two-parent leave/application/payment timeline planner                   |
+| `/o-projekcie` | What is real, what is simulated, legal caveats, and architecture        |
+| `/admin`       | Admin skeleton: counts, rules, sources, ingestion jobs                  |
+| `/admin/login` | Demo admin login (only enforced when `ADMIN_GATE_ENABLED=true`)         |
 
 ## REST API
 
@@ -100,29 +100,29 @@ All JSON endpoints use `application/json`; errors use RFC 9457 problem+json with
 a stable `code` and an `x-request-id` header. See `/api/v1/openapi.json` for the
 machine-readable contract.
 
-| Endpoint                       | Method | Description                                              |
-| ------------------------------ | ------ | -------------------------------------------------------- |
-| `/api/health`                  | GET    | Liveness plus DB, pgvector, and migration checks         |
-| `/api/v1/health`               | GET    | Versioned health, table checks, and demo row counts      |
-| `/api/v1/knowledge/search`     | GET    | Hybrid retrieval (`q`, `limit`, `asOf`, `source`, `sourceType`, `tag`, `minRelevance`) |
-| `/api/v1/assistant/chat`       | POST   | Streaming chat (AI SDK UI message stream, SSE)           |
-| `/api/v1/assistant/messages`   | POST   | Same orchestration, single JSON reply (REST integration) |
-| `/api/v1/assistant/conversations` | GET/DELETE | List / delete all of this session's conversations |
-| `/api/v1/assistant/conversations/{id}` | GET/DELETE | History with tool results and sources / delete |
-| `/api/v1/assistant/session`    | GET    | Profile availability and answer mode (no personal data)  |
-| `/api/v1/onboarding`           | POST   | Create a household, user profile, and benefit case       |
-| `/api/v1/calculations`         | GET    | Recent calculations                                      |
-| `/api/v1/calculations`         | POST   | Deterministic calculation; persists input and trace      |
-| `/api/v1/eligibility/evaluate` | POST   | Deterministic eligibility per parent and benefit (engine) |
-| `/api/v1/benefits/calculate`   | POST   | Full assessment: periods, breakdown, totals, allocation, sources |
-| `/api/v1/scenarios/compare`    | POST   | One household, up to 5 leave plans, difference vs the first |
-| `/api/v1/timeline`             | POST   | Benefit periods and dated deadlines                      |
-| `/api/v1/documents/required`   | POST   | Required documents, forms and where to submit them       |
-| `/api/v1/rulesets`             | GET    | Rule set versions, parameters with verification status, rules, assumptions, unsupported scenarios |
-| `/api/v1/documents/analyze`    | GET    | Available synthetic sample documents                     |
-| `/api/v1/documents/analyze`    | POST   | Analyze a PDF or `sampleCase` multipart field            |
-| `/api/v1/admin/login`          | POST   | Demo admin login, sets an HMAC-signed HttpOnly cookie    |
-| `/api/v1/admin/logout`         | POST   | Clears the admin cookie                                  |
+| Endpoint                               | Method     | Description                                                                                       |
+| -------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| `/api/health`                          | GET        | Liveness plus DB, pgvector, and migration checks                                                  |
+| `/api/v1/health`                       | GET        | Versioned health, table checks, and demo row counts                                               |
+| `/api/v1/knowledge/search`             | GET        | Hybrid retrieval (`q`, `limit`, `asOf`, `source`, `sourceType`, `tag`, `minRelevance`)            |
+| `/api/v1/assistant/chat`               | POST       | Streaming chat (AI SDK UI message stream, SSE)                                                    |
+| `/api/v1/assistant/messages`           | POST       | Same orchestration, single JSON reply (REST integration)                                          |
+| `/api/v1/assistant/conversations`      | GET/DELETE | List / delete all of this session's conversations                                                 |
+| `/api/v1/assistant/conversations/{id}` | GET/DELETE | History with tool results and sources / delete                                                    |
+| `/api/v1/assistant/session`            | GET        | Profile availability and answer mode (no personal data)                                           |
+| `/api/v1/onboarding`                   | POST       | Create a household, user profile, and benefit case                                                |
+| `/api/v1/calculations`                 | GET        | Recent calculations                                                                               |
+| `/api/v1/calculations`                 | POST       | Deterministic calculation; persists input and trace                                               |
+| `/api/v1/eligibility/evaluate`         | POST       | Deterministic eligibility per parent and benefit (engine)                                         |
+| `/api/v1/benefits/calculate`           | POST       | Full assessment: periods, breakdown, totals, allocation, sources                                  |
+| `/api/v1/scenarios/compare`            | POST       | One household, up to 5 leave plans, difference vs the first                                       |
+| `/api/v1/timeline`                     | POST       | Benefit periods and dated deadlines                                                               |
+| `/api/v1/documents/required`           | POST       | Required documents, forms and where to submit them                                                |
+| `/api/v1/rulesets`                     | GET        | Rule set versions, parameters with verification status, rules, assumptions, unsupported scenarios |
+| `/api/v1/documents/analyze`            | GET        | Available synthetic sample documents                                                              |
+| `/api/v1/documents/analyze`            | POST       | Analyze a PDF or `sampleCase` multipart field                                                     |
+| `/api/v1/admin/login`                  | POST       | Demo admin login, sets an HMAC-signed HttpOnly cookie                                             |
+| `/api/v1/admin/logout`                 | POST       | Clears the admin cookie                                                                           |
 
 Examples:
 
@@ -202,7 +202,7 @@ One turn: **PII scrub → intent classification → tool policy → tool loop
 (`streamText`) → streamed answer → guards → persistence.**
 
 - **Provider-independent** (Vercel AI SDK 7): `AI_PROVIDER=anthropic | openai | openrouter |
-  ollama | openai-compatible`. With `none` (default) an offline rules model
+ollama | openai-compatible`. With `none` (default) an offline rules model
   plugs into the same `streamText` loop: same tools, real retrieval, guards,
   streaming and persistence; the answer is composed only from tool results
   and retrieved passages.
@@ -235,12 +235,12 @@ One turn: **PII scrub → intent classification → tool policy → tool loop
 
 One PostgreSQL database, four schemas:
 
-| Schema  | Contents                                                                 |
-| ------- | ------------------------------------------------------------------------ |
+| Schema  | Contents                                                                                     |
+| ------- | -------------------------------------------------------------------------------------------- |
 | `app`   | users, profiles, insurance/employment, family events, cases, scenarios, calculations, drafts |
-| `legal` | legal rules and versioned rule sets                                      |
-| `kb`    | knowledge sources/documents/chunks, ingestion jobs, embedding models      |
-| `chat`  | conversations, messages, tool calls, retrieved evidence                   |
+| `legal` | legal rules and versioned rule sets                                                          |
+| `kb`    | knowledge sources/documents/chunks, ingestion jobs, embedding models                         |
+| `chat`  | conversations, messages, tool calls, retrieved evidence                                      |
 
 `kb.knowledge_chunks` stores model-independent text and metadata (`content`,
 page range, `section_identifier`, `heading_path`, `legal_reference`,
@@ -277,15 +277,15 @@ updating a source.
   Competition PDFs are INTERNAL and citation-only; ZUS sample cases are
   RESTRICTED and refused by the pipeline.
 
-| Command                                   | Purpose                                                   |
-| ----------------------------------------- | --------------------------------------------------------- |
-| `pnpm kb:seed`                            | Reproducible KB from committed sources, then `kb:verify`  |
-| `pnpm kb:seed -- --with-local`            | Also ingest local competition PDFs (`KB_LOCAL_SOURCES_DIR`)|
-| `pnpm kb:verify`                          | Integrity checks + retrieval eval set (recall gate)        |
-| `pnpm --filter @zpr/rag kb:ingest …`      | Ingest / re-ingest one manifest document or source         |
-| `pnpm --filter @zpr/rag kb:inspect <file>`| Dry-run extraction and chunking, no database               |
-| `pnpm --filter @zpr/rag kb:search "<q>"`  | Debug ranking (ranks per list, relevance, dates)           |
-| `pnpm --filter @zpr/rag kb:reembed`       | Re-embed with a new `EMBEDDING_*` configuration            |
+| Command                                    | Purpose                                                     |
+| ------------------------------------------ | ----------------------------------------------------------- |
+| `pnpm kb:seed`                             | Reproducible KB from committed sources, then `kb:verify`    |
+| `pnpm kb:seed -- --with-local`             | Also ingest local competition PDFs (`KB_LOCAL_SOURCES_DIR`) |
+| `pnpm kb:verify`                           | Integrity checks + retrieval eval set (recall gate)         |
+| `pnpm --filter @zpr/rag kb:ingest …`       | Ingest / re-ingest one manifest document or source          |
+| `pnpm --filter @zpr/rag kb:inspect <file>` | Dry-run extraction and chunking, no database                |
+| `pnpm --filter @zpr/rag kb:search "<q>"`   | Debug ranking (ranks per list, relevance, dates)            |
+| `pnpm --filter @zpr/rag kb:reembed`        | Re-embed with a new `EMBEDDING_*` configuration             |
 
 ### Embeddings
 
@@ -305,11 +305,11 @@ run `pnpm --filter @zpr/rag kb:reembed` after a change.
 
 The migration creates NOLOGIN grouping roles:
 
-| Role          | Access                                                        |
-| ------------- | ------------------------------------------------------------- |
-| `zpr_app`     | read `legal`/`kb`; read/write `app` and `chat`                 |
-| `zpr_ingest`  | read `legal`; read/write `kb`                                  |
-| `zpr_readonly`| read-only across all schemas                                   |
+| Role           | Access                                         |
+| -------------- | ---------------------------------------------- |
+| `zpr_app`      | read `legal`/`kb`; read/write `app` and `chat` |
+| `zpr_ingest`   | read `legal`; read/write `kb`                  |
+| `zpr_readonly` | read-only across all schemas                   |
 
 Local development connects as the owner (`zpr`). A deployment attaches login
 roles to these groups instead of using the owner account.
@@ -325,26 +325,45 @@ reachable in a demo. Set it to `true` to protect `/admin` with the demo login:
 The session is an HMAC-signed, HttpOnly `zpr_admin` cookie. Replace the demo
 credential flow before any real deployment.
 
+### Rule parameters
+
+The calculator, UI timeline planner and deadline guidance resolve shared legal
+parameters from `legal.legal_rule_versions.parameters` in `apps/api`. The web
+app reads the validated set through the authenticated `/internal/rule-set` view.
+Changing these percentages, week counts and deadlines is a data change.
+The expanded assessment endpoints and assistant engine tools retain the
+versioned assessment rule catalog described in [calculation-engine.md](docs/calculation-engine.md);
+new adoption, loss and hospitalisation cases retain their statutory rules.
+
+The active set is resolved for a date (`getRuleParameters(asOf)`), mapped by the
+stable rule codes (`LR-123`, `LR-127`, `LR-130`, `LR-112`, `LR-133`, `LR-100`,
+`LR-132`, `LR-134`, `LR-101`, `LR-102`) and validated before use. A missing or malformed parameter
+returns a `503` problem response instead of silently using an old value.
+
+Until the admin editing UI lands (FR-ADM-01), change a value directly in the
+active rule version and re-run the app; `pnpm --filter @zpr/db db:seed` upserts
+the seeded versions and also adds `LR-134`. Results store the rule set version
+and pin `rule_version_id` of the amount rule (`LR-130`).
+
 ## Scripts
 
-| Command                              | Description                              |
-| ------------------------------------ | ---------------------------------------- |
-| `pnpm dev`                           | Start all workspaces in watch mode       |
-| `pnpm build`                         | Build all workspaces                     |
-| `pnpm typecheck`                     | Type-check all workspaces                |
-| `pnpm lint`                          | Lint all workspaces                      |
-| `pnpm test`                          | Run Vitest across workspaces (set `TEST_DATABASE_URL` to include pgvector integration tests) |
-| `pnpm e2e`                           | Run Playwright (builds first via Turbo)  |
-| `pnpm --filter @zpr/db db:migrate`   | Apply Drizzle migrations                 |
-| `pnpm --filter @zpr/db db:seed`      | Seed synthetic demo data (idempotent)    |
-| `pnpm kb:seed` / `pnpm kb:verify`    | Build / verify the knowledge base        |
-| `pnpm db:setup`                      | migrate + demo seed + knowledge base     |
-| `pnpm --filter @zpr/db db:generate`  | Generate a migration after schema edits  |
-| `pnpm --filter @zpr/db db:studio`    | Open Drizzle Studio                      |
-| `pnpm --filter web e2e`              | Run Playwright against both apps  |
-
-The Playwright suite uses seeded PostgreSQL and starts both apps by default.
-Set `PLAYWRIGHT_BASE_URL` to test an already running web and API pair.
+| Command                                                                      | Description                                                                                  |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `pnpm dev`                                                                   | Start all workspaces in watch mode                                                           |
+| `pnpm build`                                                                 | Build all workspaces                                                                         |
+| `pnpm typecheck`                                                             | Type-check all workspaces                                                                    |
+| `pnpm lint`                                                                  | Lint all workspaces                                                                          |
+| `pnpm test`                                                                  | Run Vitest across workspaces (set `TEST_DATABASE_URL` to include pgvector integration tests) |
+| `pnpm e2e`                                                                   | Run Playwright (builds first via Turbo)                                                      |
+| `pnpm --filter @zpr/db db:migrate`                                           | Apply Drizzle migrations                                                                     |
+| `pnpm --filter @zpr/db db:seed`                                              | Seed synthetic demo data (idempotent)                                                        |
+| `pnpm kb:seed` / `pnpm kb:verify`                                            | Build / verify the knowledge base                                                            |
+| `pnpm db:setup`                                                              | migrate + demo seed + knowledge base                                                         |
+| `pnpm --filter @zpr/db db:generate`                                          | Generate a migration after schema edits                                                      |
+| `pnpm --filter @zpr/db db:studio`                                            | Open Drizzle Studio                                                                          |
+| `pnpm --filter web e2e`                                                      | Run Playwright against a running server                                                      |
+| The Playwright suite uses seeded PostgreSQL and starts both apps by default. |
+| Set `PLAYWRIGHT_BASE_URL` to test an already running web and API pair.       |
 
 Playwright needs browsers once:
 

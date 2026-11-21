@@ -107,7 +107,7 @@ export function calculatorToAssessmentInput(input: CalculatorInput): AssessmentI
 const KIND_ORDER: CalculationLine["kind"][] = ["MATERNITY", "PARENTAL", "WORK_COMBINATION_EXTENSION", "PATERNITY"]
 
 /** Deterministic, explainable estimate for the integrated calculator. */
-export function calculateEngineBenefits(input: CalculatorInput): CalculatorResult {
+export function calculateEngineBenefits(input: CalculatorInput, ruleSet: import("./rule-set").RuleSet): CalculatorResult {
   const normalized = normalizeInput(input)
   const { assessment, schedule } = evaluate(calculatorToAssessmentInput(normalized))
   const children = normalized.childrenCount
@@ -150,7 +150,7 @@ export function calculateEngineBenefits(input: CalculatorInput): CalculatorResul
 
   const amountsKnown = assessment.totals.totalGrosze !== null && basisGrosze > 0
   return {
-    ...calculateBenefits(normalized),
+    ...calculateBenefits(normalized, ruleSet),
     input: normalized,
     normalizedChildrenCount: children,
     maternityWeeks,

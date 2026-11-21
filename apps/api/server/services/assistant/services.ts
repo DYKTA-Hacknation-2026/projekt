@@ -2,6 +2,7 @@ import type { AssistantServices, ProfileAccess, ProfileSnapshot } from "@zpr/ai"
 import { warsawToday } from "@zpr/ai"
 import type { AssistantProfileRecord } from "@zpr/db/repositories"
 import { groszeToPln, relevantDeadlines, type CaseFacts } from "@zpr/domain"
+import { type RuleSet } from "@zpr/domain"
 import {
   calculateParentalBenefits,
   compareBenefitScenarios,
@@ -15,15 +16,19 @@ import { getContainer } from "@/server/container"
 import { searchKnowledge } from "@/server/services/knowledge"
 
 /** Converts the stored record into minimised case facts. */
-export function toProfileSnapshot(record: AssistantProfileRecord): ProfileSnapshot {
+export function toProfileSnapshot(
+  record: AssistantProfileRecord
+): ProfileSnapshot {
   const facts: CaseFacts = {}
   if (record.employmentType) facts.employmentType = record.employmentType
   if (record.employmentType !== "EMPLOYMENT" && record.coverageMode) {
     // The wizard stores the coverage of the insurance period; for mandate and
     // self-employment, "VOLUNTARY" means voluntary sickness insurance.
-    facts.sicknessInsurance = record.coverageMode === "VOLUNTARY" ? "VOLUNTARY" : undefined
+    facts.sicknessInsurance =
+      record.coverageMode === "VOLUNTARY" ? "VOLUNTARY" : undefined
   }
-  if (record.insuranceStartDate) facts.insuranceStartDate = record.insuranceStartDate
+  if (record.insuranceStartDate)
+    facts.insuranceStartDate = record.insuranceStartDate
   if (record.familyEvent) facts.familyEvent = record.familyEvent
   if (record.eventDate) facts.eventDate = record.eventDate
   if (record.expectedDueDate) facts.expectedDueDate = record.expectedDueDate
@@ -65,7 +70,9 @@ export async function loadProfileFor(
 export function createAssistantServices(input: {
   principal: Principal
   profileEnabled: boolean
+  ruleSet: RuleSet
 }): AssistantServices {
+  const { ruleSet } = input
   return {
     today: () => warsawToday(),
     searchKnowledge: (query) =>
@@ -84,6 +91,7 @@ export function createAssistantServices(input: {
       generateBenefitTimeline,
       identifyRequiredDocuments,
     },
-    deadlines: relevantDeadlines,
+    deadlines: (facts, options) =>
+      relevantDeadlines(facts, { ...options, ruleSet }),
   }
 }

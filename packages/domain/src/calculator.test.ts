@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest"
 
-import { calculateBenefits } from "./calculator"
+import { calculateBenefits as calculateWithRules } from "./calculator"
+import { buildRuleSet } from "./rule-set"
+import { testRuleParameters, testRuleSet } from "./testing"
 import { averageMonthlyIncome, basisFromGross, minimumBasis } from "./basis"
 import { daysAmount } from "./money"
 import { PRESET_CASES } from "./presets"
 import type { CalculatorInput } from "./types"
+
+const ruleSet = testRuleSet()
+
+const calculateBenefits = (input: CalculatorInput, rules = ruleSet) =>
+  calculateWithRules(input, rules)
 
 const baseInput: CalculatorInput = {
   grossMonthlyIncomeGrosze: 1_000_000,
@@ -23,7 +30,7 @@ function input(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
 
 describe("calculateBenefits", () => {
   it("uses the statutory maternity and parental weeks for one child", () => {
-    const result = calculateBenefits(input())
+    const result = calculateBenefits(input(), ruleSet)
 
     expect(result.maternityWeeks).toBe(20)
     expect(result.parentalPoolWeeks).toBe(41)
@@ -31,10 +38,11 @@ describe("calculateBenefits", () => {
     expect(result.motherParentalWeeks).toBe(32)
     expect(result.secondParentWeeks).toBe(0)
     expect(result.trace.map((step) => step.ruleId)).toContain("LR-123")
+    expect(result.ruleSetVersion).toBe("2026.11-Z1")
   })
 
-  it("never marks the preview as a verified entitlement", () => {
-    const result = calculateBenefits(input())
+  it("never marks the preview as a verified entitlement while Q-29/Q-15 are open", () => {
+    const result = calculateBenefits(input(), ruleSet)
 
     expect(result.verified).toBe(false)
     expect(result.status).toBe("INDETERMINATE")
@@ -43,7 +51,10 @@ describe("calculateBenefits", () => {
   })
 
   it("derives the benefit basis from gross pay minus the 13.71% contribution", () => {
-    const result = calculateBenefits(input({ grossMonthlyIncomeGrosze: 1_000_000 }))
+    const result = calculateBenefits(
+      input({ grossMonthlyIncomeGrosze: 1_000_000 }),
+      ruleSet
+    )
 
     expect(result.basisGrosze).toBe(862_900)
     expect(result.dailyBasisGrosze).toBe(28_763)
@@ -57,7 +68,8 @@ describe("calculateBenefits", () => {
         secondParentParentalWeeks: 30,
         parentalWorkFraction: 4,
         paternityDays: 99,
-      })
+      }),
+      ruleSet
     )
 
     expect(result.normalizedChildrenCount).toBe(5)
@@ -70,10 +82,13 @@ describe("calculateBenefits", () => {
   })
 
   it("applies the Za życiem parental pool", () => {
-    expect(calculateBenefits(input({ hasZaZyciem: true })).parentalPoolWeeks).toBe(65)
+    expect(
+      calculateBenefits(input({ hasZaZyciem: true }), ruleSet).parentalPoolWeeks
+    ).toBe(65)
 
     const multiple = calculateBenefits(
-      input({ hasZaZyciem: true, childrenCount: 2 })
+      input({ hasZaZyciem: true, childrenCount: 2 }),
+      ruleSet
     )
     expect(multiple.parentalPoolWeeks).toBe(67)
     expect(multiple.maternityWeeks).toBe(31)
@@ -81,7 +96,8 @@ describe("calculateBenefits", () => {
 
   it("reserves the non-transferable nine weeks for the second parent", () => {
     const result = calculateBenefits(
-      input({ secondParentParentalWeeks: 9, paternityDays: 14 })
+      input({ secondParentParentalWeeks: 9, paternityDays: 14 }),
+      ruleSet
     )
 
     expect(result.secondParentWeeks).toBe(9)
@@ -97,7 +113,8 @@ describe("calculateBenefits", () => {
 
   it("uses the 81.5% rate for the flat option but keeps 70% for the second parent", () => {
     const result = calculateBenefits(
-      input({ paymentOption: "FLAT_81_5", secondParentParentalWeeks: 9 })
+      input({ paymentOption: "FLAT_81_5", secondParentParentalWeeks: 9 }),
+      ruleSet
     )
 
     const [maternity, motherParental, secondParent] = result.lines
@@ -108,7 +125,10 @@ describe("calculateBenefits", () => {
   })
 
   it("extends the parental leave proportionally when working part-time", () => {
-    const result = calculateBenefits(input({ parentalWorkFraction: 0.5 }))
+    const result = calculateBenefits(
+      input({ parentalWorkFraction: 0.5 }),
+      ruleSet
+    )
 
     // KP art. 182¹f § 2: extension = weeks combined with work × fraction = 32 × ½.
     expect(result.extensionWeeks).toBe(16)
@@ -116,6 +136,35 @@ describe("calculateBenefits", () => {
       "WORK_COMBINATION_EXTENSION"
     )
     expect(result.warnings.join(" ")).toContain("21 dni")
+  })
+
+  it("changes the amounts when only the rule set changes (no code change)", () => {
+    const rows = testRuleParameters()
+    const rates = rows.find((row) => row.code === "LR-130")
+    expect(rates).toBeDefined()
+    rates!.parameters = { ...rates!.parameters, parental: 0.75 }
+
+    const changed = buildRuleSet(rows)
+    const before = calculateBenefits(
+      input({ secondParentParentalWeeks: 9 }),
+      ruleSet
+    )
+    const after = calculateBenefits(
+      input({ secondParentParentalWeeks: 9 }),
+      changed
+    )
+
+    expect(after.lines.some((line) => line.rate === 0.75)).toBe(true)
+    expect(after.totalGrosze).toBeGreaterThan(before.totalGrosze)
+  })
+
+  it("becomes verified when the rule set has no blocking gaps", () => {
+    const result = calculateBenefits(input(), testRuleSet({ verified: true }))
+
+    expect(result.verified).toBe(true)
+    expect(result.status).toBe("OK")
+    expect(result.warnings.join(" ")).not.toContain("Q-29")
+    expect(result.warnings.join(" ")).not.toContain("Q-15")
   })
 })
 
@@ -130,7 +179,9 @@ describe("adoption and foster care (FR-CALC-04)", () => {
     expect(result.guaranteeApplied).toBe(false)
     expect(result.maternityWeeks).toBe(20)
     expect(result.parentalPoolWeeks).toBe(41)
-    expect(result.lines[0]?.leaveType).toBe("Urlop na warunkach macierzyńskiego")
+    expect(result.lines[0]?.leaveType).toBe(
+      "Urlop na warunkach macierzyńskiego"
+    )
     expect(result.lines[0]?.rate).toBe(1)
     expect(result.trace.map((s) => s.legalReference).join(" ")).toContain("183")
   })
@@ -172,14 +223,22 @@ describe("adoption and foster care (FR-CALC-04)", () => {
       calculateBenefits(input({ mode: "FOSTER_CARE", ...overrides }))
 
     expect(foster({ childAgeYears: 8 }).eligible).toBe(false)
-    expect(foster({ childAgeYears: 8, isDeferredSchooling: true }).eligible).toBe(true)
-    expect(foster({ childAgeYears: 10, isDeferredSchooling: true }).eligible).toBe(false)
+    expect(
+      foster({ childAgeYears: 8, isDeferredSchooling: true }).eligible
+    ).toBe(true)
+    expect(
+      foster({ childAgeYears: 10, isDeferredSchooling: true }).eligible
+    ).toBe(false)
     expect(foster({ childAgeYears: 3 }).maternityWeeks).toBe(20)
   })
 
   it("excludes professional foster families with a warning", () => {
     const result = calculateBenefits(
-      input({ mode: "FOSTER_CARE", childAgeYears: 3, isProfessionalFosterFamily: true })
+      input({
+        mode: "FOSTER_CARE",
+        childAgeYears: 3,
+        isProfessionalFosterFamily: true,
+      })
     )
     expect(result.eligible).toBe(false)
     expect(result.warnings.join(" ")).toContain("Zawodowe rodziny zastępcze")
@@ -221,7 +280,9 @@ describe("independent incomes and flexible split (FR-CALC-03)", () => {
 
     expect(result.motherParentalWeeks).toBe(20)
     expect(result.secondParentWeeks).toBe(21)
-    const secondLines = result.lines.filter((l) => l.beneficiary === "SECOND_PARENT")
+    const secondLines = result.lines.filter(
+      (l) => l.beneficiary === "SECOND_PARENT"
+    )
     expect(secondLines.map((l) => [l.weeks, l.rate])).toEqual([
       [9, 0.7],
       [12, 0.815],
@@ -257,7 +318,9 @@ describe("independent incomes and flexible split (FR-CALC-03)", () => {
     expect(takeover?.rate).toBe(1)
     expect(takeover?.amountGrosze).toBe(daysAmount(431_450, 1, 42))
 
-    const capped = calculateBenefits(input({ fatherMaternityTakeoverWeeks: 10 }))
+    const capped = calculateBenefits(
+      input({ fatherMaternityTakeoverWeeks: 10 })
+    )
     expect(capped.fatherMaternityTakeoverWeeks).toBe(6)
     expect(capped.warnings.join(" ")).toContain("najwyżej 6")
   })
@@ -266,14 +329,20 @@ describe("independent incomes and flexible split (FR-CALC-03)", () => {
 describe("supplementary maternity and special cases (FR-CALC-01)", () => {
   it("grants up to 15 weeks for a premature baby week for week", () => {
     const result = calculateBenefits(
-      input({ birthWeekOfPregnancy: 27, birthWeightGrams: 950, childHospitalWeeks: 12 })
+      input({
+        birthWeekOfPregnancy: 27,
+        birthWeightGrams: 950,
+        childHospitalWeeks: 12,
+      })
     )
     expect(result.supplementaryWeeks).toBe(12)
     const line = result.lines.find((l) => l.kind === "MATERNITY_SUPPLEMENTARY")
     expect(line?.rate).toBe(1)
     expect(line?.amountGrosze).toBe(daysAmount(862_900, 1, 84))
     expect(result.lines[1]).toBe(line)
-    expect(result.trace.map((s) => s.legalReference).join(" ")).toContain("180²")
+    expect(result.trace.map((s) => s.legalReference).join(" ")).toContain(
+      "180²"
+    )
 
     expect(
       calculateBenefits(
@@ -285,23 +354,37 @@ describe("supplementary maternity and special cases (FR-CALC-01)", () => {
   it("caps at 8 weeks for 28–37 weeks and for term babies with hospital stay", () => {
     expect(
       calculateBenefits(
-        input({ birthWeekOfPregnancy: 32, birthWeightGrams: 1800, childHospitalWeeks: 10 })
+        input({
+          birthWeekOfPregnancy: 32,
+          birthWeightGrams: 1800,
+          childHospitalWeeks: 10,
+        })
       ).supplementaryWeeks
     ).toBe(8)
     expect(
       calculateBenefits(
-        input({ birthWeekOfPregnancy: 39, childHospitalWeeks: 3, childHospitalDaysDay5To28: 4 })
+        input({
+          birthWeekOfPregnancy: 39,
+          childHospitalWeeks: 3,
+          childHospitalDaysDay5To28: 4,
+        })
       ).supplementaryWeeks
     ).toBe(3)
     expect(
       calculateBenefits(
-        input({ birthWeekOfPregnancy: 39, childHospitalWeeks: 3, childHospitalDaysDay5To28: 1 })
+        input({
+          birthWeekOfPregnancy: 39,
+          childHospitalWeeks: 3,
+          childHospitalDaysDay5To28: 1,
+        })
       ).supplementaryWeeks
     ).toBe(0)
   })
 
   it("gives exactly 8 weeks after a stillbirth and no parental leave", () => {
-    const result = calculateBenefits(input({ specialCase: "STILLBIRTH", paternityDays: 14 }))
+    const result = calculateBenefits(
+      input({ specialCase: "STILLBIRTH", paternityDays: 14 })
+    )
     expect(result.maternityWeeks).toBe(8)
     expect(result.parentalPoolWeeks).toBe(0)
     expect(result.paternityDays).toBe(0)
@@ -316,7 +399,9 @@ describe("supplementary maternity and special cases (FR-CALC-01)", () => {
   })
 
   it("pays 7 days after a death following the 8th week", () => {
-    const result = calculateBenefits(input({ specialCase: "CHILD_DEATH_AFTER_8W" }))
+    const result = calculateBenefits(
+      input({ specialCase: "CHILD_DEATH_AFTER_8W" })
+    )
     expect(result.lines).toHaveLength(1)
     expect(result.lines[0]?.days).toBe(7)
     expect(result.lines[0]?.amountGrosze).toBe(daysAmount(862_900, 1, 7))
@@ -330,28 +415,39 @@ describe("working during parental leave (FR-CALC-02)", () => {
     )
 
     expect(result.extensionWeeks).toBe(32)
-    expect(result.parentalPoolWeeks + result.extensionWeeks).toBeLessThanOrEqual(
-      result.extensionCapWeeks
-    )
+    expect(
+      result.parentalPoolWeeks + result.extensionWeeks
+    ).toBeLessThanOrEqual(result.extensionCapWeeks)
     expect(result.extensionCapWeeks).toBe(82)
 
-    const combined = result.lines.find((l) => l.leaveType.includes("praca łączona"))
+    const combined = result.lines.find((l) =>
+      l.leaveType.includes("praca łączona")
+    )
     expect(combined?.amountGrosze).toBe(daysAmount(862_900, 0.7 * 0.5, 32 * 7))
-    const extension = result.lines.find((l) => l.kind === "WORK_COMBINATION_EXTENSION")
+    const extension = result.lines.find(
+      (l) => l.kind === "WORK_COMBINATION_EXTENSION"
+    )
     expect(extension?.amountGrosze).toBe(daysAmount(862_900, 0.7 * 0.5, 32 * 7))
     expect(result.trace.map((s) => s.legalReference).join(" ")).toContain("4a")
   })
 
   it("floors the extension formula and uses the multiple/Za życiem caps", () => {
     const quarter = calculateBenefits(
-      input({ parentalWorkFraction: 0.25, combineWorkInExtension: true, workCombinedWeeks: 20 })
+      input({
+        parentalWorkFraction: 0.25,
+        combineWorkInExtension: true,
+        workCombinedWeeks: 20,
+      })
     )
     expect(quarter.extensionWeeks).toBe(Math.floor(20 / 0.75) - 20)
 
     expect(
-      calculateBenefits(input({ childrenCount: 2, hasZaZyciem: true })).extensionCapWeeks
+      calculateBenefits(input({ childrenCount: 2, hasZaZyciem: true }))
+        .extensionCapWeeks
     ).toBe(134)
-    expect(calculateBenefits(input({ hasZaZyciem: true })).extensionCapWeeks).toBe(130)
+    expect(
+      calculateBenefits(input({ hasZaZyciem: true })).extensionCapWeeks
+    ).toBe(130)
   })
 })
 
@@ -360,7 +456,11 @@ describe("individual basis (FR-CALC-05)", () => {
     const average = averageMonthlyIncome([
       { grossGrosze: 400_000 },
       { grossGrosze: 100_000, absenceOver50Percent: true },
-      { grossGrosze: 100_000, absenceOver50Percent: true, supplementedGrosze: 500_000 },
+      {
+        grossGrosze: 100_000,
+        absenceOver50Percent: true,
+        supplementedGrosze: 500_000,
+      },
     ])
     expect(average.usedMonths).toBe(2)
     expect(average.excludedMonths).toBe(1)
@@ -381,12 +481,18 @@ describe("individual basis (FR-CALC-05)", () => {
   })
 
   it("raises the basis of an employee to the minimum and lifts tiny amounts to 1 000 zł", () => {
-    const result = calculateBenefits(input({ grossMonthlyIncomeGrosze: 100_000 }))
+    const result = calculateBenefits(
+      input({ grossMonthlyIncomeGrosze: 100_000 })
+    )
     expect(result.basisGrosze).toBe(minimumBasis(1))
     expect(minimumBasis(1)).toBe(basisFromGross(480_600))
 
     const contractor = calculateBenefits(
-      input({ grossMonthlyIncomeGrosze: 100_000, employmentType: "CONTRACTOR" })
+      input({
+        grossMonthlyIncomeGrosze: 100_000,
+        employmentType: "CONTRACTOR",
+      }),
+      testRuleSet({ verified: true })
     )
     expect(contractor.basisGrosze).toBe(86_290)
     const parental = contractor.lines.find((l) => l.kind === "PARENTAL")
@@ -402,5 +508,39 @@ describe("preset cases", () => {
       expect(result.eligible, preset.id).toBe(true)
       expect(result.totalGrosze, preset.id).toBeGreaterThan(0)
     }
+  })
+})
+
+describe("database parameters with the expanded calculator", () => {
+  it("does not invent a benefit floor when the database amount is unset", () => {
+    const result = calculateBenefits(
+      input({ grossMonthlyIncomeGrosze: 100_000, employmentType: "CONTRACTOR" })
+    )
+    expect(result.lines.every((line) => !line.minimumApplied)).toBe(true)
+    expect(result.warnings.join(" ")).toContain("Q-29")
+  })
+  it("uses changed rates, deductions and divisors for both parents' separate incomes", () => {
+    const rules = testRuleSet()
+    rules.basis.contributionDeduction = 0.2
+    rules.basis.dailyDivisor = 20
+    rules.parental.rate = 0.6
+    const result = calculateBenefits(
+      input({
+        grossMonthlyIncomeGrosze: 1_000_000,
+        secondParentMonthlyIncomeGrosze: 500_000,
+        motherParentalWeeks: 20,
+        secondParentParentalWeeks: 21,
+      }),
+      rules
+    )
+    expect(result.basisGrosze).toBe(800_000)
+    expect(result.secondParentBasisGrosze).toBe(400_000)
+    const father = result.lines.filter(
+      (line) => line.beneficiary === "SECOND_PARENT"
+    )
+    expect(father.every((line) => line.rate === 0.6)).toBe(true)
+    expect(father.reduce((sum, line) => sum + line.amountGrosze, 0)).toBe(
+      1_764_000
+    )
   })
 })
