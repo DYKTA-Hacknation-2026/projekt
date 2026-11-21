@@ -14,7 +14,20 @@ export type SpecialCase =
 
 export type EmploymentType = "EMPLOYEE" | "CONTRACTOR" | "BUSINESS"
 
-export type IncomeMode = "SIMPLE" | "DETAILED"
+export type SicknessCoverage = "COMPULSORY" | "VOLUNTARY" | "NONE"
+
+export type IncomeMode = "SIMPLE" | "DETAILED" | "KNOWN_BASIS"
+
+export type TakeoverReason =
+  | "MOTHER_RESIGNS_AFTER_14_WEEKS"
+  | "MOTHER_INCAPACITY"
+  | "MOTHER_HOSPITALIZED"
+  | "MOTHER_DIED"
+  | "MOTHER_ABANDONED_CHILD"
+  | "UNINSURED_MOTHER_DIED"
+  | "UNINSURED_MOTHER_ABANDONED_CHILD"
+  | "UNINSURED_MOTHER_INCAPACITY"
+  | "UNINSURED_MOTHER_EMPLOYED"
 
 export type Beneficiary = "MOTHER" | "SECOND_PARENT"
 
@@ -28,6 +41,8 @@ export type BenefitKind =
 
 /** One of the (up to) 12 months used to compute the individual basis. */
 export interface MonthlyIncomeEntry {
+  /** Month in YYYY-MM. Optional for the simple UI; the adapter fills it. */
+  month?: string
   /** Gross pay actually received in the month, in grosze. */
   grossGrosze: number
   /** Absence above 50% of working time — the month is excluded (U art. 36). */
@@ -52,7 +67,21 @@ export interface CalculatorInput {
   /** The child holds a "Za życiem" certificate. */
   hasZaZyciem: boolean
   paymentOption: PaymentOption
-  /** Maternity leave taken before the due date; capped by the active rule set. */
+  /** Actual birth date for BIRTH mode; used for calendar periods and deadlines. */
+  birthDate?: string
+  /** Date of the 81.5% application, if known. */
+  flatRateApplicationDate?: string
+  /** Reason for the father's takeover of maternity leave. */
+  fatherMaternityTakeoverReason?: TakeoverReason
+  /** Adoption: application to the guardianship court and final adoption order. */
+  courtApplicationDate?: string
+  adoptionFinalDate?: string
+  /** Adoption/foster care: leave already used before the current placement. */
+  previouslyUsedMaternityTermsWeeks?: number
+  previouslyUsedParentalWeeks?: number
+  /** Optional evaluation date; defaults to the latest rule set start. */
+  asOf?: string
+  /** Maternity leave taken before the due date, 0–6 weeks. */
   maternityWeeksBeforeBirth: number
   /** Weeks of the shared parental pool used by the second parent; capped by the rule set. */
   secondParentParentalWeeks: number
@@ -102,8 +131,29 @@ export interface CalculatorInput {
   /** Up to 12 months, used when `incomeMode` is `DETAILED`. */
   monthlyIncomes?: MonthlyIncomeEntry[]
   employmentType?: EmploymentType
+  /** A basis already established by the payer/ZUS (e.g. Z-3/Z-3a or an earlier benefit). */
+  knownBasisGrosze?: number
+  /** Known basis of the second parent, if the case gives one. */
+  secondParentKnownBasisGrosze?: number
   /** Employment fraction used to scale the minimum basis (0.1–1). */
   employmentFraction?: number
+
+  // --- Insurance / eligible parents (FR-CALC-01, FR-CALC-03) ---
+  /** Both default to true; set false for a father-only or mother-only case. */
+  motherEnabled?: boolean
+  fatherEnabled?: boolean
+  motherEmploymentType?: EmploymentType
+  fatherEmploymentType?: EmploymentType
+  motherSicknessInsurance?: SicknessCoverage
+  fatherSicknessInsurance?: SicknessCoverage
+  motherInsuranceStartDate?: string
+  fatherInsuranceStartDate?: string
+  motherInsuranceEndDate?: string
+  fatherInsuranceEndDate?: string
+  motherPayerSize?: "OVER_20" | "UP_TO_20"
+  fatherPayerSize?: "OVER_20" | "UP_TO_20"
+  motherContributionDebt?: boolean
+  fatherContributionDebt?: boolean
 }
 
 export interface CalculationTraceStep {
@@ -152,8 +202,11 @@ export interface CalculatorResult {
   dailyBasisGrosze: number
   secondParentBasisGrosze: number
   secondParentDailyBasisGrosze: number
+  motherEligible: boolean
+  fatherEligible: boolean
   lines: CalculationLine[]
   totalGrosze: number
+  totalsByBeneficiary: { beneficiary: Beneficiary; totalGrosze: number }[]
   verified: boolean
   status: "OK" | "INDETERMINATE" | "NOT_ELIGIBLE"
   /** Version label of the rule set that produced this result. */

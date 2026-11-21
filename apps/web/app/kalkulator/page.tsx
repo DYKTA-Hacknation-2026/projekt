@@ -111,9 +111,11 @@ export default async function CalculatorPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-pretty text-muted-foreground">
-            Nie rozstrzyga o prawie do zasiłku, nie zastępuje decyzji ZUS i nie
-            uwzględnia indywidualnych przerw w ubezpieczeniu. Do tego służy
-            osobny moduł uprawnień i analiza dokumentów.
+            Sprawdza ubezpieczenie, zadłużenie i wymiar przez ten sam silnik
+            reguł co API, ale nie zastępuje decyzji ZUS. Nie modeluje m.in.
+            zbiegu tytułów ubezpieczenia, wszystkich przyczyn zakończenia
+            zatrudnienia ani układania urlopu w konkretnych częściach i datach.
+            Do tego służy osobny moduł uprawnień i analiza dokumentów.
           </CardContent>
         </Card>
       </section>

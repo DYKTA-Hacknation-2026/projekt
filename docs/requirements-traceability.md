@@ -86,7 +86,7 @@ Every `LR-xx` in `requirements.md` §6, including LR-100…136, must map to at l
 
 ## 4. Calculation engine coverage (v0.3)
 
-Engine = `@zpr/domain/engine`, endpoints `POST /eligibility/evaluate`, `/benefits/calculate`, `/scenarios/compare`, `/timeline`, `/documents/required`. ✅ = implemented and tested in the engine and its API/assistant adapters; the UI still uses the simplified calculator and planner (both now adapters over the engine).
+Engine = `@zpr/domain/engine`, endpoints `POST /eligibility/evaluate`, `/benefits/calculate`, `/scenarios/compare`, `/timeline`, `/documents/required`. ✅ = implemented and tested in the engine and its API/assistant adapters. The `/kalkulator` UI uses an engine-backed calculator (birth/adoption/foster, both parents, work + parental leave, 12-month or known basis, private SC-xx JSON import) with the configured Q-29 values; it still does not expose every engine edge case input (multiple titles, all termination reasons, full per-part calendar scheduling). The planner remains the birth-only timeline planner.
 
 | Requirement | Engine status | Notes |
 |-------------|---------------|-------|
@@ -99,7 +99,7 @@ Engine = `@zpr/domain/engine`, endpoints `POST /eligibility/evaluate`, `/benefit
 | FR-CALC-02 | ✅ | KP art. 182¹e–f extension, U art. 31 ust. 4a |
 | FR-CALC-03 | ✅ | two-parent allocation, reserved nine weeks, pool, parts; `U-10` |
 | FR-CALC-04, FR-CALC-06 | ✅ | age caps, court application, professional foster excluded, Q-30 → manual review |
-| FR-CALC-05 | 🟨 | basis methods (U art. 36–38, 48a, 50) done; **ZUS sample cases not available** |
+| FR-CALC-05 | 🟨 | basis methods and known Z-3/Z-3a basis done; private `SC-xx.json` can be imported into the calculator, but there is no server-side case browser or automatic golden-outcome comparison |
 | FR-CALC-08 | ✅ | exact 81.5% conditions, deadline, 9 reserved weeks at 70%, first-year fallback |
 | FR-CALC-09 | ✅ | rule set version, sources, assumptions, missing evidence on every result |
 | FR-ADM-01 | 🟨 | rule sets are versioned data and published by `GET /rulesets`; admin editing UI not part of the engine |
