@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter, JetBrains_Mono, Newsreader } from "next/font/google"
+import { DM_Sans, JetBrains_Mono, Nunito_Sans } from "next/font/google"
 
 import "@workspace/ui/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -9,15 +9,15 @@ import { SimulationBanner } from "@/components/simulation-banner"
 import { APP_NAME } from "@/messages/pl"
 import { cn } from "@workspace/ui/lib/utils"
 
-const inter = Inter({
+const nunitoSans = Nunito_Sans({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-inter",
+  variable: "--font-nunito",
   display: "swap",
 })
 
-const newsreader = Newsreader({
+const dmSans = DM_Sans({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-newsreader",
+  variable: "--font-dm-sans",
   display: "swap",
 })
 
@@ -54,9 +54,10 @@ export default function RootLayout({
     <html
       lang="pl"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={cn(
-        inter.variable,
-        newsreader.variable,
+        nunitoSans.variable,
+        dmSans.variable,
         jetbrainsMono.variable
       )}
     >

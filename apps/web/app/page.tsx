@@ -1,23 +1,43 @@
+import type { Metadata } from "next"
+import Image from "next/image"
 import Link from "next/link"
 import {
+  ArrowDown,
   ArrowRight,
   ArrowUpRight,
-  BookOpen,
   Calculator,
-  Info,
+  CalendarRange,
+  Check,
+  ClipboardList,
   FileCheck2,
   FileText,
-  FolderOpen,
+  HeartHandshake,
+  Info,
   LockKeyhole,
   MessagesSquare,
-  ScanLine,
+  Scale,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react"
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
+
 import { home } from "@/messages/pl"
 import { formatPln } from "@/lib/format"
 import "./home.css"
+
+export const metadata: Metadata = {
+  title: "Spokojnie zaplanuj czas po narodzinach dziecka",
+}
+
+const capabilityIcons = {
+  "/panel": Scale,
+  "/kalkulator": Calculator,
+  "/os-czasu": CalendarRange,
+  "/dokumenty": FileCheck2,
+  "/asystent": MessagesSquare,
+} as const
+
+const benefitIcons = [HeartHandshake, Scale, ClipboardList]
+const principleIcons = [FileCheck2, Sparkles, LockKeyhole]
 
 const panelRows = [
   ["Urlop macierzyński", "20 tygodni"],
@@ -27,214 +47,360 @@ const panelRows = [
 
 export default function HomePage() {
   return (
-    <div className="guide">
-      <section className="guide-hero hero wrap" data-enter>
-        <div className="guide-intro">
-          <p className="guide-kicker">
-            <BookOpen size={15} /> Przewodnik dla rodziców
-          </p>
-          <h1>
-            Sprawdź, co ci <em>przysługuje.</em>
-          </h1>
-          <p className="guide-lead">
-            Zasiłki, urlopy i dokumenty w jednym miejscu. Sprawdź uprawnienia
-            obojga rodziców i zaplanuj czas po narodzinach dziecka.
-          </p>
-          <div className="guide-actions">
-            <Link href="/dokumenty">
-              <FileText size={17} /> Sprawdź dokumenty <ArrowRight size={16} />
-            </Link>
-            <Link href="/kalkulator">
-              <Calculator size={17} /> Oblicz zasiłek
-            </Link>
-          </div>
-          <p className="guide-proof">
-            <LockKeyhole size={14} /> Bez logowania <span>·</span> Bez numeru
-            PESEL
-          </p>
-        </div>
-        <div className="dossier app-frame" data-visual="">
-          <div className="dossier-label">
-            <FolderOpen size={16} /> Teczka świadczeń <span>DEMO</span>
-          </div>
-          <div className="receipt">
-            <div className="receipt-id">
-              <ScanLine size={19} /> ZPR-DEMO-001
+    <div className="home">
+      <section className="home-hero" aria-labelledby="home-hero-title">
+        <div className="home-shell home-hero__inner">
+          <div className="home-hero__copy">
+            <p className="home-eyebrow">
+              <span className="home-eyebrow__dot" aria-hidden="true" />
+              {home.eyebrow}
+            </p>
+            <h1 id="home-hero-title" className="home-hero__title">
+              Spokojnie zaplanuj czas po{" "}
+              <span className="home-hero__accent">narodzinach dziecka</span>.
+            </h1>
+            <p className="home-hero__lead">{home.lead}</p>
+
+            <div className="home-hero__actions">
+              <Link href="/start" className="home-button home-button--primary">
+                {home.primaryCta}
+                <ArrowRight aria-hidden="true" />
+              </Link>
+              <Link
+                href="#scenariusze"
+                className="home-button home-button--secondary"
+              >
+                {home.secondaryCta}
+                <ArrowDown aria-hidden="true" />
+              </Link>
             </div>
-            <p>Szacunek łączny</p>
-            <strong>{formatPln(15_540_000)}</strong>
-            <dl>
-              {panelRows.map(([label, value]) => (
-                <div key={label}>
-                  <dt>{label}</dt>
-                  <dd>{value}</dd>
-                </div>
+
+            <ul className="home-trust" aria-label="Co zyskujesz">
+              {home.trust.map((item) => (
+                <li key={item}>
+                  <span className="home-trust__check" aria-hidden="true">
+                    <Check />
+                  </span>
+                  {item}
+                </li>
               ))}
-            </dl>
-            <div className="receipt-end">
-              <span className="barcode" aria-hidden="true" /> S-01 / S-10
-            </div>
+            </ul>
           </div>
-          <p className="dossier-foot">
-            <Info size={14} /> Podstawa 8 000 zł brutto · wynik niezweryfikowany (Q-29)
-          </p>
+
+          <div className="home-hero__media">
+            <figure className="home-hero__figure">
+              <div className="home-hero__frame">
+                <Image
+                  src="/images/hero-rodzice-z-noworodkiem.jpg"
+                  alt="Rodzice trzymają nowo narodzone dziecko przy jasnym oknie w domu."
+                  fill
+                  priority
+                  sizes="(max-width: 900px) 100vw, 46vw"
+                  className="home-hero__img"
+                />
+                <span className="home-hero__shade" aria-hidden="true" />
+                <a
+                  className="home-photo-credit"
+                  href="https://www.pexels.com/photo/couple-standing-by-window-holding-newborn-16852493/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Fot. Dasha Halepova / Pexels
+                </a>
+              </div>
+            </figure>
+
+            <aside
+              className="home-summary"
+              aria-label="Przykładowa sprawa demo"
+            >
+              <p className="home-summary__label">
+                <FileText aria-hidden="true" />
+                Przykładowa sprawa · demo
+              </p>
+              <div className="home-summary__amount">
+                <span>Szacunek łączny</span>
+                <strong>{formatPln(15_540_000)}</strong>
+              </div>
+              <dl className="home-summary__rows">
+                {panelRows.map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="home-summary__meta">
+                <Info aria-hidden="true" />
+                Podstawa 8 000 zł brutto · wynik niezweryfikowany (Q-29)
+              </p>
+            </aside>
+
+            <p className="home-hero__time">
+              <ShieldCheck aria-hidden="true" />
+              Pierwszy wynik w około 3 minuty
+            </p>
+          </div>
         </div>
       </section>
-      <section className="guide-tools">
-        <div className="guide-wrap wrap">
-          <h2>Narzędzia dla rodziców</h2>
-          <div className="tool-grid">
-            {home.paths.map((path, i) => {
-              const Icon =
-                [FolderOpen, Calculator, MessagesSquare][i] ?? FileText
+
+      <section className="home-benefits" aria-labelledby="home-benefits-title">
+        <div className="home-shell">
+          <h2 id="home-benefits-title" className="sr-only">
+            Dlaczego warto korzystać z przewodnika
+          </h2>
+          <ul className="home-benefits__grid">
+            {home.benefits.map((benefit, index) => {
+              const Icon = benefitIcons[index] ?? HeartHandshake
               return (
-                <Link href={path.href} key={path.href}>
-                  <span className="tool-icon">
-                    <Icon size={23} />
+                <li key={benefit.title} className="home-benefit">
+                  <span className="home-benefit__icon" aria-hidden="true">
+                    <Icon />
                   </span>
-                  <ArrowUpRight className="tool-arrow" size={19} />
-                  <h3>{path.title}</h3>
-                  <p>{path.description}</p>
-                </Link>
+                  <div>
+                    <h3>{benefit.title}</h3>
+                    <p>{benefit.text}</p>
+                  </div>
+                </li>
               )
             })}
-          </div>
+          </ul>
         </div>
       </section>
-      <section className="border-y border-border/70 bg-secondary/40">
-        <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+
+      <section
+        className="home-section"
+        id="mozliwosci"
+        aria-labelledby="home-capabilities-title"
+      >
+        <div className="home-shell">
+          <header className="home-section__head">
             <div>
-              <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
-                Jak to działa
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Planowanie urlopu w trzech krokach
+              <p className="home-eyebrow">Jedno miejsce na wszystko</p>
+              <h2 id="home-capabilities-title">
+                Co możesz zrobić w przewodniku
               </h2>
             </div>
-            <p className="max-w-sm text-sm text-pretty text-muted-foreground">
+            <p className="home-section__lead">
+              Od pierwszego pytania o uprawnienia po gotowy plan urlopów i listę
+              dokumentów. Wszystko po kolei, bez urzędowego języka.
+            </p>
+          </header>
+
+          <ul className="home-capabilities">
+            {home.paths.map((path) => {
+              const Icon = capabilityIcons[path.href]
+              return (
+                <li
+                  key={path.href}
+                  className={`home-capability home-capability--${path.tone}`}
+                >
+                  <Link href={path.href} className="home-capability__link">
+                    <span className="home-capability__top">
+                      <span
+                        className="home-capability__icon"
+                        aria-hidden="true"
+                      >
+                        <Icon />
+                      </span>
+                      {path.tone === "featured" && (
+                        <span className="home-capability__badge">
+                          Zacznij tutaj
+                        </span>
+                      )}
+                      <ArrowUpRight
+                        className="home-capability__arrow"
+                        aria-hidden="true"
+                      />
+                    </span>
+                    <h3>{path.title}</h3>
+                    <p>{path.description}</p>
+                    <span className="home-capability__cue">
+                      Przejdź
+                      <ArrowRight aria-hidden="true" />
+                    </span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </section>
+
+      <section
+        className="home-steps"
+        id="jak-to-dziala"
+        aria-labelledby="home-steps-title"
+      >
+        <div className="home-shell">
+          <header className="home-section__head">
+            <div>
+              <p className="home-eyebrow">Jak to działa</p>
+              <h2 id="home-steps-title">Spokojny plan w trzech krokach</h2>
+            </div>
+            <p className="home-section__lead">
               Każdy wynik ma numer reguły, wersję zestawu przepisów i jawne
               założenia. Braki danych nie zamieniają się w zgadywanie.
             </p>
-          </div>
-          <ol className="mt-8 grid gap-4 md:grid-cols-3">
+          </header>
+
+          <ol className="home-steps__list">
             {home.steps.map((step) => (
-              <li
-                key={step.number}
-                className="rounded-xl border border-border/70 bg-card p-5"
-              >
-                <span className="font-mono text-xs font-semibold text-primary">
+              <li key={step.number} className="home-step">
+                <span className="home-step__number" aria-hidden="true">
                   {step.number}
                 </span>
-                <h3 className="mt-2 text-lg font-semibold">{step.title}</h3>
-                <p className="mt-2 text-sm text-pretty text-muted-foreground">
-                  {step.text}
-                </p>
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <div className="space-y-4">
-            <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
-              Scenariusze demo
-            </p>
-            <h2 className="text-3xl font-semibold tracking-tight text-balance">
-              Przykładowe sytuacje rodziców
-            </h2>
-            <p className="text-sm text-pretty text-muted-foreground">
-              Dane są syntetyczne i wymyślone na potrzeby demonstracji. Każda
-              osoba odpowiada scenariuszowi z dokumentacji projektu, więc jury
-              może porównać wynik z oczekiwanym.
-            </p>
-            <div className="rounded-xl border border-border/70 bg-card p-4">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <ShieldCheck
-                  aria-hidden="true"
-                  className="size-4 text-primary"
-                />
-                Uczciwie o brakach
-              </div>
-              <p className="mt-2 text-sm text-pretty text-muted-foreground">
-                Minimalna podstawa i kwota świadczenia rodzicielskiego (Q-29)
-                oraz polityka zaokrągleń (Q-15) czekają na zatwierdzenie.
-                Dlatego kalkulator pokazuje status „Wymaga danych”, a nie
-                wymyśloną kwotę.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-3">
-            {home.personas.map((persona) => (
-              <div
-                key={persona.name}
-                className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
+      <section
+        className="home-scenarios"
+        id="scenariusze"
+        aria-labelledby="home-scenarios-title"
+      >
+        <div className="home-shell home-scenarios__grid">
+          <figure className="home-scenarios__figure">
+            <div className="home-scenarios__frame">
+              <Image
+                src="/images/rodzina-z-dzieckiem.jpg"
+                alt="Mama i tata blisko tulą niemowlę w domowym zaciszu."
+                fill
+                loading="lazy"
+                sizes="(max-width: 900px) 100vw, 40vw"
+                className="home-scenarios__img"
+              />
+              <span className="home-scenarios__shade" aria-hidden="true" />
+              <a
+                className="home-photo-credit"
+                href="https://www.pexels.com/photo/father-and-mother-holding-baby-son-20729677/"
+                target="_blank"
+                rel="noreferrer"
               >
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-semibold">{persona.name}</h3>
-                    <Badge variant="outline" className="font-mono text-[10px]">
-                      {persona.scenario}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {persona.role}
-                  </p>
-                  <p className="mt-1 text-xs text-pretty text-muted-foreground">
-                    {persona.note}
-                  </p>
-                </div>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0"
-                >
-                  <Link href="/panel">
-                    Otwórz
-                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                Fot. Gisele Seidel / Pexels
+              </a>
+            </div>
+            <figcaption>
+              <span className="home-scenarios__tag">Scenariusze demo</span>
+              <span>
+                Dane osób są syntetyczne i służą do porównania wyników.
+              </span>
+            </figcaption>
+          </figure>
+
+          <div className="home-scenarios__content">
+            <p className="home-eyebrow">Przykładowe sytuacje</p>
+            <h2 id="home-scenarios-title">
+              Zobacz, jak to wygląda dla konkretnej rodziny
+            </h2>
+            <p className="home-section__lead">
+              Trzy historie, które pokazują różne punkty startu. Każda odpowiada
+              scenariuszowi z dokumentacji projektu, więc wynik można sprawdzić
+              z oczekiwanym.
+            </p>
+
+            <ul className="home-personas">
+              {home.personas.map((persona) => (
+                <li key={persona.name}>
+                  <Link href="/panel" className="home-persona">
+                    <span className="home-persona__avatar" aria-hidden="true">
+                      {persona.name.slice(0, 1)}
+                    </span>
+                    <span className="home-persona__body">
+                      <span className="home-persona__heading">
+                        <span className="home-persona__name">
+                          {persona.name}
+                        </span>
+                        <span className="home-persona__scenario">
+                          {persona.scenario}
+                        </span>
+                      </span>
+                      <span className="home-persona__role">{persona.role}</span>
+                      <span className="home-persona__note">{persona.note}</span>
+                    </span>
+                    <span className="home-persona__cta">
+                      Otwórz
+                      <ArrowRight aria-hidden="true" />
+                    </span>
                   </Link>
-                </Button>
-              </div>
-            ))}
+                </li>
+              ))}
+            </ul>
+
+            <p className="home-scenarios__foot">
+              <Info aria-hidden="true" />
+              To symulacja. Wyniki nie zastępują decyzji ZUS.
+            </p>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="overflow-hidden rounded-2xl border border-primary/20 bg-primary px-6 py-10 text-primary-foreground sm:px-10">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="max-w-xl space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] uppercase">
-                <FileCheck2 aria-hidden="true" className="size-4" />
-                Start w 3 minuty
-              </div>
-              <h2 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-                Zobacz, jak wygląda twoja sprawa po wpisaniu kilku danych.
-              </h2>
-              <p className="text-sm text-pretty text-primary-foreground">
-                Bez konta, bez PESEL-u. W każdej chwili możesz wrócić do
-                kalkulatora i porównać warianty.
+      <section
+        className="home-trust-section"
+        aria-labelledby="home-trust-title"
+      >
+        <div className="home-shell home-trust-section__grid">
+          <div>
+            <p className="home-eyebrow">Zaufanie i przejrzystość</p>
+            <h2 id="home-trust-title">Wiesz, skąd bierze się każda kwota</h2>
+            <ul className="home-principles">
+              {home.principles.map((principle, index) => {
+                const Icon = principleIcons[index] ?? ShieldCheck
+                return (
+                  <li key={principle.title} className="home-principle">
+                    <span className="home-principle__icon" aria-hidden="true">
+                      <Icon />
+                    </span>
+                    <div>
+                      <h3>{principle.title}</h3>
+                      <p>{principle.text}</p>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+
+          <aside className="home-honesty">
+            <span className="home-honesty__icon" aria-hidden="true">
+              <Info />
+            </span>
+            <h3>{home.honesty.title}</h3>
+            <p>{home.honesty.text}</p>
+            <Link href="/o-projekcie" className="home-honesty__link">
+              {home.honesty.cta}
+              <ArrowRight aria-hidden="true" />
+            </Link>
+          </aside>
+        </div>
+      </section>
+
+      <section className="home-cta" aria-labelledby="home-cta-title">
+        <div className="home-shell">
+          <div className="home-cta__panel">
+            <div className="home-cta__copy">
+              <p className="home-cta__eyebrow">
+                <Sparkles aria-hidden="true" />
+                {home.finalCta.eyebrow}
               </p>
+              <h2 id="home-cta-title">{home.finalCta.title}</h2>
+              <p>{home.finalCta.text}</p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button asChild size="lg" variant="secondary" className="h-11">
-                <Link href="/start">
-                  Otwórz kreator
-                  <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-11 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            <div className="home-cta__actions">
+              <Link href="/start" className="home-button home-button--on-navy">
+                {home.finalCta.primary}
+                <ArrowRight aria-hidden="true" />
+              </Link>
+              <Link
+                href="/o-projekcie"
+                className="home-button home-button--ghost-light"
               >
-                <Link href="/o-projekcie">O projekcie</Link>
-              </Button>
+                {home.finalCta.secondary}
+              </Link>
             </div>
           </div>
         </div>

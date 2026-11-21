@@ -12,7 +12,10 @@ import {
 
 const officialLinks = [
   { href: "https://www.zus.pl/", label: "zus.pl" },
-  { href: "https://www.gov.pl/web/rodzina/urlop-rodzicielski", label: "gov.pl — urlop rodzicielski" },
+  {
+    href: "https://www.gov.pl/web/rodzina/urlop-rodzicielski",
+    label: "gov.pl — urlop rodzicielski",
+  },
   { href: "https://www.pip.gov.pl/", label: "pip.gov.pl" },
 ]
 
@@ -28,6 +31,35 @@ export function SiteFooter() {
             </p>
             <p className="max-w-sm text-xs text-pretty text-muted-foreground">
               {SIMULATION_DISCLOSURE}
+            </p>
+            <p className="max-w-sm text-xs text-pretty text-muted-foreground">
+              Zdjęcia na stronie głównej:{" "}
+              <a
+                href="https://www.pexels.com/@dasha-halepova-566202699/"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                Dasha Halepova
+              </a>
+              ,{" "}
+              <a
+                href="https://www.pexels.com/@gisele-seidel-170981851/"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                Gisele Seidel
+              </a>{" "}
+              ·{" "}
+              <a
+                href="https://www.pexels.com/license/"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                licencja Pexels
+              </a>
             </p>
           </div>
 

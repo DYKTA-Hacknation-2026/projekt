@@ -17,15 +17,15 @@ export const LEGAL_DISCLOSURE =
   "Materiał informacyjny. Ostateczna decyzja należy do ZUS lub płatnika składek. Przed złożeniem wniosku sprawdź aktualne przepisy."
 
 export const navItems = [
-  { href: "/panel", label: "Panel" },
-  { href: "/kalkulator", label: "Kalkulator" },
+  { href: "/panel", label: "Moja sytuacja" },
+  { href: "/kalkulator", label: "Świadczenia" },
   { href: "/asystent", label: "Asystent" },
   { href: "/dokumenty", label: "Dokumenty" },
-  { href: "/os-czasu", label: "Oś czasu" },
+  { href: "/os-czasu", label: "Plan urlopów" },
 ] as const
 
 export const footerLinks = [
-  { href: "/start", label: "Kreator startowy" },
+  { href: "/start", label: "Kreator analizy" },
   { href: "/dane", label: "Pobierz dane (symulacja)" },
   { href: "/mobywatel", label: "Logowanie mObywatel (symulacja)" },
   { href: "/o-projekcie", label: "O projekcie i AI" },
@@ -55,53 +55,106 @@ export const statusLabels = {
 } as const
 
 export const home = {
-  eyebrow: "HackNation · ZUS",
-  title: "Sprawdź, co ci przysługuje — zanim urodzi się dziecko.",
-  lead: "Jedno miejsce na uprawnienia, kwoty, dokumenty i terminy. Dla obojga rodziców, także w sytuacjach trudnych. Wynik zawsze z podstawą prawną i śladem obliczeń.",
-  primaryCta: "Przetestuj przykładową sprawę",
-  secondaryCta: "Policz swoje świadczenie",
-  trust: [
-    "Bez logowania — tryb gościa",
-    "Deterministyczne kwoty, nie zgadywanie",
-    "Źródła i wersja przepisów przy każdym wyniku",
+  eyebrow: "Przewodnik dla rodziców",
+  title: "Spokojnie zaplanuj czas po narodzinach dziecka.",
+  lead: "Sprawdź świadczenia, poznaj swoje prawa i uporządkuj formalności związane z rodzicielstwem w jednym miejscu.",
+  primaryCta: "Rozpocznij analizę",
+  secondaryCta: "Zobacz przykładowe sprawy",
+  trust: ["Bez logowania", "Bez numeru PESEL", "Źródła przy każdym wyniku"],
+  benefits: [
+    {
+      title: "Jeden plan dla obojga rodziców",
+      text: "Uprawnienia i urlopy mamy oraz taty w jednym miejscu, bez porównywania kilku serwisów.",
+    },
+    {
+      title: "Kwoty z podstawą prawną",
+      text: "Każdy wynik pokazuje reguły, wersję przepisów i założenia, na których powstał.",
+    },
+    {
+      title: "Formalności krok po kroku",
+      text: "Lista dokumentów, terminy i gotowy plan rozmowy z pracodawcą.",
+    },
   ],
   paths: [
     {
-      href: "/start",
-      title: "Kreator sytuacji",
+      href: "/panel",
+      tone: "featured",
+      title: "Sprawdź swoje prawa",
       description:
-        "Kilka pytań o twoją pracę, ubezpieczenie i rodzinę. Na końcu powstaje sprawa demonstracyjna z kompletem danych.",
+        "Zobacz, do jakich świadczeń i urlopów wstępnie kwalifikujesz się — dla obojga rodziców.",
     },
     {
       href: "/kalkulator",
-      title: "Kalkulator zasiłków",
+      tone: "default",
+      title: "Oblicz świadczenia",
       description:
-        "Macierzyński, rodzicielski i ojcowski dla obojga rodziców. Porównaj wariant 100%/70% z 81,5%.",
+        "Policz macierzyński, rodzicielski i ojcowski wraz z wariantami, założeniami i źródłami.",
+    },
+    {
+      href: "/os-czasu",
+      tone: "default",
+      title: "Zaplanuj urlopy",
+      description:
+        "Ułóż plan dla dwojga rodziców i sprawdź, jak zmienia go inny termin porodu.",
+    },
+    {
+      href: "/dokumenty",
+      tone: "default",
+      title: "Przygotuj dokumenty",
+      description:
+        "Poznaj potrzebne formularze i przeanalizuj dokumenty ZUS bez zgadywania.",
     },
     {
       href: "/asystent",
-      title: "Asystent z cytatami",
+      tone: "dark",
+      title: "Zapytaj asystenta",
       description:
-        "Zadaj pytanie po polsku. Odpowiedź powstaje z bazy wiedzy i zawsze wskazuje źródło oraz zastrzeżenie AI.",
+        "Zadaj pytanie po polsku. Każda odpowiedź wskazuje źródło i jasno mówi, gdy brakuje danych.",
     },
   ],
   steps: [
     {
       number: "01",
-      title: "Opisz sytuację",
-      text: "Termin porodu, forma zatrudnienia, okres ubezpieczenia i dochód. Bez PESEL-u i bez danych zdrowotnych, jeśli ich nie potrzebujesz.",
+      title: "Opisz swoją sytuację",
+      text: "Termin porodu, forma zatrudnienia i dochód. Bez PESEL-u i bez danych, których nie potrzebujesz.",
     },
     {
       number: "02",
-      title: "Sprawdź uprawnienia",
-      text: "Moduł reguł pokazuje wynik: przysługuje, nie przysługuje albo brakuje danych. Każdy krok ma podstawę prawną.",
+      title: "Poznaj uprawnienia",
+      text: "Zobacz, co przysługuje obojgu rodzicom. Każdy wynik ma podstawę prawną i jawne założenia.",
     },
     {
       number: "03",
-      title: "Zaplanuj finanse i dokumenty",
-      text: "Zobacz kwoty, terminy i listę dokumentów. Porównaj scenariusze i pobierz plan rozmowy z pracodawcą.",
+      title: "Ułóż plan działania",
+      text: "Dostajesz kwoty, terminy i listę dokumentów. Możesz porównać warianty i wrócić do nich później.",
     },
   ],
+  principles: [
+    {
+      title: "Reguły, nie domysły",
+      text: "Kwoty liczy deterministyczny moduł na podstawie wersjonowanych przepisów. Ten sam zestaw danych zawsze daje ten sam wynik.",
+    },
+    {
+      title: "Źródło przy każdej odpowiedzi",
+      text: "Asystent cytuje bazę wiedzy, a kalkulator pokazuje reguły i ślad obliczeń. Wiesz, na czym opiera się wynik.",
+    },
+    {
+      title: "Mniej danych, więcej spokoju",
+      text: "Do wstępnej analizy nie potrzebujesz numeru PESEL. Zgody na dane zdrowotne i dokumenty są rozdzielone.",
+    },
+  ],
+  honesty: {
+    title: "Uczciwie o brakach",
+    text: "Minimalna podstawa i kwota świadczenia rodzicielskiego (Q-29) oraz polityka zaokrągleń (Q-15) czekają na zatwierdzenie. Dlatego kalkulator pokazuje status „Wymaga danych”, a nie wymyśloną kwotę.",
+    cta: "Zobacz, co jest prawdziwe",
+  },
+  finalCta: {
+    eyebrow: "Start w 3 minuty",
+    title: "Zobacz, jak wygląda twoja sprawa po wpisaniu kilku danych.",
+    text: "Bez konta i bez PESEL-u. W każdej chwili możesz wrócić do kalkulatora i porównać warianty.",
+    primary: "Rozpocznij analizę",
+    secondary: "O projekcie",
+  },
   personas: [
     {
       name: "Anna",
@@ -113,7 +166,7 @@ export const home = {
       name: "Kasia",
       role: "Zlecenie zakończone przed porodem",
       scenario: "S-18",
-      note: "Brak ubezpieczenia chorobowego w dniu porodu — ryzyko widoczne przed decyzją.",
+      note: "Brak ubezpieczenia chorobowego w dniu porodu — ryzyko widoczne, zanim podejmiesz decyzję.",
     },
     {
       name: "Tomasz",
@@ -175,8 +228,7 @@ export const mobywatel = {
     "W symulacji nie przekazujemy numeru PESEL. Aplikacja go nie potrzebuje — zbieramy tylko dane potrzebne do wypełnienia formularza.",
   consentSubmit: "Udostępnij dane",
   pinStep: "Potwierdź tożsamość",
-  pinLead:
-    "W aplikacji mObywatel potwierdź logowanie kodem PIN lub biometrią.",
+  pinLead: "W aplikacji mObywatel potwierdź logowanie kodem PIN lub biometrią.",
   pinLabel: "Kod PIN",
   pinHint: "Demo: dowolne 4 cyfry, np. 1234.",
   pinSubmit: "Potwierdź w aplikacji",
