@@ -65,9 +65,9 @@ export default function HomePage() {
         <div className="home-shell home-tools">
           <div className="home-tools__intro">
             <h2 id="tools-title" data-reveal="heading">
-              Od pytań
+              Świadczenia
               <br />
-              do konkretów.
+              i dokumenty.
             </h2>
             <p data-reveal="copy">
               Wybierz to, czego potrzebujesz. Możesz zacząć od swojej sytuacji
@@ -182,9 +182,9 @@ export default function HomePage() {
         <div className="home-shell home-questions__grid">
           <div>
             <h2 id="questions-title" data-reveal="heading">
-              Dobrze wiedzieć
+              Pytania
               <br />
-              na początek.
+              i odpowiedzi.
             </h2>
             <p data-reveal="copy">
               Jasne zasady i źródła. Zanim podasz informacje o swojej sytuacji,
