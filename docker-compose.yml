@@ -77,8 +77,6 @@ services:
       SESSION_SECRET: docker-local-only-session-secret-32-chars
       ADMIN_GATE_ENABLED: "false"
       NEXT_TELEMETRY_DISABLED: "1"
-    ports:
-      - "3000:3000"
     depends_on:
       api:
         condition: service_healthy
