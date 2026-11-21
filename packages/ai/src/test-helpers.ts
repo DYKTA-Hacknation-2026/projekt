@@ -3,14 +3,16 @@ import type {
   KnowledgeChunkResult,
   KnowledgeSearchResult,
 } from "@zpr/contracts/knowledge"
+import { relevantDeadlines } from "@zpr/domain"
+import { type RuleSet } from "@zpr/domain"
+import { testRuleSet } from "@zpr/domain/testing"
 import {
-  assessEligibility,
-  buildTimeline,
-  calculateBenefits,
-  compareLeaveScenarios,
-  relevantDeadlines,
-  requiredDocuments,
-} from "@zpr/domain"
+  calculateParentalBenefits,
+  compareBenefitScenarios,
+  evaluateEligibility,
+  generateBenefitTimeline,
+  identifyRequiredDocuments,
+} from "@zpr/domain/engine"
 
 import type { AssistantServices, ProfileAccess } from "./types"
 
@@ -66,10 +68,12 @@ export interface FakeServicesOptions {
   profile?: ProfileAccess
   searchError?: boolean
   today?: string
+  ruleSet?: RuleSet
 }
 
 export function fakeServices(options: FakeServicesOptions = {}) {
   const searches: SearchKnowledgeBaseInput[] = []
+  const ruleSet = options.ruleSet ?? testRuleSet()
   let profileLoads = 0
   const services: AssistantServices = {
     today: () => options.today ?? "2026-11-21",
@@ -85,7 +89,11 @@ export function fakeServices(options: FakeServicesOptions = {}) {
         redactions: [],
         noEvidence: results.length
           ? null
-          : { reason: "NO_MATCH", message: "W bazie wiedzy nie ma fragmentu, który dotyczy tego pytania." },
+          : {
+              reason: "NO_MATCH",
+              message:
+                "W bazie wiedzy nie ma fragmentu, który dotyczy tego pytania.",
+            },
         embeddingModel: null,
         results,
       }
@@ -94,12 +102,15 @@ export function fakeServices(options: FakeServicesOptions = {}) {
       profileLoads += 1
       return options.profile ?? { status: "NOT_ENABLED" }
     },
-    assessEligibility,
-    calculate: calculateBenefits,
-    compareScenarios: compareLeaveScenarios,
-    requiredDocuments,
-    deadlines: relevantDeadlines,
-    timeline: buildTimeline,
+    engine: {
+      evaluateEligibility,
+      calculateParentalBenefits,
+      compareBenefitScenarios,
+      generateBenefitTimeline,
+      identifyRequiredDocuments,
+    },
+    deadlines: (facts, options) =>
+      relevantDeadlines(facts, { ...options, ruleSet }),
   }
   return {
     services,

@@ -35,15 +35,12 @@ import { PageHeader } from "@/components/page-header"
 import { StatCard } from "@/components/stat-card"
 import { formatDate, formatNumber, formatPln } from "@/lib/format"
 import { dashboard, statusLabels } from "@/messages/pl"
-import { getCurrentUserId } from "@/server/auth/current"
-import {
-  getDashboardData,
-  type DashboardData,
-} from "@/server/services/dashboard"
+import type { DashboardData } from "@zpr/contracts/views"
+import { getDashboardData } from "@/server/api-client"
 import {
   getLatestImportForUser,
   type LatestImportForUser,
-} from "@/server/services/data-import"
+} from "@/server/api-client"
 
 export const dynamic = "force-dynamic"
 
@@ -174,7 +171,8 @@ function ImportedDataCard({ imported }: { imported: LatestImportForUser }) {
   )
 }
 
-function CasesTable({ data }: { data: DashboardData }) {  return (
+function CasesTable({ data }: { data: DashboardData }) {
+  return (
     <Card>
       <CardHeader className="border-b border-border/70">
         <div className="flex items-center justify-between gap-3">
@@ -257,8 +255,7 @@ export default async function PanelPage() {
   }
 
   try {
-    const userId = await getCurrentUserId()
-    imported = userId ? await getLatestImportForUser(userId) : null
+    imported = await getLatestImportForUser()
   } catch {
     // The panel remains usable when no import session exists or the migration
     // has not been applied yet.
@@ -435,7 +432,7 @@ export default async function PanelPage() {
                         {item.engineVersion}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {formatDate(item.createdAt)}
+                        {formatDate(new Date(item.createdAt))}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -1,4 +1,14 @@
 import type {
+  UserSummary as UserSummaryPayload,
+  BenefitCaseSummary as BenefitCaseSummaryPayload,
+  CalculationSummary as CalculationSummaryPayload,
+  LegalRuleSummary,
+  KnowledgeSourceSummary,
+  KnowledgeDocumentSummary,
+  IngestionJobSummary as IngestionJobSummaryPayload,
+  EmbeddingModelSummary,
+} from "@zpr/contracts/views"
+import type {
   conversationMessages,
   conversations,
   dataImportSessions,
@@ -24,14 +34,7 @@ export type LegalRuleVersionRecord = typeof legalRuleVersions.$inferSelect
 export type ImportSessionRecord = typeof dataImportSessions.$inferSelect
 export type ImportSnapshotRecord = typeof dataImportSnapshots.$inferSelect
 
-export interface UserSummary {
-  id: string
-  displayName: string
-  email: string
-  role: UserRecord["role"]
-  isDemo: boolean
-  createdAt: Date
-}
+export type UserSummary = UserSummaryPayload<Date>
 
 export interface UserRepository {
   countUsers(): Promise<number>
@@ -46,28 +49,15 @@ export interface HouseholdRepository {
   ): Promise<{ userId: string; caseId: string; caseNumber: string }>
 }
 
-export interface BenefitCaseSummary {
-  id: string
-  caseNumber: string
-  title: string
-  status: "DRAFT" | "IN_REVIEW" | "READY" | "CLOSED"
-  dueDate: string | null
-  ownerName: string
-  createdAt: Date
-}
+export type BenefitCaseSummary = BenefitCaseSummaryPayload<Date>
 
-export interface CalculationSummary {
-  id: string
-  caseId: string | null
-  totalAmountGrosze: number
-  status: "OK" | "INDETERMINATE" | "ERROR"
-  engineVersion: string
-  createdAt: Date
-}
+export type CalculationSummary = CalculationSummaryPayload<Date>
 
 export interface SaveCalculationInput {
   caseId?: string
   scenarioId?: string
+  /** Version of the amount rule (LR-130) that produced the result. */
+  ruleVersionId?: string
   input: Record<string, unknown>
   result: Record<string, unknown>
   totalAmountGrosze: number
@@ -84,59 +74,36 @@ export interface BenefitRepository {
   saveCalculation(input: SaveCalculationInput): Promise<{ id: string }>
 }
 
-export interface LegalRuleSummary {
+export type { LegalRuleSummary } from "@zpr/contracts/views"
+
+/** One effective version of a rule, including its typed parameter payload. */
+export interface LegalRuleParameterRecord {
   id: string
   code: string
-  title: string
-  category: string
-  legalReference: string
-  verificationStatus: "VERIFIED" | "UNVERIFIED" | "PROPOSED"
   version: string
   effectiveFrom: string
+  effectiveTo: string | null
+  verificationStatus: "VERIFIED" | "UNVERIFIED" | "PROPOSED"
+  parameters: Record<string, unknown>
 }
 
 export interface LegalRepository {
   countRules(): Promise<number>
   listRuleVersions(limit?: number): Promise<LegalRuleSummary[]>
+  /**
+   * Latest effective version of every active rule at `asOf`. The domain layer
+   * turns these rows into a `RuleSet`; no legal value lives in application code.
+   */
+  getRuleParameters(asOf: string): Promise<LegalRuleParameterRecord[]>
 }
 
-export interface KnowledgeSourceSummary {
-  id: string
-  slug: string
-  title: string
-  publisher: string
-  sourceType: string
-  isConfidential: boolean
-  accessLevel: "PUBLIC" | "INTERNAL" | "RESTRICTED"
-  documentCount: number
-}
+export type { KnowledgeSourceSummary } from "@zpr/contracts/views"
 
-export interface KnowledgeDocumentSummary {
-  id: string
-  title: string
-  version: string
-  status: "PENDING" | "INDEXED" | "FAILED" | "SUPERSEDED" | "ARCHIVED"
-  effectiveFrom: string | null
-  effectiveTo: string | null
-  sourceTitle: string
-  chunkCount: number
-}
+export type { KnowledgeDocumentSummary } from "@zpr/contracts/views"
 
-export interface IngestionJobSummary {
-  id: string
-  status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED"
-  chunksCreated: number
-  documentTitle: string
-  createdAt: Date
-}
+export type IngestionJobSummary = IngestionJobSummaryPayload<Date>
 
-export interface EmbeddingModelSummary {
-  id: string
-  name: string
-  provider: string
-  dimensions: number
-  isActive: boolean
-}
+export type { EmbeddingModelSummary } from "@zpr/contracts/views"
 
 export interface KnowledgeRepository {
   getActiveEmbeddingModel(): Promise<EmbeddingModelSummary | null>
@@ -205,8 +172,14 @@ export interface ConversationRepository {
     isSimulated?: boolean
   }): Promise<ConversationRecord>
   getConversation(id: string): Promise<ConversationRecord | null>
-  getOwnedConversation(id: string, ownerKey: string): Promise<ConversationRecord | null>
-  listOwnedConversations(ownerKey: string, limit?: number): Promise<ConversationSummary[]>
+  getOwnedConversation(
+    id: string,
+    ownerKey: string
+  ): Promise<ConversationRecord | null>
+  listOwnedConversations(
+    ownerKey: string,
+    limit?: number
+  ): Promise<ConversationSummary[]>
   listMessages(conversationId: string): Promise<ConversationMessageRecord[]>
   appendMessage(input: {
     conversationId: string

@@ -20,6 +20,7 @@ import type { MobywatelPersona } from "@zpr/contracts/mobywatel"
 import {
   CONTRIBUTION_DEDUCTION,
   analyzeSickLeave,
+  type RuleSet,
   assessEligibility,
   calculateBenefits,
   type CalculatorInput,
@@ -49,7 +50,10 @@ export interface PreviewResult {
   validationIssues: SourceIssue[]
 }
 
-const ORIGIN_LABELS: Record<Exclude<FieldSource["origin"], "MANUAL">, string> = {
+const ORIGIN_LABELS: Record<
+  Exclude<FieldSource["origin"], "MANUAL">,
+  string
+> = {
   ZUS: "ZUS (symulacja)",
   EMPLOYER: "Pracodawca / płatnik (symulacja)",
   EZLA: "e-ZLA (symulacja)",
@@ -82,7 +86,9 @@ function employerData(
   return data?.source === "EMPLOYER" ? data : null
 }
 
-function ezlaData(results: readonly SourceFetchResult[]): EzlaSourceData | null {
+function ezlaData(
+  results: readonly SourceFetchResult[]
+): EzlaSourceData | null {
   const data = sourceResult(results, "EZLA")?.data
   return data?.source === "EZLA" ? data : null
 }
@@ -209,7 +215,8 @@ export function buildInitialCaseData(context: ScenarioContext): {
 
   const employer = employerData(context.results)
   if (employer) {
-    const payer = employer.payers.find((item) => item.isCurrent) ?? employer.payers[0]
+    const payer =
+      employer.payers.find((item) => item.isCurrent) ?? employer.payers[0]
     const employment =
       employer.employments.find((item) => item.endDate === null) ??
       [...employer.employments].sort((left, right) =>
@@ -352,7 +359,8 @@ export function toCaseFacts(
     facts.sicknessInsurance =
       data.coverageMode === "VOLUNTARY" ? "VOLUNTARY" : "COMPULSORY"
   }
-  if (data.insuranceStartDate) facts.insuranceStartDate = data.insuranceStartDate
+  if (data.insuranceStartDate)
+    facts.insuranceStartDate = data.insuranceStartDate
   const zus = zusData(results)
   const latestPeriod =
     zus?.insurancePeriods.find((period) => period.isActive) ??
@@ -438,12 +446,7 @@ export function buildInconsistencies(
     }
   }
 
-  if (
-    employer &&
-    employment &&
-    zus &&
-    zus.contributionBases.length > 0
-  ) {
+  if (employer && employment && zus && zus.contributionBases.length > 0) {
     const latest = [...zus.contributionBases].sort((left, right) =>
       right.period.localeCompare(left.period)
     )[0]
@@ -515,7 +518,11 @@ function missingFieldReason(
   field: ImportFieldKey,
   context: ScenarioContext
 ): string {
-  if (field === "eventType" || field === "eventDate" || field === "childrenCount") {
+  if (
+    field === "eventType" ||
+    field === "eventDate" ||
+    field === "childrenCount"
+  ) {
     return "USC nie zwróciło danych o dziecku. Uzupełnij informacje ręcznie."
   }
   if (
@@ -627,7 +634,8 @@ export function buildSummary(
 
 export function previewImportData(
   context: ScenarioContext,
-  override?: ImportedCaseData
+  override: ImportedCaseData | undefined,
+  ruleSet: RuleSet
 ): PreviewResult {
   const initial = buildInitialCaseData(context)
   const data: ImportedCaseData = { ...initial.data, ...(override ?? {}) }
@@ -654,8 +662,9 @@ export function previewImportData(
   )
   const eligibility = assessEligibility(facts, {
     asOf: context.now.slice(0, 10),
+    ruleSet,
   })
-  const calculation = calculateBenefits(toCalculatorInput(data))
+  const calculation = calculateBenefits(toCalculatorInput(data), ruleSet)
   const summary = buildSummary(context, data, fieldSources)
 
   return {

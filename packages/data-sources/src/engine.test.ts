@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest"
+import { testRuleSet } from "@zpr/domain/testing"
 
 import type { DataScope } from "@zpr/contracts/data-import"
 import type { MobywatelPersona } from "@zpr/contracts/mobywatel"
 
 import { fetchSelectedSources } from "./engine"
-import { buildInitialCaseData, previewImportData } from "./mapping"
+import {
+  buildInitialCaseData,
+  previewImportData as previewWithRules,
+} from "./mapping"
 import {
   annaEmploymentScenario,
   findScenarioForPersona,
@@ -12,6 +16,13 @@ import {
   marekSelfEmploymentScenario,
 } from "./scenarios"
 import type { ScenarioContext } from "./mapping"
+
+function previewImportData(
+  context: ScenarioContext,
+  override?: Parameters<typeof previewWithRules>[1]
+) {
+  return previewWithRules(context, override, testRuleSet())
+}
 
 const NOW = "2026-11-21T09:00:00.000Z"
 const ALL_SCOPES: DataScope[] = [
@@ -57,7 +68,10 @@ const PERSONAS: Record<string, MobywatelPersona> = {
   },
 }
 
-function context(personaId: string, scopes: DataScope[] = ALL_SCOPES): ScenarioContext {
+function context(
+  personaId: string,
+  scopes: DataScope[] = ALL_SCOPES
+): ScenarioContext {
   const persona = PERSONAS[personaId]
   const scenario = findScenarioForPersona(personaId)
   if (!persona || !scenario) throw new Error("Brak scenariusza testowego")
@@ -102,13 +116,19 @@ describe("simulated data sources", () => {
 
     expect(child?.birthDate).toBe(event?.eventDate)
     expect(event?.childIds).toContain(child?.id)
-    expect(event?.eventDate && period?.startDate && event.eventDate >= period.startDate).toBe(true)
+    expect(
+      event?.eventDate &&
+        period?.startDate &&
+        event.eventDate >= period.startDate
+    ).toBe(true)
     expect(scenario.sources.EMPLOYER.payers[0]?.id).toBe(period?.payerId)
   })
 
   it("fetches all available sources for the employed scenario", () => {
     const ctx = context("anna-kowalska")
-    const bySource = new Map(ctx.results.map((result) => [result.source, result]))
+    const bySource = new Map(
+      ctx.results.map((result) => [result.source, result])
+    )
 
     expect(bySource.get("ZUS")?.status).toBe("SUCCESS")
     expect(bySource.get("EMPLOYER")?.status).toBe("SUCCESS")
@@ -200,7 +220,9 @@ describe("simulated data sources", () => {
 
   it("surfaces empty and failed sources and the insurance gap", () => {
     const ctx = context("kasia-nowak")
-    const bySource = new Map(ctx.results.map((result) => [result.source, result]))
+    const bySource = new Map(
+      ctx.results.map((result) => [result.source, result])
+    )
     const preview = previewImportData(ctx)
 
     expect(bySource.get("ZUS")?.status).toBe("PARTIAL")
@@ -239,6 +261,26 @@ describe("simulated data sources", () => {
     }
     expect(initial.data.monthlyBasisGrosze).toBeUndefined()
     expect(initial.data.employerName).toBe("Przykładowy Pracodawca S.A.")
+  })
+
+  it("uses active legal parameters while preserving the imported ZUS basis", () => {
+    const ctx = context("anna-kowalska")
+    const rules = testRuleSet()
+    rules.maternity.weeksByChildren[1] = 24
+    rules.basis.dailyDivisor = 20
+    const preview = previewWithRules(
+      ctx,
+      { eventType: "BIRTH", childrenCount: 1 },
+      rules
+    )
+
+    expect(preview.calculation.maternityWeeks).toBe(24)
+    expect(preview.calculation.basisGrosze).toBe(
+      preview.data.monthlyBasisGrosze
+    )
+    expect(preview.calculation.dailyBasisGrosze).toBe(
+      Math.round(preview.calculation.basisGrosze / 20)
+    )
   })
 
   it("is deterministic for the same scenario and time", () => {
