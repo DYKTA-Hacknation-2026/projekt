@@ -98,6 +98,23 @@ export const envSchema = z.object({
   ADMIN_GATE_ENABLED: booleanFromEnv.default(false),
   ADMIN_DEMO_PASSWORD: z.string().min(8).default("demo-admin"),
 
+  /**
+   * Uploaded documents (FR-PRD-06). Files go to a private directory (or a
+   * private bucket adapter) — never under `public/`. They and their
+   * extraction rows are purged after DOCUMENT_TTL_HOURS.
+   */
+  DOCUMENT_STORAGE_DIR: z.string().trim().optional(),
+  DOCUMENT_TTL_HOURS: z.coerce.number().int().min(1).max(24 * 7).default(24),
+  DOCUMENT_EXTRACTION_TIMEOUT_MS: z.coerce.number().int().min(1000).max(60000).default(10000),
+  /** OCR for scans via `pdftoppm` + `tesseract -l pol` (both must be installed). */
+  DOCUMENT_OCR_ENABLED: booleanFromEnv.default(false),
+  /** LLM proposals for unread fields (scrubbed, consented, always confirmed). Needs AI_PROVIDER. */
+  DOCUMENT_LLM_FALLBACK: booleanFromEnv.default(false),
+  /** Shows the expected-outcome badge of sample cases (S-00 step 7). */
+  DOCUMENT_DEMO_MODE: booleanFromEnv.default(true),
+  /** Private ZUS sample cases (git-ignored), with `manifest.json`. */
+  SAMPLE_CASES_DIR: z.string().trim().optional(),
+
   RATE_LIMIT_REQUESTS_PER_MINUTE: z.coerce
     .number()
     .int()
