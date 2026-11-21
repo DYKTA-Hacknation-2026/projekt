@@ -9,11 +9,11 @@ export const runtime = "nodejs"
 
 export const POST = apiRoute(async (request) => {
   const input = await readJson(request, onboardingSchema)
-  const created = await createHousehold(input)
+  const principal = principalFrom(request)
+  const created = await createHousehold(input, { ownerKey: principal.sid })
   // Bind the created (synthetic) user to this browser session so the
   // assistant may read the confirmed profile — only with the user's consent
   // and only after they switch it on in the chat.
-  const principal = principalFrom(request)
   return respondAs(json(created, { status: 201 }), {
     sid: principal.sid,
     userId: created.userId,

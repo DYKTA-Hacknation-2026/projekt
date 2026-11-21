@@ -1,7 +1,9 @@
+import { calculatorRules } from "./calculator-rules"
+import type { RuleSet } from "./rule-set"
+import type { RuleSet as EngineRuleSet } from "./engine/rulesets"
 import {
   MINIMUM_WAGE_GROSZE,
   PARENTAL_BENEFIT_FLOOR_GROSZE,
-  PARENTAL_POOL_WEEKS,
   PARENTAL_TOTAL_CAP_WEEKS,
 } from "./constants"
 import { dailyBasis } from "./money"
@@ -52,7 +54,10 @@ function unique<T>(values: T[]): T[] {
   return [...new Set(values)]
 }
 
-function normalize(input: CalculatorInput): CalculatorInput {
+function normalize(
+  input: CalculatorInput,
+  rules: EngineRuleSet
+): CalculatorInput {
   const motherEmploymentType =
     input.motherEmploymentType ?? input.employmentType ?? "EMPLOYEE"
   const fatherEmploymentType =
@@ -71,7 +76,10 @@ function normalize(input: CalculatorInput): CalculatorInput {
     secondParentMonthlyIncomeGrosze:
       input.secondParentMonthlyIncomeGrosze === undefined
         ? undefined
-        : Math.max(0, Math.round(finite(input.secondParentMonthlyIncomeGrosze))),
+        : Math.max(
+            0,
+            Math.round(finite(input.secondParentMonthlyIncomeGrosze))
+          ),
     knownBasisGrosze:
       input.knownBasisGrosze === undefined
         ? undefined
@@ -80,18 +88,32 @@ function normalize(input: CalculatorInput): CalculatorInput {
       input.secondParentKnownBasisGrosze === undefined
         ? undefined
         : Math.max(0, Math.round(finite(input.secondParentKnownBasisGrosze))),
-    childrenCount: clamp(Math.round(finite(input.childrenCount, 1)), 1, 5),
+    childrenCount: clamp(
+      Math.round(finite(input.childrenCount, 1)),
+      1,
+      Math.max(
+        ...Object.keys(rules.parameters.maternity.weeksByChildren).map(Number)
+      )
+    ),
     maternityWeeksBeforeBirth: clamp(
       Math.round(finite(input.maternityWeeksBeforeBirth)),
       0,
-      6
+      rules.parameters.maternity.maxPreBirthWeeks
     ),
     secondParentParentalWeeks: Math.max(
       0,
       Math.round(finite(input.secondParentParentalWeeks))
     ),
-    parentalWorkFraction: clamp(finite(input.parentalWorkFraction), 0, 0.5),
-    paternityDays: clamp(Math.round(finite(input.paternityDays)), 0, 14),
+    parentalWorkFraction: clamp(
+      finite(input.parentalWorkFraction),
+      0,
+      Number(rules.parameters.parental.maxWorkFraction)
+    ),
+    paternityDays: clamp(
+      Math.round(finite(input.paternityDays)),
+      0,
+      rules.parameters.paternity.maxDays
+    ),
     fatherMaternityTakeoverWeeks: Math.max(
       0,
       Math.round(finite(input.fatherMaternityTakeoverWeeks))
@@ -149,6 +171,16 @@ function parentBasis(
   role: "MOTHER" | "FATHER",
   rightDate: string
 ): ParentInput["basis"] | undefined {
+  if (role === "MOTHER" && input.monthlyBasisOverrideGrosze !== undefined) {
+    return {
+      method: "KNOWN_BASIS",
+      monthlyBasisGrosze: Math.max(
+        0,
+        Math.round(input.monthlyBasisOverrideGrosze)
+      ),
+      origin: "USER",
+    }
+  }
   const known =
     role === "MOTHER"
       ? input.knownBasisGrosze
@@ -253,10 +285,7 @@ function mapEvent(input: CalculatorInput, rightDate: string): FamilyEventInput {
     const childBirthDate =
       input.childBirthDate ??
       (input.childAgeYears !== undefined
-        ? addDays(
-            careDate,
-            -Math.round(input.childAgeYears * 365.2425)
-          )
+        ? addDays(careDate, -Math.round(input.childAgeYears * 365.2425))
         : undefined)
     return {
       kind: mode,
@@ -273,8 +302,7 @@ function mapEvent(input: CalculatorInput, rightDate: string): FamilyEventInput {
       ...(mode === "ADOPTION" && input.adoptionFinalDate
         ? { adoptionFinalDate: input.adoptionFinalDate }
         : {}),
-      ...(mode === "FOSTER_CARE" &&
-      input.isProfessionalFosterFamily
+      ...(mode === "FOSTER_CARE" && input.isProfessionalFosterFamily
         ? { professionalFosterFamily: true }
         : {}),
       ...(mode === "FOSTER_CARE" && input.isDeferredSchooling
@@ -320,7 +348,10 @@ function mapEvent(input: CalculatorInput, rightDate: string): FamilyEventInput {
   if (pretermCategory && (input.childHospitalWeeks ?? 0) > 0) {
     hospitalStays.push({
       start: birthDate,
-      end: addDays(birthDate, Math.round((input.childHospitalWeeks ?? 0) * 7) - 1),
+      end: addDays(
+        birthDate,
+        Math.round((input.childHospitalWeeks ?? 0) * 7) - 1
+      ),
     })
   } else if ((input.childHospitalDaysDay5To28 ?? 0) > 0) {
     hospitalStays.push({
@@ -333,7 +364,10 @@ function mapEvent(input: CalculatorInput, rightDate: string): FamilyEventInput {
   } else if ((input.childHospitalWeeks ?? 0) > 0) {
     hospitalStays.push({
       start: birthDate,
-      end: addDays(birthDate, Math.round((input.childHospitalWeeks ?? 0) * 7) - 1),
+      end: addDays(
+        birthDate,
+        Math.round((input.childHospitalWeeks ?? 0) * 7) - 1
+      ),
     })
   }
 
@@ -353,7 +387,10 @@ function mapEvent(input: CalculatorInput, rightDate: string): FamilyEventInput {
   }
 }
 
-function mapPlan(input: CalculatorInput): LeavePlanInput | undefined {
+function mapPlan(
+  input: CalculatorInput,
+  rules: EngineRuleSet
+): LeavePlanInput | undefined {
   const plan: LeavePlanInput = {
     paymentOption: input.paymentOption,
     maternityWeeksBeforeBirth: input.maternityWeeksBeforeBirth,
@@ -368,10 +405,10 @@ function mapPlan(input: CalculatorInput): LeavePlanInput | undefined {
   ) {
     plan.maternityTakeover = {
       reason:
-        input.fatherMaternityTakeoverReason ??
-        "MOTHER_RESIGNS_AFTER_14_WEEKS",
+        input.fatherMaternityTakeoverReason ?? "MOTHER_RESIGNS_AFTER_14_WEEKS",
       motherWeeksAfterBirth:
-        input.fatherMaternityTakeoverReason === "MOTHER_RESIGNS_AFTER_14_WEEKS" ||
+        input.fatherMaternityTakeoverReason ===
+          "MOTHER_RESIGNS_AFTER_14_WEEKS" ||
         input.fatherMaternityTakeoverReason === undefined
           ? 14
           : 0,
@@ -379,17 +416,17 @@ function mapPlan(input: CalculatorInput): LeavePlanInput | undefined {
   }
   const poolWeeks = input.hasZaZyciem
     ? (input.childrenCount ?? 1) > 1
-      ? PARENTAL_POOL_WEEKS.zaZyciemMultiple
-      : PARENTAL_POOL_WEEKS.zaZyciemSingle
+      ? rules.parameters.parental.poolWeeks.zaZyciemMultiple
+      : rules.parameters.parental.poolWeeks.zaZyciemSingle
     : (input.childrenCount ?? 1) > 1
-      ? PARENTAL_POOL_WEEKS.multiple
-      : PARENTAL_POOL_WEEKS.single
+      ? rules.parameters.parental.poolWeeks.multiple
+      : rules.parameters.parental.poolWeeks.single
   const femaleWeeks = Math.max(
     0,
     Math.round(
       finite(
         input.motherParentalWeeks,
-        Math.max(0, poolWeeks - 9)
+        Math.max(0, poolWeeks - rules.parameters.parental.nonTransferableWeeks)
       )
     )
   )
@@ -444,14 +481,17 @@ const KIND_ORDER: CalculationLine["kind"][] = [
   "LOSS_OF_CHILD",
 ]
 
-function lineKind(line: Assessment["breakdown"][number]): CalculationLine["kind"] | null {
+function lineKind(
+  line: Assessment["breakdown"][number]
+): CalculationLine["kind"] | null {
   if (line.benefit === "PARENTAL") {
     return line.id.endsWith("extension")
       ? "WORK_COMBINATION_EXTENSION"
       : "PARENTAL"
   }
   if (line.benefit === "PATERNITY") return "PATERNITY"
-  if (line.benefit === "SUPPLEMENTARY_MATERNITY") return "MATERNITY_SUPPLEMENTARY"
+  if (line.benefit === "SUPPLEMENTARY_MATERNITY")
+    return "MATERNITY_SUPPLEMENTARY"
   if (line.benefit === "STILLBIRTH_FUNERAL_ALLOWANCE") return "LOSS_OF_CHILD"
   if (
     line.benefit === "MATERNITY" ||
@@ -559,7 +599,9 @@ function extensionCap(input: CalculatorInput): number {
       ? PARENTAL_TOTAL_CAP_WEEKS.zaZyciemMultiple
       : PARENTAL_TOTAL_CAP_WEEKS.zaZyciemSingle
   }
-  return multiple ? PARENTAL_TOTAL_CAP_WEEKS.multiple : PARENTAL_TOTAL_CAP_WEEKS.single
+  return multiple
+    ? PARENTAL_TOTAL_CAP_WEEKS.multiple
+    : PARENTAL_TOTAL_CAP_WEEKS.single
 }
 
 function eligibleFor(
@@ -610,18 +652,31 @@ function emptyResult(input: CalculatorInput): CalculatorResult {
     ],
     verified: false,
     status: "NOT_ELIGIBLE",
+    ruleSetVersion: latestRuleSet().version,
+    ruleSetEffectiveFrom: latestRuleSet().effectiveFrom,
+    ruleSetVerified: false,
     warnings: ["Uwzględnij co najmniej jednego rodzica."],
     trace: [],
   }
 }
 
-export function calculateBenefits(rawInput: CalculatorInput): CalculatorResult {
-  const input = normalize(rawInput)
+export function calculateBenefits(
+  rawInput: CalculatorInput,
+  ruleSet?: RuleSet
+): CalculatorResult {
+  const rules = calculatorRules(ruleSet)
+  const input = normalize(rawInput, rules)
   const parents = mapParents(
     input,
     input.birthDate ?? input.placementDate ?? latestRuleSet().effectiveFrom
   )
-  if (parents.length === 0) return emptyResult(input)
+  if (parents.length === 0)
+    return {
+      ...emptyResult(input),
+      ruleSetVersion: rules.version,
+      ruleSetEffectiveFrom: rules.effectiveFrom,
+      ruleSetVerified: ruleSet?.verified ?? false,
+    }
   const event = mapEvent(input, latestRuleSet().effectiveFrom)
   const rightDate =
     event.kind === "ADOPTION" || event.kind === "FOSTER_CARE"
@@ -633,17 +688,23 @@ export function calculateBenefits(rawInput: CalculatorInput): CalculatorResult {
     ruleSetVersion: latestRuleSet().version,
     event,
     parents,
-    plan: mapPlan(input),
+    plan: mapPlan(input, rules),
     externalParameters: {
       minimumWageGrosze: MINIMUM_WAGE_GROSZE,
-      parentalBenefitAmountGrosze: PARENTAL_BENEFIT_FLOOR_GROSZE,
+      ...(ruleSet
+        ? {}
+        : { parentalBenefitAmountGrosze: PARENTAL_BENEFIT_FLOOR_GROSZE }),
       sourceNote: EXTERNAL_NOTE,
     },
   }
-  const { assessment, schedule } = evaluate(request)
+  const { assessment, schedule } = evaluate(request, rules)
   const lines = mapLines(assessment, input.mode ?? "BIRTH")
-  const motherBasis = assessment.basis.find((basis) => basis.parent === "MOTHER")
-  const fatherBasis = assessment.basis.find((basis) => basis.parent === "FATHER")
+  const motherBasis = assessment.basis.find(
+    (basis) => basis.parent === "MOTHER"
+  )
+  const fatherBasis = assessment.basis.find(
+    (basis) => basis.parent === "FATHER"
+  )
   const basisGrosze = motherBasis?.monthlyBasisGrosze ?? 0
   const secondParentBasisGrosze = fatherBasis?.monthlyBasisGrosze ?? 0
   const maternityWeeks = (schedule?.maternityDimensionDays ?? 0) / 7
@@ -661,8 +722,7 @@ export function calculateBenefits(rawInput: CalculatorInput): CalculatorResult {
   const fatherMaternityTakeoverWeeks =
     periods
       .filter(
-        (period) =>
-          period.parent === "FATHER" && period.benefit === "MATERNITY"
+        (period) => period.parent === "FATHER" && period.benefit === "MATERNITY"
       )
       .reduce((sum, period) => sum + period.days, 0) / 7
   const preBirthWeeks =
@@ -717,6 +777,16 @@ export function calculateBenefits(rawInput: CalculatorInput): CalculatorResult {
     ),
     "Parametry Q-29 (minimalne wynagrodzenie i kwota świadczenia rodzicielskiego) przyjęto jako stałe aplikacji — wynik nadal wymaga potwierdzenia.",
   ]
+  if (ruleSet?.verified) {
+    for (let i = warnings.length - 1; i >= 0; i--) {
+      if (/Q-29|Q-15/.test(warnings[i]!)) warnings.splice(i, 1)
+    }
+  }
+  if (input.monthlyBasisOverrideGrosze !== undefined) {
+    warnings.push(
+      "Podstawa wymiaru pochodzi z danych pobranych z symulowanego ZUS. Sprawdź, czy jest aktualna."
+    )
+  }
   if (input.isProfessionalFosterFamily) {
     warnings.push(
       "Zawodowe rodziny zastępcze są wyłączone z urlopu na warunkach macierzyńskiego i rodzicielskiego (KP art. 183 § 1)."
@@ -740,8 +810,7 @@ export function calculateBenefits(rawInput: CalculatorInput): CalculatorResult {
     )
   }
   if (
-    (input.fatherMaternityTakeoverWeeks ?? 0) >
-    fatherMaternityTakeoverWeeks
+    (input.fatherMaternityTakeoverWeeks ?? 0) > fatherMaternityTakeoverWeeks
   ) {
     warnings.push(
       `Ojciec może przejąć najwyżej ${fatherMaternityTakeoverWeeks} tyg. urlopu macierzyńskiego (matka musi wykorzystać co najmniej 14 tyg.).`
@@ -763,9 +832,12 @@ export function calculateBenefits(rawInput: CalculatorInput): CalculatorResult {
   const trace: CalculationTraceStep[] = assessment.appliedRules.map((rule) => ({
     ruleId: rule.ruleId,
     label: rule.title,
-    detail: rule.openQuestion
-      ? `Wersja ${rule.ruleSetVersion}; kwestia otwarta ${rule.openQuestion}.`
-      : `Wersja ${rule.ruleSetVersion}.`,
+    detail:
+      rule.ruleId === "LR-112" && input.monthlyBasisOverrideGrosze !== undefined
+        ? "Podstawa miesięczna pochodzi z symulowanego ZUS."
+        : rule.openQuestion
+          ? `Wersja ${rule.ruleSetVersion}; kwestia otwarta ${rule.openQuestion}.`
+          : `Wersja ${rule.ruleSetVersion}.`,
     legalReference: rule.sources.join("; "),
   }))
   if (trace.length === 0) {
@@ -798,20 +870,34 @@ export function calculateBenefits(rawInput: CalculatorInput): CalculatorResult {
       input.childAgeYears !== undefined
         ? input.childAgeYears
         : input.childBirthDate && input.placementDate
-          ? daysBetweenDates(input.childBirthDate, input.placementDate) / 365.2425
+          ? daysBetweenDates(input.childBirthDate, input.placementDate) /
+            365.2425
           : (schedule?.terms?.ageAtCareTaking ?? null),
     guaranteeApplied: schedule?.terms?.guaranteeCase ?? false,
     basisGrosze,
-    dailyBasisGrosze: dailyBasis(basisGrosze),
+    dailyBasisGrosze: dailyBasis(
+      basisGrosze,
+      rules.parameters.basis.dailyDivisor
+    ),
     secondParentBasisGrosze,
-    secondParentDailyBasisGrosze: dailyBasis(secondParentBasisGrosze),
+    secondParentDailyBasisGrosze: dailyBasis(
+      secondParentBasisGrosze,
+      rules.parameters.basis.dailyDivisor
+    ),
     motherEligible,
     fatherEligible,
     lines,
     totalGrosze: assessment.totals.totalGrosze ?? 0,
     totalsByBeneficiary,
-    verified: false,
-    status: eligible ? "INDETERMINATE" : "NOT_ELIGIBLE",
+    ruleSetVersion: rules.version,
+    ruleSetEffectiveFrom: rules.effectiveFrom,
+    ruleSetVerified: ruleSet?.verified ?? false,
+    verified: ruleSet?.verified ?? false,
+    status: eligible
+      ? ruleSet?.verified
+        ? "OK"
+        : "INDETERMINATE"
+      : "NOT_ELIGIBLE",
     warnings,
     trace,
   }

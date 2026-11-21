@@ -6,9 +6,11 @@ import type { Database } from "../client"
 import { uuidv7 } from "../ids"
 import {
   benefitCases,
+  contributionBases,
   familyEvents,
   insurancePeriods,
   employmentRecords,
+  sickLeavePeriods,
   userProfiles,
   users,
 } from "../schema"
@@ -84,15 +86,38 @@ export class DrizzleUserRepository implements UserRepository {
       .orderBy(desc(employmentRecords.createdAt))
       .limit(1)
 
-    const [insurance] = await this.db
+    const insuranceRows = await this.db
       .select({
         coverageMode: insurancePeriods.coverageMode,
         startDate: insurancePeriods.startDate,
+        endDate: insurancePeriods.endDate,
+        isActive: insurancePeriods.isActive,
       })
       .from(insurancePeriods)
-      .where(and(eq(insurancePeriods.userId, userId), eq(insurancePeriods.isActive, true)))
-      .orderBy(desc(insurancePeriods.createdAt))
+      .where(eq(insurancePeriods.userId, userId))
+      .orderBy(desc(insurancePeriods.startDate))
+
+    const insurance =
+      insuranceRows.find((row) => row.isActive) ?? insuranceRows[0]
+
+    const [unpaidContribution] = await this.db
+      .select({ id: contributionBases.id })
+      .from(contributionBases)
+      .where(
+        and(
+          eq(contributionBases.userId, userId),
+          eq(contributionBases.paid, false)
+        )
+      )
       .limit(1)
+
+    const sickLeaves = await this.db
+      .select({
+        pregnancyRelated: sickLeavePeriods.pregnancyRelated,
+        days: sickLeavePeriods.days,
+      })
+      .from(sickLeavePeriods)
+      .where(eq(sickLeavePeriods.userId, userId))
 
     const [event] = await this.db
       .select({
@@ -120,6 +145,17 @@ export class DrizzleUserRepository implements UserRepository {
       employmentType: employment?.contractType ?? null,
       coverageMode: insurance?.coverageMode ?? null,
       insuranceStartDate: insurance?.startDate ?? null,
+      insuranceEndDate: insurance?.endDate ?? null,
+      contributionArrears:
+        unpaidContribution === undefined ? null : Boolean(unpaidContribution),
+      pregnancySickLeave:
+        sickLeaves.length === 0
+          ? null
+          : sickLeaves.some((leave) => leave.pregnancyRelated),
+      sickLeaveDays:
+        sickLeaves.length === 0
+          ? null
+          : sickLeaves.reduce((sum, leave) => sum + leave.days, 0),
       grossMonthlyAmountGrosze: employment?.grossMonthlyAmountGrosze ?? null,
       familyEvent: event?.eventType ?? null,
       eventDate: event?.eventDate ?? null,

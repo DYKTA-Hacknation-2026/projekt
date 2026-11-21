@@ -22,6 +22,7 @@ import {
 import {
   PRESET_CASES,
   findPresetCase,
+  type RuleSet,
   type CalculatorInput,
   type CalculatorMode,
   type CalculatorResult,
@@ -31,7 +32,12 @@ import {
   type SicknessCoverage,
   type SpecialCase,
 } from "@zpr/domain"
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
+import { importPrefillStorageSchema } from "@zpr/contracts/data-import"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -98,7 +104,14 @@ function numberOrUndefined(value: string): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined
 }
 
-export function CalculatorForm() {
+function workLabel(fraction: number): string {
+  if (fraction === 0) return "Bez pracy"
+  if (fraction === 0.25) return "¼ etatu"
+  if (fraction === 0.5) return "½ etatu"
+  return `${Math.round(fraction * 100)}% etatu`
+}
+
+export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
   const [tab, setTab] = useState<FormTab>("BIRTH")
   const [mode, setMode] = useState<CalculatorMode>("BIRTH")
   const [presetId, setPresetId] = useState("")
@@ -148,8 +161,12 @@ export function CalculatorForm() {
     useState<PaymentOption>("STANDARD_100_70")
   const [flatRateApplicationDate, setFlatRateApplicationDate] = useState("")
   const [hasZaZyciem, setHasZaZyciem] = useState(false)
-  const [preBirthWeeks, setPreBirthWeeks] = useState("2")
-  const [secondParentWeeks, setSecondParentWeeks] = useState("9")
+  const [preBirthWeeks, setPreBirthWeeks] = useState(
+    String(Math.min(2, ruleSet.maternity.maxPreBirthWeeks))
+  )
+  const [secondParentWeeks, setSecondParentWeeks] = useState(
+    String(ruleSet.parental.nonTransferableWeeks)
+  )
   const [motherWeeks, setMotherWeeks] = useState("")
   const [takeoverWeeks, setTakeoverWeeks] = useState("0")
   const [takeoverReason, setTakeoverReason] = useState<
@@ -158,7 +175,9 @@ export function CalculatorForm() {
   const [workFraction, setWorkFraction] = useState("0")
   const [workCombinedWeeks, setWorkCombinedWeeks] = useState("")
   const [combineInExtension, setCombineInExtension] = useState(false)
-  const [paternityDays, setPaternityDays] = useState("14")
+  const [paternityDays, setPaternityDays] = useState(
+    String(ruleSet.paternity.days)
+  )
 
   // Child situation — birth
   const [birthWeek, setBirthWeek] = useState("")
@@ -183,8 +202,62 @@ export function CalculatorForm() {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ResponseBody | null>(null)
+  const [monthlyBasis, setMonthlyBasis] = useState<number | undefined>()
+  const [useImportedBasis, setUseImportedBasis] = useState(true)
+  const [importLoaded, setImportLoaded] = useState(false)
+
+  const childCounts = Object.keys(ruleSet.maternity.weeksByChildren)
+    .map(Number)
+    .sort((a, b) => a - b)
+  const preBirthOptions = Array.from(
+    { length: ruleSet.maternity.maxPreBirthWeeks + 1 },
+    (_, index) => index
+  )
+  const paternityOptions = Array.from(
+    new Set([0, ruleSet.paternity.minPartDays, ruleSet.paternity.days])
+  )
+    .filter((days) => days >= 0 && days <= ruleSet.paternity.days)
+    .sort((a, b) => a - b)
+  const workOptions = [0, 0.25, 0.5]
+    .filter((value) => value <= ruleSet.parental.maxWorkFraction)
+    .map((value) => ({ value, label: workLabel(value) }))
 
   useEffect(() => {
+    const rawImport = window.sessionStorage.getItem("zpr:import-prefill")
+    if (rawImport) {
+      try {
+        const parsed = importPrefillStorageSchema.safeParse(
+          JSON.parse(rawImport)
+        )
+        if (parsed.success) {
+          const data = parsed.data.data
+          if (data.grossMonthlyIncomePln !== undefined) {
+            setIncome(String(data.grossMonthlyIncomePln))
+          }
+          if (data.childrenCount !== undefined) {
+            setChildren(
+              String(
+                Math.min(
+                  ruleSet.maternity.maxChildren,
+                  Math.max(1, data.childrenCount)
+                )
+              )
+            )
+          }
+          if (data.hasZaZyciem !== undefined) {
+            setHasZaZyciem(data.hasZaZyciem)
+          }
+          if (data.monthlyBasisGrosze !== undefined) {
+            setMonthlyBasis(data.monthlyBasisGrosze)
+            setUseImportedBasis(true)
+          }
+          setImportLoaded(true)
+        }
+      } catch {
+        // Ignore a stale or malformed prefill.
+      }
+    }
+
     const raw = window.sessionStorage.getItem("zpr:document-prefill")
     if (!raw) return
     window.sessionStorage.removeItem("zpr:document-prefill")
@@ -192,6 +265,7 @@ export function CalculatorForm() {
       const parsed = JSON.parse(raw) as { income?: string }
       if (parsed.income && Number.isFinite(Number(parsed.income))) {
         setIncome(parsed.income)
+        setMonthlyBasis(undefined)
       }
     } catch {
       // Ignore a stale or malformed prefill.
@@ -208,6 +282,8 @@ export function CalculatorForm() {
   function applyInput(p: CalculatorInput) {
     const motherType = p.motherEmploymentType ?? p.employmentType ?? "EMPLOYEE"
     const fatherType = p.fatherEmploymentType ?? p.employmentType ?? "EMPLOYEE"
+    setMonthlyBasis(undefined)
+    setImportLoaded(false)
     setMode(p.mode ?? "BIRTH")
     setIncome(plnToString(p.grossMonthlyIncomeGrosze))
     if (
@@ -250,9 +326,9 @@ export function CalculatorForm() {
       p.fatherEnabled ??
         Boolean(
           p.secondParentMonthlyIncomeGrosze !== undefined ||
-            p.secondParentKnownBasisGrosze !== undefined ||
-            p.secondParentParentalWeeks > 0 ||
-            p.paternityDays > 0
+          p.secondParentKnownBasisGrosze !== undefined ||
+          p.secondParentParentalWeeks > 0 ||
+          p.paternityDays > 0
         )
     )
     if (p.motherEnabled === false) setIncomeScope("BOTH")
@@ -379,7 +455,10 @@ export function CalculatorForm() {
 
   function buildInput(): CalculatorInput {
     const incomePln = Number(income)
-    if (incomeMode === "SIMPLE" && (!Number.isFinite(incomePln) || incomePln < 0)) {
+    if (
+      incomeMode === "SIMPLE" &&
+      (!Number.isFinite(incomePln) || incomePln < 0)
+    ) {
       throw new Error("Podaj poprawny miesięczny dochód brutto.")
     }
 
@@ -388,7 +467,9 @@ export function CalculatorForm() {
       if (!Number.isFinite(gross) || gross < 0) {
         throw new Error(`Podaj poprawną kwotę dla: ${MONTH_LABELS[index]}.`)
       }
-      const supplement = row.absence ? numberOrUndefined(row.supplement) : undefined
+      const supplement = row.absence
+        ? numberOrUndefined(row.supplement)
+        : undefined
       return {
         grossGrosze: Math.round(gross * 100),
         absenceOver50Percent: row.absence || undefined,
@@ -426,12 +507,17 @@ export function CalculatorForm() {
       fatherEnabled &&
       (secondKnown === undefined || secondKnown <= 0)
     ) {
-      throw new Error("Podaj podstawę wymiaru drugiego rodzica z zaświadczenia.")
+      throw new Error(
+        "Podaj podstawę wymiaru drugiego rodzica z zaświadczenia."
+      )
     }
 
     const isBirth = mode === "BIRTH"
     const input: CalculatorInput = {
-      grossMonthlyIncomeGrosze: Math.round((Number.isFinite(incomePln) ? incomePln : 0) * 100),
+      grossMonthlyIncomeGrosze: Math.round(
+        (Number.isFinite(incomePln) ? incomePln : 0) * 100
+      ),
+      monthlyBasisOverrideGrosze: useImportedBasis ? monthlyBasis : undefined,
       childrenCount: Number(children),
       hasZaZyciem,
       paymentOption,
@@ -475,7 +561,8 @@ export function CalculatorForm() {
       input.fatherMaternityTakeoverReason = takeoverReason
     }
     if (!isBirth) {
-      if (courtApplicationDate) input.courtApplicationDate = courtApplicationDate
+      if (courtApplicationDate)
+        input.courtApplicationDate = courtApplicationDate
       if (adoptionFinalDate) input.adoptionFinalDate = adoptionFinalDate
       const previousMaternity = numberOrUndefined(previousMaternityTermsWeeks)
       const previousParental = numberOrUndefined(previousParentalWeeks)
@@ -554,7 +641,7 @@ export function CalculatorForm() {
         throw new Error(
           issue
             ? `${issue.path}: ${issue.message}`
-            : data.detail ?? "Nie udało się wykonać obliczenia."
+            : (data.detail ?? "Nie udało się wykonać obliczenia.")
         )
       }
       setResult(data)
@@ -580,12 +667,24 @@ export function CalculatorForm() {
             Dane do wyliczenia
           </CardTitle>
           <CardDescription>
-            Wynik zapisuje się z wersją silnika i pełnym wejściem. Kwoty są
-            szacunkiem do czasu zatwierdzenia Q-29 i Q-15.
+            Wynik zapisuje się z wersją silnika, zestawem reguł{" "}
+            {ruleSet.version} i pełnym wejściem. Kwoty są szacunkiem, dopóki
+            zestaw reguł nie jest w pełni zweryfikowany.
           </CardDescription>
         </CardHeader>
         <form onSubmit={onSubmit} aria-busy={pending}>
           <CardContent className="space-y-5">
+            {importLoaded && (
+              <Alert variant="info">
+                <Info aria-hidden="true" />
+                <AlertTitle>Dane z symulowanych źródeł</AlertTitle>
+                <AlertDescription>
+                  Dochód i liczba dzieci pochodzą z zaakceptowanego raportu
+                  pobrania. Możesz je zmienić — kalkulator nadal liczy
+                  deterministycznie.
+                </AlertDescription>
+              </Alert>
+            )}
             <Tabs value={tab} onValueChange={onTabChange}>
               <TabsList
                 aria-label="Rodzaj sprawy"
@@ -678,11 +777,16 @@ export function CalculatorForm() {
                 <Select
                   id="adoptionKind"
                   value={mode}
-                  onChange={(event) => setMode(event.target.value as CalculatorMode)}
+                  onChange={(event) =>
+                    setMode(event.target.value as CalculatorMode)
+                  }
                 >
-                  <option value="ADOPTION">Adopcja (do ukończenia 14 lat)</option>
+                  <option value="ADOPTION">
+                    Adopcja (do ukończenia 14 lat)
+                  </option>
                   <option value="FOSTER_CARE">
-                    Rodzina zastępcza niezawodowa (do 7 lat, do 10 przy odroczeniu)
+                    Rodzina zastępcza niezawodowa (do 7 lat, do 10 przy
+                    odroczeniu)
                   </option>
                 </Select>
               </div>
@@ -691,7 +795,11 @@ export function CalculatorForm() {
             <fieldset className="space-y-3 rounded-lg border border-border/70 p-3">
               <legend className="px-1 text-sm font-medium">Dochody</legend>
 
-              <div role="radiogroup" aria-label="Czyj dochód podajesz" className="grid gap-2 sm:grid-cols-2">
+              <div
+                role="radiogroup"
+                aria-label="Czyj dochód podajesz"
+                className="grid gap-2 sm:grid-cols-2"
+              >
                 <ChoiceCard
                   name="incomeScope"
                   checked={incomeScope === "MOTHER"}
@@ -708,7 +816,33 @@ export function CalculatorForm() {
                 />
               </div>
 
-              <div role="radiogroup" aria-label="Sposób podania podstawy" className="grid gap-2 sm:grid-cols-3">
+              {monthlyBasis !== undefined && (
+                <label className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-4 accent-[var(--primary)]"
+                    checked={useImportedBasis}
+                    onChange={(event) =>
+                      setUseImportedBasis(event.target.checked)
+                    }
+                  />
+                  <span>
+                    <span className="font-medium">
+                      Użyj podstawy wymiaru z ZUS (symulacja)
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {formatPln(monthlyBasis)} miesięcznie. Odznacz, aby
+                      wyliczyć podstawę z podanego wynagrodzenia.
+                    </span>
+                  </span>
+                </label>
+              )}
+
+              <div
+                role="radiogroup"
+                aria-label="Sposób podania podstawy"
+                className="grid gap-2 sm:grid-cols-3"
+              >
                 <ChoiceCard
                   name="incomeMode"
                   checked={incomeMode === "SIMPLE"}
@@ -798,7 +932,9 @@ export function CalculatorForm() {
                       step={0.01}
                       inputMode="decimal"
                       value={secondKnownBasis}
-                      onChange={(event) => setSecondKnownBasis(event.target.value)}
+                      onChange={(event) =>
+                        setSecondKnownBasis(event.target.value)
+                      }
                       required
                     />
                   </div>
@@ -808,9 +944,9 @@ export function CalculatorForm() {
               {incomeMode === "DETAILED" && (
                 <div className="space-y-2">
                   <p id="months-help" className="text-xs text-muted-foreground">
-                    Zaznacz miesiące z absencją powyżej 50% czasu pracy — zostaną
-                    wyłączone. Podanie kwoty dopełnienia zastępuje wyłączenie
-                    (U art. 36, 38).
+                    Zaznacz miesiące z absencją powyżej 50% czasu pracy —
+                    zostaną wyłączone. Podanie kwoty dopełnienia zastępuje
+                    wyłączenie (U art. 36, 38).
                   </p>
                   <ul aria-describedby="months-help" className="space-y-2">
                     {months.map((row, index) => (
@@ -844,13 +980,18 @@ export function CalculatorForm() {
                             className="size-4 accent-[var(--primary)]"
                             checked={row.absence}
                             onChange={(event) =>
-                              updateMonth(index, { absence: event.target.checked })
+                              updateMonth(index, {
+                                absence: event.target.checked,
+                              })
                             }
                           />
                           Absencja &gt; 50%
                         </label>
                         <div className="space-y-1">
-                          <Label htmlFor={`supplement-${index}`} className="text-xs">
+                          <Label
+                            htmlFor={`supplement-${index}`}
+                            className="text-xs"
+                          >
                             Dopełnienie (zł)
                           </Label>
                           <Input
@@ -863,7 +1004,9 @@ export function CalculatorForm() {
                             disabled={!row.absence}
                             placeholder="opcjonalnie"
                             onChange={(event) =>
-                              updateMonth(index, { supplement: event.target.value })
+                              updateMonth(index, {
+                                supplement: event.target.value,
+                              })
                             }
                           />
                         </div>
@@ -917,7 +1060,9 @@ export function CalculatorForm() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="motherInsurance">Ubezpieczenie chorobowe</Label>
+                    <Label htmlFor="motherInsurance">
+                      Ubezpieczenie chorobowe
+                    </Label>
                     <Select
                       id="motherInsurance"
                       value={motherSicknessInsurance}
@@ -935,7 +1080,9 @@ export function CalculatorForm() {
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <div className="space-y-1">
-                      <Label htmlFor="motherInsuranceStart">Początek ubezpieczenia</Label>
+                      <Label htmlFor="motherInsuranceStart">
+                        Początek ubezpieczenia
+                      </Label>
                       <Input
                         id="motherInsuranceStart"
                         type="date"
@@ -947,7 +1094,9 @@ export function CalculatorForm() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="motherInsuranceEnd">Koniec ubezpieczenia</Label>
+                      <Label htmlFor="motherInsuranceEnd">
+                        Koniec ubezpieczenia
+                      </Label>
                       <Input
                         id="motherInsuranceEnd"
                         type="date"
@@ -964,7 +1113,9 @@ export function CalculatorForm() {
                         id="motherPayerSize"
                         value={motherPayerSize}
                         disabled={!motherEnabled}
-                        onChange={(event) => setMotherPayerSize(event.target.value)}
+                        onChange={(event) =>
+                          setMotherPayerSize(event.target.value)
+                        }
                       >
                         <option value="">Nie wiem</option>
                         <option value="OVER_20">Ponad 20 ubezpieczonych</option>
@@ -997,7 +1148,9 @@ export function CalculatorForm() {
                       type="checkbox"
                       className="size-4 accent-[var(--primary)]"
                       checked={fatherEnabled}
-                      onChange={(event) => setFatherEnabled(event.target.checked)}
+                      onChange={(event) =>
+                        setFatherEnabled(event.target.checked)
+                      }
                     />
                     Tata / drugi rodzic
                   </label>
@@ -1021,7 +1174,9 @@ export function CalculatorForm() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="fatherInsurance">Ubezpieczenie chorobowe</Label>
+                    <Label htmlFor="fatherInsurance">
+                      Ubezpieczenie chorobowe
+                    </Label>
                     <Select
                       id="fatherInsurance"
                       value={fatherSicknessInsurance}
@@ -1039,7 +1194,9 @@ export function CalculatorForm() {
                   </div>
                   <div className="grid gap-2 sm:grid-cols-2">
                     <div className="space-y-1">
-                      <Label htmlFor="fatherInsuranceStart">Początek ubezpieczenia</Label>
+                      <Label htmlFor="fatherInsuranceStart">
+                        Początek ubezpieczenia
+                      </Label>
                       <Input
                         id="fatherInsuranceStart"
                         type="date"
@@ -1051,7 +1208,9 @@ export function CalculatorForm() {
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="fatherInsuranceEnd">Koniec ubezpieczenia</Label>
+                      <Label htmlFor="fatherInsuranceEnd">
+                        Koniec ubezpieczenia
+                      </Label>
                       <Input
                         id="fatherInsuranceEnd"
                         type="date"
@@ -1068,7 +1227,9 @@ export function CalculatorForm() {
                         id="fatherPayerSize"
                         value={fatherPayerSize}
                         disabled={!fatherEnabled}
-                        onChange={(event) => setFatherPayerSize(event.target.value)}
+                        onChange={(event) =>
+                          setFatherPayerSize(event.target.value)
+                        }
                       >
                         <option value="">Nie wiem</option>
                         <option value="OVER_20">Ponad 20 ubezpieczonych</option>
@@ -1106,7 +1267,9 @@ export function CalculatorForm() {
                   max={1}
                   step={0.05}
                   value={employmentFraction}
-                  onChange={(event) => setEmploymentFraction(event.target.value)}
+                  onChange={(event) =>
+                    setEmploymentFraction(event.target.value)
+                  }
                 />
                 <p className="text-xs text-muted-foreground">
                   1 = pełny etat; 0,5 = pół etatu. Dotyczy minimalnej podstawy
@@ -1118,16 +1281,20 @@ export function CalculatorForm() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="children">
-                  {isBirth ? "Dzieci z jednego porodu" : "Dzieci przyjęte jednocześnie"}
+                  {isBirth
+                    ? "Dzieci z jednego porodu"
+                    : "Dzieci przyjęte jednocześnie"}
                 </Label>
                 <Select
                   id="children"
                   value={children}
                   onChange={(event) => setChildren(event.target.value)}
                 >
-                  {[1, 2, 3, 4, 5].map((count) => (
+                  {childCounts.map((count) => (
                     <option key={count} value={count}>
-                      {count === 5 ? "5 lub więcej" : count}
+                      {count === ruleSet.maternity.maxChildren
+                        ? `${count} lub więcej`
+                        : count}
                     </option>
                   ))}
                 </Select>
@@ -1147,13 +1314,15 @@ export function CalculatorForm() {
 
               {isBirth && (
                 <div className="space-y-2">
-                  <Label htmlFor="preBirth">Tygodnie urlopu przed porodem</Label>
+                  <Label htmlFor="preBirth">
+                    Tygodnie urlopu przed porodem
+                  </Label>
                   <Select
                     id="preBirth"
                     value={preBirthWeeks}
                     onChange={(event) => setPreBirthWeeks(event.target.value)}
                   >
-                    {[0, 1, 2, 3, 4, 5, 6].map((weeks) => (
+                    {preBirthOptions.map((weeks) => (
                       <option key={weeks} value={weeks}>
                         {weeks} tyg.
                       </option>
@@ -1170,7 +1339,7 @@ export function CalculatorForm() {
                   id="secondParent"
                   type="number"
                   min={0}
-                  max={67}
+                  max={Math.max(...Object.values(ruleSet.parental.poolWeeks))}
                   step={1}
                   value={secondParentWeeks}
                   onChange={(event) => setSecondParentWeeks(event.target.value)}
@@ -1179,12 +1348,14 @@ export function CalculatorForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="motherWeeks">Tygodnie rodzicielskiego mamy</Label>
+                <Label htmlFor="motherWeeks">
+                  Tygodnie rodzicielskiego mamy
+                </Label>
                 <Input
                   id="motherWeeks"
                   type="number"
                   min={0}
-                  max={67}
+                  max={Math.max(...Object.values(ruleSet.parental.poolWeeks))}
                   step={1}
                   value={motherWeeks}
                   placeholder="reszta puli"
@@ -1192,11 +1363,18 @@ export function CalculatorForm() {
                   aria-describedby="split-help"
                 />
               </div>
-              <p id="split-help" className="text-xs text-muted-foreground sm:col-span-2">
-                Każde z rodziców ma 9 niezbywalnych tygodni. Drugi rodzic może
-                wziąć więcej niż 9, jeśli mama zrezygnuje z części swoich —
-                wpisz wtedy jej tygodnie. Suma nie przekroczy puli 41/43
-                (65/67 z „Za życiem”).
+              <p
+                id="split-help"
+                className="text-xs text-muted-foreground sm:col-span-2"
+              >
+                Każde z rodziców ma {ruleSet.parental.nonTransferableWeeks}{" "}
+                niezbywalnych tygodni. Drugi rodzic może wziąć więcej niż{" "}
+                {ruleSet.parental.nonTransferableWeeks}, jeśli mama zrezygnuje z
+                części swoich — wpisz wtedy jej tygodnie. Suma nie przekroczy
+                puli {ruleSet.parental.poolWeeks.single}/
+                {ruleSet.parental.poolWeeks.multiple}(
+                {ruleSet.parental.poolWeeks.zaZyciemSingle}/
+                {ruleSet.parental.poolWeeks.zaZyciemMultiple} z „Za życiem”).
               </p>
 
               {isBirth && (
@@ -1208,7 +1386,11 @@ export function CalculatorForm() {
                     id="takeover"
                     type="number"
                     min={0}
-                    max={23}
+                    max={
+                      Math.max(
+                        ...Object.values(ruleSet.maternity.weeksByChildren)
+                      ) - ruleSet.maternity.motherPersonalWeeks
+                    }
                     step={1}
                     value={takeoverWeeks}
                     onChange={(event) => setTakeoverWeeks(event.target.value)}
@@ -1220,8 +1402,7 @@ export function CalculatorForm() {
                     value={takeoverReason}
                     onChange={(event) =>
                       setTakeoverReason(
-                        event.target
-                          .value as NonNullable<
+                        event.target.value as NonNullable<
                           CalculatorInput["fatherMaternityTakeoverReason"]
                         >
                       )
@@ -1235,7 +1416,9 @@ export function CalculatorForm() {
                     </option>
                     <option value="MOTHER_HOSPITALIZED">Szpital mamy</option>
                     <option value="MOTHER_DIED">Zgon mamy</option>
-                    <option value="MOTHER_ABANDONED_CHILD">Porzucenie dziecka</option>
+                    <option value="MOTHER_ABANDONED_CHILD">
+                      Porzucenie dziecka
+                    </option>
                     <option value="UNINSURED_MOTHER_DIED">
                       Zgon nieubezpieczonej mamy
                     </option>
@@ -1249,7 +1432,10 @@ export function CalculatorForm() {
                       Nieubezpieczona mama podjęła pracę
                     </option>
                   </Select>
-                  <p id="takeover-help" className="text-xs text-muted-foreground">
+                  <p
+                    id="takeover-help"
+                    className="text-xs text-muted-foreground"
+                  >
                     Maksymalnie wymiar macierzyńskiego minus 14 tygodni mamy.
                   </p>
                 </div>
@@ -1262,7 +1448,7 @@ export function CalculatorForm() {
                   value={paternityDays}
                   onChange={(event) => setPaternityDays(event.target.value)}
                 >
-                  {[0, 7, 14].map((days) => (
+                  {paternityOptions.map((days) => (
                     <option key={days} value={days}>
                       {days} dni
                     </option>
@@ -1271,15 +1457,19 @@ export function CalculatorForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="work">Praca podczas urlopu rodzicielskiego</Label>
+                <Label htmlFor="work">
+                  Praca podczas urlopu rodzicielskiego
+                </Label>
                 <Select
                   id="work"
                   value={workFraction}
                   onChange={(event) => setWorkFraction(event.target.value)}
                 >
-                  <option value="0">Bez pracy</option>
-                  <option value="0.25">¼ etatu</option>
-                  <option value="0.5">½ etatu</option>
+                  {workOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </Select>
               </div>
 
@@ -1291,11 +1481,15 @@ export function CalculatorForm() {
                       id="workWeeks"
                       type="number"
                       min={0}
-                      max={67}
+                      max={Math.max(
+                        ...Object.values(ruleSet.parental.poolWeeks)
+                      )}
                       step={1}
                       value={workCombinedWeeks}
                       placeholder="cały urlop mamy"
-                      onChange={(event) => setWorkCombinedWeeks(event.target.value)}
+                      onChange={(event) =>
+                        setWorkCombinedWeeks(event.target.value)
+                      }
                     />
                   </div>
                   <label
@@ -1307,10 +1501,14 @@ export function CalculatorForm() {
                       type="checkbox"
                       className="mt-0.5 size-4 accent-[var(--primary)]"
                       checked={combineInExtension}
-                      onChange={(event) => setCombineInExtension(event.target.checked)}
+                      onChange={(event) =>
+                        setCombineInExtension(event.target.checked)
+                      }
                     />
                     <span>
-                      <span className="font-medium">Praca także w przedłużeniu</span>
+                      <span className="font-medium">
+                        Praca także w przedłużeniu
+                      </span>
                       <span className="block text-xs text-muted-foreground">
                         Wydłużenie wg wzoru z art. 182¹f KP, maks. 82/86 tyg.
                         (130/134 z „Za życiem”).
@@ -1329,7 +1527,9 @@ export function CalculatorForm() {
                 {isBirth ? (
                   <>
                     <div className="space-y-2">
-                      <Label htmlFor="birthWeek">Tydzień ciąży przy porodzie</Label>
+                      <Label htmlFor="birthWeek">
+                        Tydzień ciąży przy porodzie
+                      </Label>
                       <Input
                         id="birthWeek"
                         type="number"
@@ -1362,7 +1562,9 @@ export function CalculatorForm() {
                         min={0}
                         max={60}
                         value={hospitalWeeks}
-                        onChange={(event) => setHospitalWeeks(event.target.value)}
+                        onChange={(event) =>
+                          setHospitalWeeks(event.target.value)
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -1376,11 +1578,15 @@ export function CalculatorForm() {
                         max={24}
                         value={hospitalDays}
                         placeholder="dla porodu od 37. tyg."
-                        onChange={(event) => setHospitalDays(event.target.value)}
+                        onChange={(event) =>
+                          setHospitalDays(event.target.value)
+                        }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="specialCase">Sytuacje szczególne (utrata dziecka)</Label>
+                      <Label htmlFor="specialCase">
+                        Sytuacje szczególne (utrata dziecka)
+                      </Label>
                       <Select
                         id="specialCase"
                         value={specialCase}
@@ -1388,7 +1594,9 @@ export function CalculatorForm() {
                           setSpecialCase(event.target.value as SpecialCase)
                         }
                       >
-                        <option value="STANDARD">Brak — standardowy przebieg</option>
+                        <option value="STANDARD">
+                          Brak — standardowy przebieg
+                        </option>
                         <option value="STILLBIRTH">Martwe urodzenie</option>
                         <option value="CHILD_DEATH_BEFORE_8W">
                           Zgon dziecka przed 8. tygodniem życia
@@ -1401,7 +1609,9 @@ export function CalculatorForm() {
                     {(specialCase === "CHILD_DEATH_BEFORE_8W" ||
                       specialCase === "CHILD_DEATH_AFTER_8W") && (
                       <div className="space-y-2">
-                        <Label htmlFor="deathDay">Dzień życia dziecka w chwili zgonu</Label>
+                        <Label htmlFor="deathDay">
+                          Dzień życia dziecka w chwili zgonu
+                        </Label>
                         <Input
                           id="deathDay"
                           type="number"
@@ -1415,7 +1625,9 @@ export function CalculatorForm() {
                 ) : (
                   <>
                     <div className="space-y-2">
-                      <Label htmlFor="childAge">Wiek dziecka przy przyjęciu (lata)</Label>
+                      <Label htmlFor="childAge">
+                        Wiek dziecka przy przyjęciu (lata)
+                      </Label>
                       <Input
                         id="childAge"
                         type="number"
@@ -1428,33 +1640,46 @@ export function CalculatorForm() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="childBirthDate">Data urodzenia dziecka</Label>
+                      <Label htmlFor="childBirthDate">
+                        Data urodzenia dziecka
+                      </Label>
                       <Input
                         id="childBirthDate"
                         type="date"
                         value={childBirthDate}
-                        onChange={(event) => setChildBirthDate(event.target.value)}
+                        onChange={(event) =>
+                          setChildBirthDate(event.target.value)
+                        }
                         aria-describedby="age-help"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="placementDate">Data przyjęcia na wychowanie</Label>
+                      <Label htmlFor="placementDate">
+                        Data przyjęcia na wychowanie
+                      </Label>
                       <Input
                         id="placementDate"
                         type="date"
                         value={placementDate}
-                        onChange={(event) => setPlacementDate(event.target.value)}
+                        onChange={(event) =>
+                          setPlacementDate(event.target.value)
+                        }
                         aria-describedby="age-help"
                       />
                     </div>
-                    <p id="age-help" className="text-xs text-muted-foreground sm:col-span-2">
+                    <p
+                      id="age-help"
+                      className="text-xs text-muted-foreground sm:col-span-2"
+                    >
                       Gdy podasz obie daty, wiek wyliczymy z nich. W przeciwnym
                       razie użyjemy wieku w latach.
                     </p>
                     {mode === "ADOPTION" && (
                       <>
                         <div className="space-y-2">
-                          <Label htmlFor="courtDate">Wniosek do sądu opiekuńczego</Label>
+                          <Label htmlFor="courtDate">
+                            Wniosek do sądu opiekuńczego
+                          </Label>
                           <Input
                             id="courtDate"
                             type="date"
@@ -1465,7 +1690,9 @@ export function CalculatorForm() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="adoptionFinalDate">Prawomocne przysposobienie</Label>
+                          <Label htmlFor="adoptionFinalDate">
+                            Prawomocne przysposobienie
+                          </Label>
                           <Input
                             id="adoptionFinalDate"
                             type="date"
@@ -1516,10 +1743,14 @@ export function CalculatorForm() {
                         type="checkbox"
                         className="mt-0.5 size-4 accent-[var(--primary)]"
                         checked={deferredSchooling}
-                        onChange={(event) => setDeferredSchooling(event.target.checked)}
+                        onChange={(event) =>
+                          setDeferredSchooling(event.target.checked)
+                        }
                       />
                       <span>
-                        <span className="font-medium">Odroczony obowiązek szkolny</span>
+                        <span className="font-medium">
+                          Odroczony obowiązek szkolny
+                        </span>
                         <span className="block text-xs text-muted-foreground">
                           Limit wieku 10 lat zamiast 7 (rodzina zastępcza).
                         </span>
@@ -1535,12 +1766,17 @@ export function CalculatorForm() {
                           type="checkbox"
                           className="mt-0.5 size-4 accent-[var(--primary)]"
                           checked={professionalFoster}
-                          onChange={(event) => setProfessionalFoster(event.target.checked)}
+                          onChange={(event) =>
+                            setProfessionalFoster(event.target.checked)
+                          }
                         />
                         <span>
-                          <span className="font-medium">Zawodowa rodzina zastępcza</span>
+                          <span className="font-medium">
+                            Zawodowa rodzina zastępcza
+                          </span>
                           <span className="block text-xs text-muted-foreground">
-                            Zawodowe rodziny zastępcze nie nabywają tego uprawnienia.
+                            Zawodowe rodziny zastępcze nie nabywają tego
+                            uprawnienia.
                           </span>
                         </span>
                       </label>
@@ -1557,24 +1793,22 @@ export function CalculatorForm() {
                   name="paymentOption"
                   checked={paymentOption === "STANDARD_100_70"}
                   onSelect={() => setPaymentOption("STANDARD_100_70")}
-                  title="100% + 70%"
-                  description="Macierzyński 100%, rodzicielski 70%."
+                  title={`${formatPercent(ruleSet.maternity.rate)} + ${formatPercent(ruleSet.parental.rate)}`}
+                  description={`Macierzyński ${formatPercent(ruleSet.maternity.rate)}, rodzicielski ${formatPercent(ruleSet.parental.rate)}.`}
                 />
                 <ChoiceCard
                   name="paymentOption"
                   checked={paymentOption === "FLAT_81_5"}
                   onSelect={() => setPaymentOption("FLAT_81_5")}
-                  title="81,5%"
-                  description={
-                    isBirth
-                      ? "Wniosek w ciągu 21 dni od porodu."
-                      : "Wniosek w ciągu 21 dni od przyjęcia dziecka."
-                  }
+                  title={formatPercent(ruleSet.parental.flatRate)}
+                  description={`Wniosek w ciągu ${ruleSet.deadlines.flatRateApplicationDays} dni od porodu.`}
                 />
               </div>
               {paymentOption === "FLAT_81_5" && (
                 <div className="space-y-2">
-                  <Label htmlFor="flatDate">Data wniosku o 81,5% (opcjonalna)</Label>
+                  <Label htmlFor="flatDate">
+                    Data wniosku o 81,5% (opcjonalna)
+                  </Label>
                   <Input
                     id="flatDate"
                     type="date"
@@ -1598,7 +1832,9 @@ export function CalculatorForm() {
                 <span>
                   <span className="font-medium">Zaświadczenie „Za życiem”</span>
                   <span className="block text-xs text-muted-foreground">
-                    Wydłuża pulę urlopu rodzicielskiego do 65/67 tygodni.
+                    Wydłuża pulę urlopu rodzicielskiego do{" "}
+                    {ruleSet.parental.poolWeeks.zaZyciemSingle}/
+                    {ruleSet.parental.poolWeeks.zaZyciemMultiple} tygodni.
                   </span>
                 </span>
               </label>
@@ -1646,7 +1882,10 @@ export function CalculatorForm() {
           <Card className="border-dashed">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Info aria-hidden="true" className="size-4 text-muted-foreground" />
+                <Info
+                  aria-hidden="true"
+                  className="size-4 text-muted-foreground"
+                />
                 Tu pojawi się wynik
               </CardTitle>
               <CardDescription>
@@ -1699,7 +1938,9 @@ function ChoiceCard({
       />
       <span>
         <span className="font-medium">{title}</span>
-        <span className="block text-xs text-muted-foreground">{description}</span>
+        <span className="block text-xs text-muted-foreground">
+          {description}
+        </span>
       </span>
     </label>
   )
@@ -1736,11 +1977,19 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
               </CardTitle>
               <CardDescription>
                 Wersja silnika:{" "}
-                <span className="font-mono">{data.engineVersion}</span>
+                <span className="font-mono">{data.engineVersion}</span> · zestaw
+                reguł:{" "}
+                <span className="font-mono">{result.ruleSetVersion}</span>
               </CardDescription>
             </div>
             <Badge
-              variant={notEligible ? "destructive" : isIndeterminate ? "warning" : "success"}
+              variant={
+                notEligible
+                  ? "destructive"
+                  : isIndeterminate
+                    ? "warning"
+                    : "success"
+              }
             >
               {notEligible
                 ? "Brak uprawnienia"
@@ -1759,7 +2008,7 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
               Kwota brutto, przed zaliczką PIT.{" "}
               {result.verified
                 ? "Parametry zweryfikowane."
-                : "Wynik niezweryfikowany — Q-29 i Q-15."}
+                : "Wynik niezweryfikowany — sprawdź ostrzeżenia poniżej."}
             </p>
           </div>
 
@@ -1770,10 +2019,15 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
                   ? result.motherEligible
                   : result.fatherEligible
               return (
-                <div key={entry.beneficiary} className="rounded-lg bg-secondary/50 p-3">
+                <div
+                  key={entry.beneficiary}
+                  className="rounded-lg bg-secondary/50 p-3"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">
-                      {entry.beneficiary === "MOTHER" ? "Mama" : "Tata / drugi rodzic"}
+                      {entry.beneficiary === "MOTHER"
+                        ? "Mama"
+                        : "Tata / drugi rodzic"}
                     </p>
                     <Badge variant={eligible ? "success" : "destructive"}>
                       {eligible ? "uprawniony" : "brak uprawnienia"}
@@ -1789,11 +2043,18 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
 
           <dl className="grid grid-cols-2 gap-3 text-sm">
             <Metric
-              label={result.mode === "BIRTH" ? "Macierzyński" : "Na warunkach macierzyńskiego"}
+              label={
+                result.mode === "BIRTH"
+                  ? "Macierzyński"
+                  : "Na warunkach macierzyńskiego"
+              }
               value={`${result.maternityWeeks} tyg.`}
             />
             {result.mode === "BIRTH" ? (
-              <Metric label="Po porodzie" value={`${result.postBirthWeeks} tyg.`} />
+              <Metric
+                label="Po porodzie"
+                value={`${result.postBirthWeeks} tyg.`}
+              />
             ) : (
               <Metric
                 label="Wiek dziecka"
@@ -1810,8 +2071,14 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
                 value={`${result.supplementaryWeeks} tyg.`}
               />
             )}
-            <Metric label="Pula rodzicielska" value={`${result.parentalPoolWeeks} tyg.`} />
-            <Metric label="Rodzicielski mamy" value={formatWeeks(result.motherParentalWeeks)} />
+            <Metric
+              label="Pula rodzicielska"
+              value={`${result.parentalPoolWeeks} tyg.`}
+            />
+            <Metric
+              label="Rodzicielski mamy"
+              value={formatWeeks(result.motherParentalWeeks)}
+            />
             <Metric
               label="Dla drugiego rodzica"
               value={formatWeeks(result.secondParentWeeks)}
@@ -1822,7 +2089,10 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
                 value={`${formatWeeks(result.extensionWeeks)} (limit ${result.extensionCapWeeks})`}
               />
             )}
-            <Metric label="Podstawa mamy" value={formatPln(result.basisGrosze)} />
+            <Metric
+              label="Podstawa mamy"
+              value={formatPln(result.basisGrosze)}
+            />
             <Metric
               label="Podstawa drugiego rodzica"
               value={formatPln(result.secondParentBasisGrosze)}
@@ -1832,7 +2102,9 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
           {data.calculationId && (
             <p className="text-xs text-muted-foreground">
               Zapisano jako{" "}
-              <span className="font-mono">{data.calculationId.slice(0, 8)}…</span>
+              <span className="font-mono">
+                {data.calculationId.slice(0, 8)}…
+              </span>
             </p>
           )}
         </CardContent>
@@ -1864,11 +2136,15 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
               {result.lines.map((line, index) => (
                 <TableRow key={`${line.kind}-${index}`}>
                   <TableCell className="pl-4 font-medium whitespace-normal">
-                    {line.beneficiary === "MOTHER" ? "Mama" : "Tata / drugi rodzic"}
+                    {line.beneficiary === "MOTHER"
+                      ? "Mama"
+                      : "Tata / drugi rodzic"}
                   </TableCell>
                   <TableCell className="max-w-[15rem] whitespace-normal">
                     <p className="font-medium">{line.leaveType}</p>
-                    <p className="text-xs text-muted-foreground">{line.label}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {line.label}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {line.legalReference}
                     </p>

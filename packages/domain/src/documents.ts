@@ -1,5 +1,7 @@
 import { FACT_QUESTIONS, type CaseFacts, type MissingFact } from "./case-facts"
 import type { BenefitCode } from "./eligibility"
+import { formatRatePercent } from "./money"
+import type { RuleSet } from "./rule-set"
 
 /**
  * Required documents and routing ("gdzie złożyć"), per benefit and insurance
@@ -38,7 +40,10 @@ export interface DocumentChecklist {
 const EZUS = "portal eZUS (PUE ZUS) — najwygodniej elektronicznie"
 const ZUS_OFFICE = "dowolna placówka ZUS (osobiście lub pocztą)"
 
-export function paymentRouting(facts: CaseFacts): PaymentRouting {
+export function paymentRouting(
+  facts: CaseFacts,
+  ruleSet: RuleSet
+): PaymentRouting {
   if (facts.employmentType === "SELF_EMPLOYMENT") {
     return {
       payer: "ZUS",
@@ -51,8 +56,7 @@ export function paymentRouting(facts: CaseFacts): PaymentRouting {
   if (facts.payerSize === "OVER_20") {
     return {
       payer: "EMPLOYER",
-      explanation:
-        "Płatnik, który zgłosił do ubezpieczenia chorobowego więcej niż 20 osób (stan na 30 listopada poprzedniego roku), sam wypłaca zasiłek. Dokumenty składasz u niego.",
+      explanation: `Płatnik, który zgłosił do ubezpieczenia chorobowego więcej niż ${ruleSet.payer.selfPayThreshold} osób (stan na 30 listopada poprzedniego roku), sam wypłaca zasiłek. Dokumenty składasz u niego.`,
       channels: ["dział kadr lub płac pracodawcy (zleceniodawcy)"],
       legalBasis: "U art. 61 ust. 1; P s. 23",
     }
@@ -60,16 +64,16 @@ export function paymentRouting(facts: CaseFacts): PaymentRouting {
   if (facts.payerSize === "UP_TO_20") {
     return {
       payer: "ZUS",
-      explanation:
-        "Przy płatniku zgłaszającym do 20 osób zasiłek wypłaca ZUS. Wnioski składasz u pracodawcy, a on przekazuje dokumenty do ZUS w ciągu 7 dni.",
-      channels: ["pracodawca (zleceniodawca), który przekazuje dokumenty do ZUS"],
+      explanation: `Przy płatniku zgłaszającym do ${ruleSet.payer.selfPayThreshold} osób zasiłek wypłaca ZUS. Wnioski składasz u pracodawcy, a on przekazuje dokumenty do ZUS w ciągu ${ruleSet.deadlines.employerForwardingDays} dni.`,
+      channels: [
+        "pracodawca (zleceniodawca), który przekazuje dokumenty do ZUS",
+      ],
       legalBasis: "U art. 61 ust. 1; P s. 23, 26",
     }
   }
   return {
     payer: "UNKNOWN",
-    explanation:
-      "Zasiłek wypłaca pracodawca, jeśli zgłasza do ubezpieczenia chorobowego więcej niż 20 osób; w przeciwnym razie ZUS. W obu przypadkach wnioski o urlop składasz u pracodawcy.",
+    explanation: `Zasiłek wypłaca pracodawca, jeśli zgłasza do ubezpieczenia chorobowego więcej niż ${ruleSet.payer.selfPayThreshold} osób; w przeciwnym razie ZUS. W obu przypadkach wnioski o urlop składasz u pracodawcy.`,
     channels: ["pracodawca (zleceniodawca)", EZUS],
     legalBasis: "U art. 61 ust. 1; P s. 23",
   }
@@ -87,7 +91,10 @@ const BIRTH_CERTIFICATE: RequiredDocument = {
 const Z3B_CAVEAT =
   "Poradnik ZUS (stan na 1.04.2026) wymienia druk Z-3b, który według treści zadania został zniesiony 24.10.2026. Sprawdź aktualny wzór na zus.pl (kwestia otwarta Q-33)."
 
-function maternityDocuments(facts: CaseFacts): RequiredDocument[] {
+function maternityDocuments(
+  facts: CaseFacts,
+  ruleSet: RuleSet
+): RequiredDocument[] {
   switch (facts.employmentType) {
     case "EMPLOYMENT":
       return [
@@ -96,7 +103,7 @@ function maternityDocuments(facts: CaseFacts): RequiredDocument[] {
           name: "Wniosek o urlop macierzyński i rodzicielski (lub o część urlopu)",
           preparedBy: "YOU",
           submitTo: "EMPLOYER",
-          when: "Urlop macierzyński zaczyna się z dniem porodu; wniosek o urlop rodzicielski najpóźniej 21 dni przed jego rozpoczęciem.",
+          when: `Urlop macierzyński zaczyna się z dniem porodu; wniosek o urlop rodzicielski najpóźniej ${ruleSet.deadlines.parentalRequestNoticeDays} dni przed jego rozpoczęciem.`,
           legalBasis: "KP art. 182¹d; R322",
         },
         { ...BIRTH_CERTIFICATE, submitTo: "EMPLOYER" },
@@ -155,7 +162,10 @@ function maternityDocuments(facts: CaseFacts): RequiredDocument[] {
   }
 }
 
-function paternityDocuments(facts: CaseFacts): RequiredDocument[] {
+function paternityDocuments(
+  facts: CaseFacts,
+  ruleSet: RuleSet
+): RequiredDocument[] {
   if (facts.employmentType === "EMPLOYMENT") {
     return [
       {
@@ -163,7 +173,7 @@ function paternityDocuments(facts: CaseFacts): RequiredDocument[] {
         name: "Wniosek o urlop ojcowski",
         preparedBy: "YOU",
         submitTo: "EMPLOYER",
-        when: "Co najmniej 7 dni przed rozpoczęciem urlopu.",
+        when: `Co najmniej ${ruleSet.deadlines.paternityRequestNoticeDays} dni przed rozpoczęciem urlopu.`,
         legalBasis: "KP art. 182³ § 2",
       },
       { ...BIRTH_CERTIFICATE, submitTo: "EMPLOYER" },
@@ -174,7 +184,8 @@ function paternityDocuments(facts: CaseFacts): RequiredDocument[] {
       code: "ZAM",
       name: "Wniosek o zasiłek macierzyński za okres urlopu ojcowskiego (ZAM, dawniej ZAO)",
       preparedBy: "YOU",
-      submitTo: facts.employmentType === "SELF_EMPLOYMENT" ? "ZUS" : "EMPLOYER_OR_ZUS",
+      submitTo:
+        facts.employmentType === "SELF_EMPLOYMENT" ? "ZUS" : "EMPLOYER_OR_ZUS",
       when: "Przed rozpoczęciem okresu, za który ma być wypłacany zasiłek.",
       legalBasis: "R1316 § 33 ust. 1 pkt 3; A-14",
     },
@@ -182,10 +193,14 @@ function paternityDocuments(facts: CaseFacts): RequiredDocument[] {
   ]
 }
 
-function parentalDocuments(facts: CaseFacts): RequiredDocument[] {
+function parentalDocuments(
+  facts: CaseFacts,
+  ruleSet: RuleSet
+): RequiredDocument[] {
   const documents: RequiredDocument[] = [
     {
-      code: facts.employmentType === "EMPLOYMENT" ? "WNIOSEK-RODZICIELSKI" : "ZAM",
+      code:
+        facts.employmentType === "EMPLOYMENT" ? "WNIOSEK-RODZICIELSKI" : "ZAM",
       name:
         facts.employmentType === "EMPLOYMENT"
           ? "Wniosek o urlop rodzicielski (lub jego część)"
@@ -197,16 +212,16 @@ function parentalDocuments(facts: CaseFacts): RequiredDocument[] {
           : facts.employmentType === "SELF_EMPLOYMENT"
             ? "ZUS"
             : "EMPLOYER_OR_ZUS",
-      when: "Najpóźniej 21 dni przed rozpoczęciem urlopu rodzicielskiego.",
+      when: `Najpóźniej ${ruleSet.deadlines.parentalRequestNoticeDays} dni przed rozpoczęciem urlopu rodzicielskiego.`,
       legalBasis: "KP art. 182¹d; A-14",
     },
     {
       code: "WNIOSEK-81,5",
-      name: "Pisemny wniosek o zasiłek w wysokości 81,5% za cały okres (opcjonalnie)",
+      name: `Pisemny wniosek o zasiłek w wysokości ${formatRatePercent(ruleSet.parental.flatRate)} za cały okres (opcjonalnie)`,
       preparedBy: "YOU",
       submitTo:
         facts.employmentType === "SELF_EMPLOYMENT" ? "ZUS" : "EMPLOYER_OR_ZUS",
-      when: "W ciągu 21 dni od porodu (lub przyjęcia dziecka).",
+      when: `W ciągu ${ruleSet.deadlines.flatRateApplicationDays} dni od porodu (lub przyjęcia dziecka).`,
       legalBasis: "U art. 30a; U art. 31 ust. 3–4",
       caveat:
         "Poradnik dopuszcza także „deklarację”; ustawa mówi o pisemnym wniosku (kwestia otwarta Q-34).",
@@ -215,7 +230,10 @@ function parentalDocuments(facts: CaseFacts): RequiredDocument[] {
   return documents
 }
 
-function sicknessDocuments(facts: CaseFacts): RequiredDocument[] {
+function sicknessDocuments(
+  facts: CaseFacts,
+  ruleSet: RuleSet
+): RequiredDocument[] {
   const documents: RequiredDocument[] = [
     {
       code: "e-ZLA",
@@ -253,12 +271,14 @@ function sicknessDocuments(facts: CaseFacts): RequiredDocument[] {
 
 export function requiredDocuments(
   benefit: BenefitCode,
-  facts: CaseFacts
+  facts: CaseFacts,
+  ruleSet: RuleSet
 ): DocumentChecklist {
   const missingFacts: MissingFact[] = []
   if (!facts.employmentType) missingFacts.push(FACT_QUESTIONS.employmentType)
   if (
-    (facts.employmentType === "EMPLOYMENT" || facts.employmentType === "MANDATE") &&
+    (facts.employmentType === "EMPLOYMENT" ||
+      facts.employmentType === "MANDATE") &&
     !facts.payerSize
   ) {
     missingFacts.push(FACT_QUESTIONS.payerSize)
@@ -266,16 +286,16 @@ export function requiredDocuments(
 
   const documents =
     benefit === "MATERNITY_ALLOWANCE"
-      ? maternityDocuments(facts)
+      ? maternityDocuments(facts, ruleSet)
       : benefit === "PATERNITY_BENEFIT"
-        ? paternityDocuments(facts)
+        ? paternityDocuments(facts, ruleSet)
         : benefit === "PARENTAL_LEAVE_BENEFIT"
-          ? parentalDocuments(facts)
-          : sicknessDocuments(facts)
+          ? parentalDocuments(facts, ruleSet)
+          : sicknessDocuments(facts, ruleSet)
 
   return {
     benefit,
-    routing: paymentRouting(facts),
+    routing: paymentRouting(facts, ruleSet),
     documents,
     missingFacts,
     caveats: [

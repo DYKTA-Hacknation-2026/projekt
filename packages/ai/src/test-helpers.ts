@@ -4,6 +4,8 @@ import type {
   KnowledgeSearchResult,
 } from "@zpr/contracts/knowledge"
 import { relevantDeadlines } from "@zpr/domain"
+import { type RuleSet } from "@zpr/domain"
+import { testRuleSet } from "@zpr/domain/testing"
 import {
   calculateParentalBenefits,
   compareBenefitScenarios,
@@ -66,10 +68,12 @@ export interface FakeServicesOptions {
   profile?: ProfileAccess
   searchError?: boolean
   today?: string
+  ruleSet?: RuleSet
 }
 
 export function fakeServices(options: FakeServicesOptions = {}) {
   const searches: SearchKnowledgeBaseInput[] = []
+  const ruleSet = options.ruleSet ?? testRuleSet()
   let profileLoads = 0
   const services: AssistantServices = {
     today: () => options.today ?? "2026-11-21",
@@ -85,7 +89,11 @@ export function fakeServices(options: FakeServicesOptions = {}) {
         redactions: [],
         noEvidence: results.length
           ? null
-          : { reason: "NO_MATCH", message: "W bazie wiedzy nie ma fragmentu, który dotyczy tego pytania." },
+          : {
+              reason: "NO_MATCH",
+              message:
+                "W bazie wiedzy nie ma fragmentu, który dotyczy tego pytania.",
+            },
         embeddingModel: null,
         results,
       }
@@ -101,7 +109,8 @@ export function fakeServices(options: FakeServicesOptions = {}) {
       generateBenefitTimeline,
       identifyRequiredDocuments,
     },
-    deadlines: relevantDeadlines,
+    deadlines: (facts, options) =>
+      relevantDeadlines(facts, { ...options, ruleSet }),
   }
   return {
     services,

@@ -1,5 +1,7 @@
 import { calculateBenefits } from "./calculator"
 import { isIsoDate } from "./dates"
+import { formatRatePercent } from "./money"
+import type { RuleSet } from "./rule-set"
 import { buildTimeline } from "./timeline"
 import type { CalculatorInput, CalculatorResult, PaymentOption } from "./types"
 
@@ -44,14 +46,15 @@ export interface ScenarioOutcome {
 export interface ScenarioComparison {
   base: ScenarioBase
   outcomes: ScenarioOutcome[]
-  verified: false
+  verified: boolean
   status: CalculatorResult["status"]
   notes: string[]
 }
 
 export function compareLeaveScenarios(
   base: ScenarioBase,
-  scenarios: readonly LeaveScenario[]
+  scenarios: readonly LeaveScenario[],
+  ruleSet: RuleSet
 ): ScenarioComparison {
   if (scenarios.length === 0) {
     throw new RangeError("Podaj co najmniej jeden scenariusz.")
@@ -68,17 +71,20 @@ export function compareLeaveScenarios(
       parentalWorkFraction: scenario.parentalWorkFraction,
       paternityDays: scenario.paternityDays,
     }
-    const result = calculateBenefits(input)
+    const result = calculateBenefits(input, ruleSet)
     let motherLeaveEnd: string | null = null
     if (base.dueDate && isIsoDate(base.dueDate)) {
-      const plan = buildTimeline({
-        dueDate: base.dueDate,
-        maternityWeeksBeforeBirth: result.input.maternityWeeksBeforeBirth,
-        childrenCount: result.input.childrenCount,
-        secondParentParentalWeeks: result.input.secondParentParentalWeeks,
-        paternityDays: result.input.paternityDays,
-        hasZaZyciem: result.input.hasZaZyciem,
-      })
+      const plan = buildTimeline(
+        {
+          dueDate: base.dueDate,
+          maternityWeeksBeforeBirth: result.input.maternityWeeksBeforeBirth,
+          childrenCount: result.input.childrenCount,
+          secondParentParentalWeeks: result.input.secondParentParentalWeeks,
+          paternityDays: result.input.paternityDays,
+          hasZaZyciem: result.input.hasZaZyciem,
+        },
+        ruleSet
+      )
       motherLeaveEnd =
         plan.milestones.find((milestone) => milestone.id === "parental-end")
           ?.date ?? null
@@ -104,13 +110,13 @@ export function compareLeaveScenarios(
       motherLeaveEnd,
       warnings: result.warnings,
     })),
-    verified: false,
+    verified: results.every(({ result }) => result.verified),
     status: results.some(({ result }) => result.status === "INDETERMINATE")
       ? "INDETERMINATE"
       : "OK",
     notes: [
       "Kwoty brutto, przed zaliczką na PIT. Szacunek demonstracyjny do czasu zatwierdzenia parametrów Q-15 i Q-29.",
-      "Przy rozdziale urlopu dziewięć tygodni drugiego rodzica jest zawsze płatne 70% (U art. 31 ust. 3f).",
+      `Przy rozdziale urlopu ${ruleSet.parental.nonTransferableWeeks} tygodni drugiego rodzica jest zawsze płatne ${formatRatePercent(ruleSet.parental.rate)} (U art. 31 ust. 3f).`,
     ],
   }
 }

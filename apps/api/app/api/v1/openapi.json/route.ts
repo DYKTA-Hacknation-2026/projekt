@@ -5,7 +5,10 @@ import {
   assistantReplySchema,
   assistantStreamRequestSchema,
 } from "@zpr/contracts/assistant"
-import { assessmentInputSchema, scenarioComparisonSchema } from "@zpr/contracts/engine"
+import {
+  assessmentInputSchema,
+  scenarioComparisonSchema,
+} from "@zpr/contracts/engine"
 
 import { apiRoute, json } from "@/server/http/route"
 
@@ -13,13 +16,24 @@ export const dynamic = "force-static"
 
 const engineRequestBody = {
   required: true,
-  content: { "application/json": { schema: z.toJSONSchema(assessmentInputSchema, { io: "input" }) } },
+  content: {
+    "application/json": {
+      schema: z.toJSONSchema(assessmentInputSchema, { io: "input" }),
+    },
+  },
 }
 
 function engineResponses(description: string) {
   return {
     "200": { description },
-    "422": { description: "Błąd walidacji lub niespójne dane wejściowe", content: { "application/problem+json": { schema: { $ref: "#/components/schemas/Problem" } } } },
+    "422": {
+      description: "Błąd walidacji lub niespójne dane wejściowe",
+      content: {
+        "application/problem+json": {
+          schema: { $ref: "#/components/schemas/Problem" },
+        },
+      },
+    },
     "429": { description: "Limit żądań" },
   }
 }
@@ -122,13 +136,23 @@ const document = {
     },
     "/assistant/chat": {
       post: {
-        summary: "Asystent — strumień wiadomości (AI SDK UI message stream, SSE)",
+        summary:
+          "Asystent — strumień wiadomości (AI SDK UI message stream, SSE)",
         description:
           "Treść: { id: uuid rozmowy, message: { id, role: 'user', parts: [{ type: 'text', text }] }, options?: { useProfile, asOf }, trigger? }. Historia jest wczytywana z bazy; klient wysyła tylko najnowszą wiadomość. Części strumienia: text-delta, tool-* (wyniki narzędzi), data-evidence, data-grounding, data-followups.",
-        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(assistantStreamRequestSchema) } } },
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(assistantStreamRequestSchema),
+            },
+          },
+        },
         responses: {
           "200": { description: "text/event-stream" },
-          "404": { description: "Rozmowa należy do innej sesji lub nie istnieje" },
+          "404": {
+            description: "Rozmowa należy do innej sesji lub nie istnieje",
+          },
           "422": { description: "Nieprawidłowa treść żądania" },
           "429": { description: "Limit żądań" },
         },
@@ -137,9 +161,22 @@ const document = {
     "/assistant/messages": {
       post: {
         summary: "Asystent — odpowiedź REST (bez strumienia)",
-        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(assistantChatSchema) } } },
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": { schema: z.toJSONSchema(assistantChatSchema) },
+          },
+        },
         responses: {
-          "200": { description: "Odpowiedź, źródła, wyniki narzędzi i raport ugruntowania", content: { "application/json": { schema: z.toJSONSchema(assistantReplySchema) } } },
+          "200": {
+            description:
+              "Odpowiedź, źródła, wyniki narzędzi i raport ugruntowania",
+            content: {
+              "application/json": {
+                schema: z.toJSONSchema(assistantReplySchema),
+              },
+            },
+          },
           "429": { description: "Limit żądań" },
           "503": { description: "Model lub baza wiedzy chwilowo niedostępne" },
         },
@@ -147,14 +184,29 @@ const document = {
     },
     "/assistant/conversations": {
       get: { summary: "Rozmowy bieżącej sesji" },
-      delete: { summary: "Usunięcie wszystkich rozmów bieżącej sesji (z cytatami i wywołaniami narzędzi)" },
+      delete: {
+        summary:
+          "Usunięcie wszystkich rozmów bieżącej sesji (z cytatami i wywołaniami narzędzi)",
+      },
     },
     "/assistant/conversations/{id}": {
-      get: { summary: "Historia rozmowy z wynikami narzędzi i źródłami", responses: { "404": { description: "Brak lub cudza rozmowa" } } },
-      delete: { summary: "Usunięcie rozmowy", responses: { "204": { description: "Usunięto" }, "404": { description: "Brak lub cudza rozmowa" } } },
+      get: {
+        summary: "Historia rozmowy z wynikami narzędzi i źródłami",
+        responses: { "404": { description: "Brak lub cudza rozmowa" } },
+      },
+      delete: {
+        summary: "Usunięcie rozmowy",
+        responses: {
+          "204": { description: "Usunięto" },
+          "404": { description: "Brak lub cudza rozmowa" },
+        },
+      },
     },
     "/assistant/session": {
-      get: { summary: "Dostępność profilu dla asystenta i tryb odpowiedzi (bez danych osobowych)" },
+      get: {
+        summary:
+          "Dostępność profilu dla asystenta i tryb odpowiedzi (bez danych osobowych)",
+      },
     },
     "/eligibility/evaluate": {
       post: {
@@ -167,18 +219,30 @@ const document = {
     },
     "/benefits/calculate": {
       post: {
-        summary: "Pełne wyliczenie świadczeń (okresy, kwoty, podział między rodziców)",
+        summary:
+          "Pełne wyliczenie świadczeń (okresy, kwoty, podział między rodziców)",
         description:
           "Dokładna arytmetyka wymierna, jedno zaokrąglenie na pozycję (do grosza, połówki w górę). Brak podstawy wymiaru → kwota `null` i status BASIS_UNKNOWN zamiast szacunku.",
         requestBody: engineRequestBody,
-        responses: engineResponses("Pełna ocena: breakdown, totals, periods, allocation, appliedRules, sources, assumptions, missingEvidence, warnings, nextSteps"),
+        responses: engineResponses(
+          "Pełna ocena: breakdown, totals, periods, allocation, appliedRules, sources, assumptions, missingEvidence, warnings, nextSteps"
+        ),
       },
     },
     "/scenarios/compare": {
       post: {
         summary: "Porównanie planów urlopowych dla tych samych faktów",
-        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(scenarioComparisonSchema, { io: "input" }) } } },
-        responses: engineResponses("Wyniki scenariuszy z różnicą względem pierwszego"),
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(scenarioComparisonSchema, { io: "input" }),
+            },
+          },
+        },
+        responses: engineResponses(
+          "Wyniki scenariuszy z różnicą względem pierwszego"
+        ),
       },
     },
     "/timeline": {
@@ -190,14 +254,18 @@ const document = {
     },
     "/documents/required": {
       post: {
-        summary: "Wymagane dokumenty i miejsce złożenia dla każdego świadczenia",
+        summary:
+          "Wymagane dokumenty i miejsce złożenia dla każdego świadczenia",
         requestBody: engineRequestBody,
-        responses: engineResponses("Lista dokumentów (R1316, R322), płatnik i wersja formularzy"),
+        responses: engineResponses(
+          "Lista dokumentów (R1316, R322), płatnik i wersja formularzy"
+        ),
       },
     },
     "/rulesets": {
       get: {
-        summary: "Wersje reguł, parametry ze statusem weryfikacji, katalog reguł ze źródłami, założenia i scenariusze nieobsługiwane",
+        summary:
+          "Wersje reguł, parametry ze statusem weryfikacji, katalog reguł ze źródłami, założenia i scenariusze nieobsługiwane",
         responses: { "200": { description: "OK" } },
       },
     },
@@ -205,6 +273,92 @@ const document = {
       post: {
         summary: "Utworzenie sprawy z kreatora startowego",
         responses: { "201": { description: "Sprawa utworzona" } },
+      },
+    },
+    "/data-import/sources": {
+      get: {
+        summary: "Dostępne symulowane źródła, zakresy zgody i kroki pobierania",
+        responses: {
+          "200": { description: "Katalog źródeł bez danych osobowych" },
+        },
+      },
+    },
+    "/data-import/sessions": {
+      post: {
+        summary: "Rozpoczęcie pobierania po zgodzie na wybrane zakresy danych",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["scopes"],
+                properties: {
+                  scopes: {
+                    type: "array",
+                    minItems: 1,
+                    items: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Sesja pobierania i puste wyniki źródeł" },
+          "401": { description: "Brak sesji mObywatel (symulacja)" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}": {
+      get: {
+        summary: "Stan sesji, wyniki źródeł i podsumowanie",
+        responses: {
+          "200": { description: "Sesja z wynikami i proweniencją" },
+          "404": { description: "Brak lub cudza sesja" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}/summary": {
+      get: {
+        summary:
+          "Podsumowanie pobrania: pobrane, niedostępne, ręczne, niespójności",
+        responses: { "200": { description: "Raport podsumowania" } },
+      },
+    },
+    "/data-import/sessions/{sessionId}/sources/{sourceId}": {
+      post: {
+        summary: "Pobranie danych z jednego symulowanego źródła",
+        responses: {
+          "200": { description: "Wynik źródła i zaktualizowana sesja" },
+          "409": { description: "Sesja już zakończona" },
+          "422": { description: "Zakres zgody nie obejmuje źródła" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}/preview": {
+      post: {
+        summary:
+          "Mapowanie danych, analiza uprawnień i podgląd kalkulacji bez zapisu",
+        responses: { "200": { description: "Podgląd danych i wyników reguł" } },
+      },
+    },
+    "/data-import/sessions/{sessionId}/accept": {
+      post: {
+        summary:
+          "Zapis zaakceptowanych danych i przygotowanie prefillu formularza",
+        responses: {
+          "200": {
+            description: "Zaakceptowana sesja, prefill i wynik analizy",
+          },
+          "422": { description: "Brak wymaganych pól" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}/skip": {
+      post: {
+        summary: "Rezygnacja z pobierania i przejście do ręcznego formularza",
+        responses: { "200": { description: "Sesja oznaczona jako pominięta" } },
       },
     },
     "/documents/analyze": {
@@ -215,6 +369,40 @@ const document = {
           "200": { description: "Pola do potwierdzenia" },
           "413": { description: "Plik powyżej 10 MB" },
         },
+      },
+    },
+    "/sim/mobywatel/personas": {
+      get: {
+        summary: "Profile testowe do symulacji logowania przez mObywatel",
+        responses: {
+          "200": { description: "Lista syntetycznych profili i zakres danych" },
+        },
+      },
+    },
+    "/sim/mobywatel/authorize": {
+      post: {
+        summary: "Symulowane potwierdzenie logowania i ustawienie sesji",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                $ref: "#/components/schemas/MobywatelAuthorizeRequest",
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Sesja symulowana i przekierowanie do /start" },
+          "404": { description: "Nieznany profil testowy" },
+          "422": { description: "Błąd walidacji (zgoda, PIN)" },
+        },
+      },
+    },
+    "/sim/mobywatel/logout": {
+      post: {
+        summary: "Usunięcie symulowanej sesji mObywatel",
+        responses: { "200": { description: "Sesja usunięta" } },
       },
     },
   },
@@ -228,7 +416,8 @@ const document = {
             type: "object",
             properties: {
               grossMonthlyIncomeGrosze: { type: "integer", minimum: 0 },
-              childrenCount: { type: "integer", minimum: 1, maximum: 5 },
+              monthlyBasisOverrideGrosze: { type: "integer", minimum: 0 },
+              childrenCount: { type: "integer", minimum: 1, maximum: 20 },
               hasZaZyciem: { type: "boolean" },
               paymentOption: {
                 type: "string",
@@ -237,139 +426,19 @@ const document = {
               maternityWeeksBeforeBirth: {
                 type: "integer",
                 minimum: 0,
-                maximum: 6,
+                maximum: 52,
               },
               secondParentParentalWeeks: {
                 type: "integer",
                 minimum: 0,
-                maximum: 67,
+                maximum: 104,
               },
               parentalWorkFraction: {
                 type: "number",
                 minimum: 0,
-                maximum: 0.5,
+                maximum: 1,
               },
-              paternityDays: { type: "integer", minimum: 0, maximum: 14 },
-              mode: {
-                type: "string",
-                enum: ["BIRTH", "ADOPTION", "FOSTER_CARE"],
-              },
-              birthDate: { type: "string", format: "date" },
-              flatRateApplicationDate: { type: "string", format: "date" },
-              fatherMaternityTakeoverReason: {
-                type: "string",
-                enum: [
-                  "MOTHER_RESIGNS_AFTER_14_WEEKS",
-                  "MOTHER_INCAPACITY",
-                  "MOTHER_HOSPITALIZED",
-                  "MOTHER_DIED",
-                  "MOTHER_ABANDONED_CHILD",
-                  "UNINSURED_MOTHER_DIED",
-                  "UNINSURED_MOTHER_ABANDONED_CHILD",
-                  "UNINSURED_MOTHER_INCAPACITY",
-                  "UNINSURED_MOTHER_EMPLOYED",
-                ],
-              },
-              courtApplicationDate: { type: "string", format: "date" },
-              adoptionFinalDate: { type: "string", format: "date" },
-              previouslyUsedMaternityTermsWeeks: {
-                type: "integer",
-                minimum: 0,
-                maximum: 37,
-              },
-              previouslyUsedParentalWeeks: {
-                type: "integer",
-                minimum: 0,
-                maximum: 67,
-              },
-              asOf: { type: "string", format: "date" },
-              childAgeYears: { type: "number", minimum: 0 },
-              childBirthDate: { type: "string", format: "date" },
-              placementDate: { type: "string", format: "date" },
-              isDeferredSchooling: { type: "boolean" },
-              isProfessionalFosterFamily: { type: "boolean" },
-              secondParentMonthlyIncomeGrosze: { type: "integer", minimum: 0 },
-              motherParentalWeeks: { type: "integer", minimum: 0, maximum: 67 },
-              fatherMaternityTakeoverWeeks: {
-                type: "integer",
-                minimum: 0,
-                maximum: 23,
-              },
-              childHospitalWeeks: { type: "integer", minimum: 0, maximum: 60 },
-              childHospitalDaysDay5To28: {
-                type: "integer",
-                minimum: 0,
-                maximum: 24,
-              },
-              birthWeekOfPregnancy: { type: "integer", minimum: 20, maximum: 44 },
-              birthWeightGrams: { type: "integer", minimum: 300, maximum: 6000 },
-              specialCase: {
-                type: "string",
-                enum: [
-                  "STANDARD",
-                  "STILLBIRTH",
-                  "CHILD_DEATH_BEFORE_8W",
-                  "CHILD_DEATH_AFTER_8W",
-                ],
-              },
-              childDeathDay: { type: "integer", minimum: 0 },
-              workCombinedWeeks: { type: "integer", minimum: 0, maximum: 67 },
-              combineWorkInExtension: { type: "boolean" },
-              incomeMode: {
-                type: "string",
-                enum: ["SIMPLE", "DETAILED", "KNOWN_BASIS"],
-              },
-              monthlyIncomes: {
-                type: "array",
-                maxItems: 12,
-                items: {
-                  type: "object",
-                  properties: {
-                    grossGrosze: { type: "integer", minimum: 0 },
-                    absenceOver50Percent: { type: "boolean" },
-                    supplementedGrosze: { type: "integer", minimum: 0 },
-                  },
-                },
-              },
-              employmentType: {
-                type: "string",
-                enum: ["EMPLOYEE", "CONTRACTOR", "BUSINESS"],
-              },
-              knownBasisGrosze: { type: "integer", minimum: 0 },
-              secondParentKnownBasisGrosze: { type: "integer", minimum: 0 },
-              employmentFraction: { type: "number", minimum: 0.1, maximum: 1 },
-              motherEnabled: { type: "boolean", default: true },
-              fatherEnabled: { type: "boolean", default: true },
-              motherEmploymentType: {
-                type: "string",
-                enum: ["EMPLOYEE", "CONTRACTOR", "BUSINESS"],
-              },
-              fatherEmploymentType: {
-                type: "string",
-                enum: ["EMPLOYEE", "CONTRACTOR", "BUSINESS"],
-              },
-              motherSicknessInsurance: {
-                type: "string",
-                enum: ["COMPULSORY", "VOLUNTARY", "NONE"],
-              },
-              fatherSicknessInsurance: {
-                type: "string",
-                enum: ["COMPULSORY", "VOLUNTARY", "NONE"],
-              },
-              motherInsuranceStartDate: { type: "string", format: "date" },
-              fatherInsuranceStartDate: { type: "string", format: "date" },
-              motherInsuranceEndDate: { type: "string", format: "date" },
-              fatherInsuranceEndDate: { type: "string", format: "date" },
-              motherPayerSize: {
-                type: "string",
-                enum: ["OVER_20", "UP_TO_20"],
-              },
-              fatherPayerSize: {
-                type: "string",
-                enum: ["OVER_20", "UP_TO_20"],
-              },
-              motherContributionDebt: { type: "boolean" },
-              fatherContributionDebt: { type: "boolean" },
+              paternityDays: { type: "integer", minimum: 0, maximum: 365 },
             },
           },
           caseId: { type: "string", format: "uuid" },
@@ -386,6 +455,20 @@ const document = {
           code: { type: "string" },
           detail: { type: "string" },
           instance: { type: "string" },
+        },
+      },
+      MobywatelAuthorizeRequest: {
+        type: "object",
+        required: ["personaId", "method", "consent"],
+        properties: {
+          personaId: { type: "string" },
+          method: { type: "string", enum: ["PIN", "BIOMETRY"] },
+          pin: {
+            type: "string",
+            description: "Wymagany dla metody PIN; dowolne 4 cyfry w demo.",
+            pattern: "^\\d{4}$",
+          },
+          consent: { type: "boolean", const: true },
         },
       },
     },

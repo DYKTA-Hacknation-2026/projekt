@@ -15,14 +15,15 @@ export interface AverageIncome {
  * (dopełnienie) is given.
  */
 export function averageMonthlyIncome(
-  entries: readonly MonthlyIncomeEntry[]
+  entries: readonly MonthlyIncomeEntry[],
+  referenceMonths = 12
 ): AverageIncome {
   let sum = 0
   let used = 0
   let excluded = 0
   let supplemented = 0
 
-  for (const entry of entries.slice(0, 12)) {
+  for (const entry of entries.slice(0, referenceMonths)) {
     if (entry.absenceOver50Percent) {
       if (entry.supplementedGrosze !== undefined) {
         sum += Math.max(0, Math.round(entry.supplementedGrosze))
@@ -46,14 +47,20 @@ export function averageMonthlyIncome(
 }
 
 /** Basis = gross × (1 − 13.71%), rounded once. */
-export function basisFromGross(grossGrosze: number): number {
-  return multiplyGrosze(grossGrosze, 1 - CONTRIBUTION_DEDUCTION)
+export function basisFromGross(
+  grossGrosze: number,
+  contributionDeduction = CONTRIBUTION_DEDUCTION
+): number {
+  return multiplyGrosze(grossGrosze, 1 - contributionDeduction)
 }
 
 /** Minimum monthly basis for full-time employment: minimum wage − 13.71%. */
-export function minimumBasis(employmentFraction: number): number {
+export function minimumBasis(
+  employmentFraction: number,
+  contributionDeduction = CONTRIBUTION_DEDUCTION
+): number {
   return multiplyGrosze(
-    basisFromGross(MINIMUM_WAGE_GROSZE),
+    basisFromGross(MINIMUM_WAGE_GROSZE, contributionDeduction),
     Math.min(1, Math.max(0.1, employmentFraction))
   )
 }

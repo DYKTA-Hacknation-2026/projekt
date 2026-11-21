@@ -10,6 +10,8 @@
     "./calculator": "./src/calculator.ts",
     "./assistant": "./src/assistant.ts",
     "./knowledge": "./src/knowledge.ts",
+    "./mobywatel": "./src/mobywatel.ts",
+    "./data-import": "./src/data-import.ts",
     "./common": "./src/common.ts",
     "./documents": "./src/documents.ts",
     "./admin-token": "./src/admin-token.ts",

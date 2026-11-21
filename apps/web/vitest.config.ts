@@ -10,6 +10,7 @@ export default defineConfig({
     alias: {
       "@": root,
       "@workspace/ui": `${workspace}/packages/ui/src`,
+      "@zpr/domain/testing": `${workspace}/packages/domain/src/testing.ts`,
       "@zpr/domain/engine": `${workspace}/packages/domain/src/engine/index.ts`,
       "@zpr/domain": `${workspace}/packages/domain/src/index.ts`,
     },
