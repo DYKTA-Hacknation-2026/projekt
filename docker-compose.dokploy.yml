@@ -1,0 +1,78 @@
+# Dokploy deployment (Docker Compose service).
+#
+# In Dokploy: Project -> Create Service -> Compose
+#   Compose path: docker-compose.dokploy.yml
+#   Domains:      service "web", container port 3000, HTTPS on
+#
+# Dokploy writes variables from its Environment tab to a .env file next to
+# this compose file. Values marked ":?" are required and must be set there.
+# Keep the database private: no host ports, only the internal network.
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zpr
+      POSTGRES_USER: zpr
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in Dokploy}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+    expose:
+      - "5432"
+    volumes:
+      - zpr_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zpr -d zpr"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - internal
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      APP_URL: ${APP_URL:?Set APP_URL in Dokploy}
+      DATABASE_URL: postgresql://zpr:${POSTGRES_PASSWORD}@db:5432/zpr
+      DATABASE_SSL: "false"
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in Dokploy}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@zpr.local}
+      ADMIN_DEMO_PASSWORD: ${ADMIN_DEMO_PASSWORD:?Set ADMIN_DEMO_PASSWORD in Dokploy}
+      ADMIN_GATE_ENABLED: ${ADMIN_GATE_ENABLED:-true}
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-local-demo}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-zpr-hash-1024}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-1024}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-}
+      KB_RETRIEVAL_ACCESS_LEVELS: ${KB_RETRIEVAL_ACCESS_LEVELS:-PUBLIC}
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      NEXT_TELEMETRY_DISABLED: "1"
+    expose:
+      - "3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "corepack enable &&
+      pnpm --filter @zpr/db db:migrate &&
+      pnpm --filter @zpr/db db:seed &&
+      pnpm --filter @zpr/rag kb:seed &&
+      pnpm --filter web start"
+    networks:
+      - internal
+      - dokploy-network
+
+volumes:
+  zpr_pgdata:
+
+networks:
+  internal:
+  dokploy-network:
+    external: true

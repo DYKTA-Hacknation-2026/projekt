@@ -87,7 +87,7 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 | `/start`         | Guided onboarding wizard that creates a synthetic household and case      |
 | `/dane`          | Consent, retrieval, summary and verification of simulated ZUS/e-ZLA/USC data |
 | `/mobywatel`     | Simulated mObywatel / login.gov.pl flow that prefills the onboarding wizard |
-| `/kalkulator`    | Unified calculator with assumptions, trace, and persisted result          |
+| `/kalkulator`    | Birth/adoption/foster calculator: both parents, work + parental leave, detailed/known basis, ZUS case JSON import, trace and persisted result |
 | `/asystent`      | Streaming conversational assistant: tools, citations, history, deletion   |
 | `/dokumenty`     | Document analysis: sample case or PDF upload → extraction → field confirmation → eligibility, amount, checklist and deadlines |
 | `/os-czasu`      | Two-parent leave/application/payment timeline planner                     |
@@ -102,6 +102,13 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 | `/o-projekcie`   | What is real, what is simulated, legal caveats, and architecture          |
 | `/admin`         | Admin skeleton: counts, rules, sources, ingestion jobs                    |
 | `/admin/login`   | Demo admin login (only enforced when `ADMIN_GATE_ENABLED=true`)           |
+
+### Calculator modes
+
+- **Birth** — both parents, separate incomes, maternity takeover, paternity, 81.5% variant, work combined with parental leave, premature/child-loss cases.
+- **Adoption / foster care** — non-professional foster families, age limits 7/10/14, 9 + 38/62 week guarantee, professional foster exclusion.
+- **ZUS sets** — illustrative presets plus a browser-side import of a private `SC-xx.json`. The file is parsed locally and is never uploaded; the form shows which fields were mapped and which still need to be filled in.
+- **Individual basis** — simple monthly amount, 12-month history with absence/supplement, or an already established ZUS/payer basis (Z-3/Z-3a). The result remains `verified: false` until Q-29/Q-15 are confirmed.
 
 ## REST API
 

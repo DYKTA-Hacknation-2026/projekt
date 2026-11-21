@@ -147,7 +147,7 @@ curl -s -X POST localhost:3000/api/v1/benefits/calculate -H 'content-type: appli
 
 The assistant reaches the engine only through the `AssistantServices.engine` port (`packages/ai`). `checkBenefitEligibility`, `calculateBenefit`, `compareLeaveScenarios`, `getRequiredDocuments` and `getBenefitTimeline` map the conversation facts onto an `AssessmentInput` (`tools/household.ts`, translation only) and return engine output, including the rule set version, applied rules and assumptions. The model never computes eligibility, periods or amounts. When the user gave no due date, the tools place the plan on a disclosed nominal date; when no income is known, `calculateBenefit` answers `NEEDS_INPUT`. When the user has not said which parent is asking, the paternity row asks instead of assuming.
 
-The simplified integrated calculator (`calculateBenefits`) and the planner (`buildTimeline`) are adapters over the same engine and therefore changed: one parent may use at most pool − 9 weeks of parental leave (KP art. 182¹a § 4), so a mother alone gets 32 of 41 weeks, and the part-time extension is computed from that.
+The `/kalkulator` UI uses `calculateBenefits`, an adapter over the full engine: it pins the latest rule set, supplies the configured Q-29 values (minimum wage and parental-benefit floor), maps the UI facts to `AssessmentInput` and reports missing facts. The engine endpoints remain authoritative; the adapter does not expose every edge-case input (multiple insurance titles, all termination reasons, exact per-part scheduling). The planner (`buildTimeline`) remains an adapter over the engine schedule; one parent may use at most pool − 9 weeks of parental leave (KP art. 182¹a § 4).
 
 ## 8. Tests
 
