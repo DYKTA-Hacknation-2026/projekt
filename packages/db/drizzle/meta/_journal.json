@@ -15,6 +15,13 @@
       "when": 1795268702623,
       "tag": "0001_rag_knowledge_ingestion",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795275284489,
+      "tag": "0002_assistant_conversation_owner",
+      "breakpoints": true
     }
   ]
 }

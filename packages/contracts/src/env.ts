@@ -71,12 +71,24 @@ export const envSchema = z.object({
   /** Directory with locally provided (non-committed) source files. */
   KB_LOCAL_SOURCES_DIR: z.string().trim().optional(),
 
+  /**
+   * Chat model for the assistant. `none` runs the offline rules model: the
+   * same orchestration, tools and retrieval, with answers composed
+   * deterministically from tool results. `ollama` and `openai-compatible`
+   * use an OpenAI-style `/chat/completions` endpoint at AI_BASE_URL.
+   */
   AI_PROVIDER: z
-    .enum(["none", "anthropic", "openai", "ollama"])
+    .enum(["none", "anthropic", "openai", "ollama", "openai-compatible"])
     .default("none"),
   AI_MODEL: z.string().trim().optional(),
   AI_API_KEY: z.string().trim().optional(),
   AI_BASE_URL: optionalUrl,
+  AI_TEMPERATURE: z.coerce.number().min(0).max(1).default(0.2),
+  AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(256).max(8192).default(1500),
+  AI_MAX_STEPS: z.coerce.number().int().min(2).max(10).default(8),
+  AI_TIMEOUT_MS: z.coerce.number().int().min(5000).max(300000).default(60000),
+  /** Messages from earlier turns passed to the model (text only). */
+  AI_HISTORY_MESSAGES: z.coerce.number().int().min(0).max(40).default(12),
 
   SESSION_SECRET: z
     .string()
@@ -117,6 +129,25 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
   ) {
     throw new Error(
       "SESSION_SECRET must be set to a strong random value in production."
+    )
+  }
+
+  if (
+    parsed.data.AI_PROVIDER !== "none" &&
+    parsed.data.AI_PROVIDER !== "ollama" &&
+    !parsed.data.AI_API_KEY
+  ) {
+    throw new Error(
+      `AI_API_KEY is required when AI_PROVIDER=${parsed.data.AI_PROVIDER}.`
+    )
+  }
+  if (
+    (parsed.data.AI_PROVIDER === "ollama" ||
+      parsed.data.AI_PROVIDER === "openai-compatible") &&
+    !parsed.data.AI_BASE_URL
+  ) {
+    throw new Error(
+      `AI_BASE_URL is required when AI_PROVIDER=${parsed.data.AI_PROVIDER}.`
     )
   }
 

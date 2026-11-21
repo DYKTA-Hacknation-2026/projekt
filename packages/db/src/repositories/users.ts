@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm"
+import { and, desc, eq, sql } from "drizzle-orm"
 
 import type { OnboardingInput } from "@zpr/contracts/onboarding"
 
@@ -13,6 +13,7 @@ import {
   users,
 } from "../schema"
 import type {
+  AssistantProfileRecord,
   HouseholdRepository,
   UserRecord,
   UserRepository,
@@ -52,6 +53,82 @@ export class DrizzleUserRepository implements UserRepository {
       .where(eq(users.email, email))
       .limit(1)
     return row ?? null
+  }
+
+  /**
+   * Read-only, minimised view of one user's confirmed facts for the
+   * assistant. Selects no names, e-mail, city, birth date or health fields.
+   * The caller must already have authorised `userId` (session principal).
+   */
+  async getAssistantProfile(
+    userId: string
+  ): Promise<AssistantProfileRecord | null> {
+    const [profile] = await this.db
+      .select({
+        userId: userProfiles.userId,
+        aiAssistantConsent: userProfiles.aiAssistantConsent,
+        updatedAt: userProfiles.updatedAt,
+      })
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userId))
+      .limit(1)
+    if (!profile) return null
+
+    const [employment] = await this.db
+      .select({
+        contractType: employmentRecords.contractType,
+        grossMonthlyAmountGrosze: employmentRecords.grossMonthlyAmountGrosze,
+      })
+      .from(employmentRecords)
+      .where(and(eq(employmentRecords.userId, userId), eq(employmentRecords.isCurrent, true)))
+      .orderBy(desc(employmentRecords.createdAt))
+      .limit(1)
+
+    const [insurance] = await this.db
+      .select({
+        coverageMode: insurancePeriods.coverageMode,
+        startDate: insurancePeriods.startDate,
+      })
+      .from(insurancePeriods)
+      .where(and(eq(insurancePeriods.userId, userId), eq(insurancePeriods.isActive, true)))
+      .orderBy(desc(insurancePeriods.createdAt))
+      .limit(1)
+
+    const [event] = await this.db
+      .select({
+        eventType: familyEvents.eventType,
+        eventDate: familyEvents.eventDate,
+        expectedDueDate: familyEvents.expectedDueDate,
+        childCount: familyEvents.childCount,
+        hasZaZyciem: familyEvents.hasZaZyciem,
+      })
+      .from(familyEvents)
+      .where(eq(familyEvents.userId, userId))
+      .orderBy(desc(familyEvents.createdAt))
+      .limit(1)
+
+    const [benefitCase] = await this.db
+      .select({ caseNumber: benefitCases.caseNumber })
+      .from(benefitCases)
+      .where(eq(benefitCases.userId, userId))
+      .orderBy(desc(benefitCases.createdAt))
+      .limit(1)
+
+    return {
+      userId: profile.userId,
+      aiAssistantConsent: profile.aiAssistantConsent,
+      employmentType: employment?.contractType ?? null,
+      coverageMode: insurance?.coverageMode ?? null,
+      insuranceStartDate: insurance?.startDate ?? null,
+      grossMonthlyAmountGrosze: employment?.grossMonthlyAmountGrosze ?? null,
+      familyEvent: event?.eventType ?? null,
+      eventDate: event?.eventDate ?? null,
+      expectedDueDate: event?.expectedDueDate ?? null,
+      childCount: event?.childCount ?? null,
+      hasZaZyciem: event?.hasZaZyciem ?? null,
+      caseNumber: benefitCase?.caseNumber ?? null,
+      updatedAt: profile.updatedAt,
+    }
   }
 }
 
