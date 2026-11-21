@@ -10,7 +10,7 @@ export function Brand({ compact = false }: { compact?: boolean }) {
     >
       <span
         aria-hidden="true"
-        className="grid size-9 place-items-center rounded-xl bg-brand-navy text-sm font-semibold tracking-tight text-white shadow-sm transition-transform group-hover:-rotate-3"
+        className="grid size-9 place-items-center rounded-full bg-brand-navy text-sm font-semibold tracking-tight text-white"
       >
         {APP_SHORT_NAME}
       </span>

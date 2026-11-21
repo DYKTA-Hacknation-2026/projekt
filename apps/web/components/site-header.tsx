@@ -21,9 +21,9 @@ export function SiteHeader() {
   const { resolvedTheme, setTheme } = useTheme()
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-[4.5rem] w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Brand />
+    <header className="sticky top-0 z-40 bg-background">
+      <div className="mx-auto flex h-[4.25rem] w-full max-w-[1320px] items-center justify-between gap-4 px-4 sm:px-6">
+        <Brand compact />
 
         <nav aria-label="Nawigacja główna" className="hidden lg:block">
           <ul className="flex items-center gap-1">
@@ -55,7 +55,7 @@ export function SiteHeader() {
             onClick={() =>
               setTheme(resolvedTheme === "dark" ? "light" : "dark")
             }
-            className="inline-flex size-11 items-center justify-center rounded-lg border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="inline-flex size-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <Moon aria-hidden="true" className="size-5 dark:hidden" />
             <Sun aria-hidden="true" className="hidden size-5 dark:block" />
@@ -65,7 +65,7 @@ export function SiteHeader() {
             className="hidden h-11 px-4 text-sm font-semibold sm:inline-flex"
           >
             <Link href="/start">
-              Rozpocznij analizę
+              Sprawdź świadczenia
               <ArrowRight data-icon="inline-end" aria-hidden="true" />
             </Link>
           </Button>
@@ -116,7 +116,7 @@ export function SiteHeader() {
             <li className="pt-2">
               <Button asChild className="h-11 w-full text-sm font-semibold">
                 <Link href="/start" onClick={() => setOpen(false)}>
-                  Rozpocznij analizę
+                  Sprawdź świadczenia
                   <ArrowRight data-icon="inline-end" aria-hidden="true" />
                 </Link>
               </Button>

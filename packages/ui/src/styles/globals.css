@@ -9,8 +9,8 @@
 
 @theme inline {
   --font-sans: var(--font-nunito);
-  --font-heading: var(--font-dm-sans);
-  --font-mono: var(--font-jetbrains);
+  --font-heading: var(--font-nunito);
+  --font-mono: ui-monospace, monospace;
   --color-brand-navy: var(--zpr-navy);
   --color-brand-navy-deep: var(--zpr-navy-deep);
   --color-brand-green: var(--zpr-green);
@@ -70,17 +70,17 @@
 
 :root {
   /* ZPR palette — single source of truth for every colour in the app. */
-  --zpr-navy: #123b63;
-  --zpr-navy-deep: #0c2c4c;
-  --zpr-green: #16834b;
-  --zpr-green-deep: #0f6b3c;
+  --zpr-navy: #007834;
+  --zpr-navy-deep: #025a28;
+  --zpr-green: #007834;
+  --zpr-green-deep: #025a28;
   --zpr-green-soft: #ddebe2;
-  --zpr-cream: #f7f9f7;
-  --zpr-mist: #e9eef3;
-  --zpr-ink: #263442;
-  --zpr-ink-muted: #55636f;
+  --zpr-cream: #ffffff;
+  --zpr-mist: #edf5ee;
+  --zpr-ink: #22372b;
+  --zpr-ink-muted: #405347;
   --zpr-line: #dce3e9;
-  --zpr-amber: #e8a04b;
+  --zpr-amber: #fab856;
   --zpr-amber-ink: #7a4d12;
 
   /* Semantic tokens, mapped onto the palette above. */
@@ -127,45 +127,45 @@
 }
 
 .dark {
-  --background: #0e1a24;
-  --foreground: #e8eef4;
-  --heading: #f2f7fb;
-  --card: #152532;
-  --card-foreground: #e8eef4;
-  --popover: #152532;
-  --popover-foreground: #e8eef4;
+  --background: #10231a;
+  --foreground: #eaf3ed;
+  --heading: #f2faf4;
+  --card: #162d20;
+  --card-foreground: #eaf3ed;
+  --popover: #162d20;
+  --popover-foreground: #eaf3ed;
   --primary: #4fbe86;
   --primary-foreground: #06251a;
-  --secondary: #1c2e3d;
-  --secondary-foreground: #e3edf4;
-  --muted: #1a2b38;
-  --muted-foreground: #a9b7c3;
+  --secondary: #1e3728;
+  --secondary-foreground: #e3f0e7;
+  --muted: #1c3024;
+  --muted-foreground: #b5c9bb;
   --accent: #1d3a2c;
   --accent-foreground: #ddebe2;
   --destructive: #f0796b;
   --destructive-foreground: #2a0b08;
   --border: rgb(255 255 255 / 14%);
   --input: rgb(255 255 255 / 20%);
-  --ring: #7fb0d8;
-  --info: #8ab8e0;
-  --info-foreground: #cfe4f5;
+  --ring: #8bcda4;
+  --info: #91d4ab;
+  --info-foreground: #d5f0df;
   --success: #4fbe86;
   --success-foreground: #c9efd9;
   --warning: #f0b36b;
   --warning-foreground: #fbe7c9;
   --chart-1: #4fbe86;
-  --chart-2: #8ab8e0;
+  --chart-2: #91d4ab;
   --chart-3: #f0b36b;
   --chart-4: #6c8ea8;
   --chart-5: #8cbf9f;
-  --sidebar: #152532;
-  --sidebar-foreground: #e8eef4;
+  --sidebar: #162d20;
+  --sidebar-foreground: #eaf3ed;
   --sidebar-primary: #4fbe86;
   --sidebar-primary-foreground: #06251a;
   --sidebar-accent: #1d3a2c;
   --sidebar-accent-foreground: #ddebe2;
   --sidebar-border: rgb(255 255 255 / 14%);
-  --sidebar-ring: #7fb0d8;
+  --sidebar-ring: #8bcda4;
   --zpr-green-soft: #1d3a2c;
   --zpr-amber-ink: #f2c98e;
 }

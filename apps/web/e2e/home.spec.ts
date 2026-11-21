@@ -20,7 +20,7 @@ test("hero primary action opens the analysis wizard", async ({ page }) => {
   await page.goto("/")
   await page
     .getByRole("main")
-    .getByRole("link", { name: /Rozpocznij analizę/ })
+    .getByRole("link", { name: /Sprawdź swoje świadczenia/ })
     .first()
     .click()
 
@@ -30,15 +30,56 @@ test("hero primary action opens the analysis wizard", async ({ page }) => {
   ).toBeVisible({ timeout: 30_000 })
 })
 
-test("home images have descriptive alternative text", async ({ page }) => {
+test("home shows four real stock photographs with descriptive alternatives", async ({
+  page,
+}) => {
   await page.goto("/")
+  for (const name of [
+    /Rodzice trzymają nowo narodzone dziecko/,
+    /Przyszli rodzice układają dłonie/,
+    /Mała dłoń dziecka/,
+    /Rodzice przytulają niemowlę/,
+  ]) {
+    await expect(page.getByRole("img", { name })).toBeVisible()
+  }
+})
 
+test("leave preview switches between the parents without changing the example", async ({
+  page,
+}) => {
+  await page.goto("/")
+  const preview = page.locator(".leave-preview")
+  await preview
+    .getByRole("button", { name: "Drugi rodzic", exact: true })
+    .click()
   await expect(
-    page.getByRole("img", {
-      name: /Rodzice trzymają nowo narodzone dziecko/i,
-    })
-  ).toBeVisible()
+    preview.getByRole("button", { name: "Drugi rodzic", exact: true })
+  ).toHaveAttribute("aria-pressed", "true")
+  await expect(preview.locator(".leave-preview__explanation")).toContainText(
+    "drugi rodzic wykorzystuje"
+  )
+  await expect(preview.locator(".is-muted")).toHaveCount(2)
+  await preview.getByRole("button", { name: "Mama", exact: true }).click()
+  await expect(preview.locator(".is-muted")).toHaveCount(1)
+  await preview.getByRole("button", { name: "Razem", exact: true }).click()
+  await expect(preview.locator(".is-muted")).toHaveCount(0)
   await expect(
-    page.getByRole("img", { name: /Mama i tata blisko tulą niemowlę/i })
-  ).toBeVisible()
+    preview.getByRole("link", { name: "Otwórz planer urlopów" })
+  ).toHaveAttribute("href", "/os-czasu")
+})
+
+test("FAQ explains the demo and opens with the keyboard", async ({ page }) => {
+  await page.goto("/")
+  const question = page.getByText("Czy to oficjalny serwis ZUS?", {
+    exact: true,
+  })
+  await question.focus()
+  await page.keyboard.press("Enter")
+  await expect(page.locator(".home-faq details").first()).toHaveAttribute(
+    "open",
+    ""
+  )
+  await expect(page.locator(".home-faq details").first()).toContainText(
+    "Nie. To projekt demonstracyjny."
+  )
 })

@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { DM_Sans, JetBrains_Mono, Nunito_Sans } from "next/font/google"
+import { Source_Sans_3 } from "next/font/google"
 
 import "@workspace/ui/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -7,23 +7,10 @@ import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { SimulationBanner } from "@/components/simulation-banner"
 import { APP_NAME } from "@/messages/pl"
-import { cn } from "@workspace/ui/lib/utils"
 
-const nunitoSans = Nunito_Sans({
+const sourceSans = Source_Sans_3({
   subsets: ["latin", "latin-ext"],
   variable: "--font-nunito",
-  display: "swap",
-})
-
-const dmSans = DM_Sans({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-dm-sans",
-  display: "swap",
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-jetbrains",
   display: "swap",
 })
 
@@ -55,11 +42,7 @@ export default function RootLayout({
       lang="pl"
       suppressHydrationWarning
       data-scroll-behavior="smooth"
-      className={cn(
-        nunitoSans.variable,
-        dmSans.variable,
-        jetbrainsMono.variable
-      )}
+      className={sourceSans.variable}
     >
       <body>
         <ThemeProvider>
