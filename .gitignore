@@ -42,3 +42,6 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# ZUS-provided materials and sample cases — never commit (see docs/legal-assumptions.md Q-19)
+fixtures/private/
