@@ -8,8 +8,8 @@ without AI API keys or government integrations.
 > **Demo status.** All government data, documents, and integrations are
 > simulated. The calculator returns `INDETERMINATE` amounts until the minimum
 > base, parental benefit (Q-29), and rounding policy (Q-15) are approved. The
-> assistant quotes retrieved sources and never invents amounts or eligibility
-> decisions.
+> assistant answers only from retrieved sources and deterministic services; it
+> never invents amounts, deadlines or eligibility decisions.
 
 ## Stack
 
@@ -24,7 +24,7 @@ without AI API keys or government integrations.
 
 ## Quick start
 
-Requires Node.js 20.9+ and pnpm via Corepack.
+Requires Node.js 22+ (AI SDK 7) and pnpm via Corepack.
 
 ```bash
 corepack enable pnpm
@@ -84,7 +84,7 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 | `/start`         | Guided onboarding wizard that creates a synthetic household and case      |
 | `/mobywatel`     | Simulated mObywatel / login.gov.pl flow that prefills the onboarding wizard |
 | `/kalkulator`    | Unified calculator with assumptions, trace, and persisted result          |
-| `/asystent`      | Retrieval-grounded assistant with source citations                        |
+| `/asystent`      | Streaming conversational assistant: tools, citations, history, deletion   |
 | `/dokumenty`     | Document analysis demo (sample ZUS forms or a PDF signature check)        |
 | `/os-czasu`      | Two-parent leave/application/payment timeline planner                     |
 | `/o-projekcie`   | What is real, what is simulated, legal caveats, and architecture          |
@@ -102,7 +102,11 @@ machine-readable contract.
 | `/api/health`                  | GET    | Liveness plus DB, pgvector, and migration checks         |
 | `/api/v1/health`               | GET    | Versioned health, table checks, and demo row counts      |
 | `/api/v1/knowledge/search`     | GET    | Hybrid retrieval (`q`, `limit`, `asOf`, `source`, `sourceType`, `tag`, `minRelevance`) |
-| `/api/v1/assistant/chat`       | POST   | Grounded answer with `[S1]` citations and AI disclosure  |
+| `/api/v1/assistant/chat`       | POST   | Streaming chat (AI SDK UI message stream, SSE)           |
+| `/api/v1/assistant/messages`   | POST   | Same orchestration, single JSON reply (REST integration) |
+| `/api/v1/assistant/conversations` | GET/DELETE | List / delete all of this session's conversations |
+| `/api/v1/assistant/conversations/{id}` | GET/DELETE | History with tool results and sources / delete |
+| `/api/v1/assistant/session`    | GET    | Profile availability and answer mode (no personal data)  |
 | `/api/v1/onboarding`           | POST   | Create a household, user profile, and benefit case       |
 | `/api/v1/calculations`         | GET    | Recent calculations                                      |
 | `/api/v1/calculations`         | POST   | Deterministic calculation; persists input and trace      |
@@ -139,9 +143,9 @@ curl -s -X POST http://localhost:3000/api/v1/calculations \
 curl -s -X POST http://localhost:3000/api/v1/documents/analyze \
   -F 'sampleCase=anna-zam' | jq
 
-curl -s -X POST http://localhost:3000/api/v1/assistant/chat \
+curl -s -X POST http://localhost:3000/api/v1/assistant/messages \
   -H 'content-type: application/json' \
-  -d '{"message":"Ile trwa urlop macierzyński przy jednym dziecku?"}' | jq
+  -d '{"message":"Jestem na B2B i jestem w ciąży. Co powinnam zrobić?"}' | jq
 ```
 
 ## Architecture
@@ -162,7 +166,8 @@ apps/web
 └── tests/               # Vitest unit tests
 
 packages/
-├── domain/              # @zpr/domain — pure calculator and money helpers
+├── domain/              # @zpr/domain — pure calculator, eligibility, documents, deadlines, scenarios, timeline
+├── ai/                  # @zpr/ai — assistant orchestration, tools, guards, provider factory, rules model
 ├── contracts/           # @zpr/contracts — env, API, onboarding, calculator Zod schemas
 ├── db/                  # @zpr/db — Drizzle schema, repos, seed, migrations, health
 ├── rag/                 # @zpr/rag — ingestion pipeline, embeddings, hybrid retrieval
@@ -172,7 +177,44 @@ packages/
 ```
 
 Dependency direction: `apps/web → @zpr/contracts → @zpr/domain`,
-`apps/web → @zpr/rag → @zpr/db`. `@zpr/domain` is pure and performs no I/O.
+`apps/web → @zpr/rag → @zpr/db`, `apps/web → @zpr/ai → @zpr/contracts, @zpr/domain`.
+`@zpr/domain` is pure and performs no I/O; `@zpr/ai` has no database access —
+the web app injects application services through the `AssistantServices` port.
+
+### Conversational assistant
+
+One turn: **PII scrub → intent classification → tool policy → tool loop
+(`streamText`) → streamed answer → guards → persistence.**
+
+- **Provider-independent** (Vercel AI SDK 7): `AI_PROVIDER=anthropic | openai |
+  ollama | openai-compatible`. With `none` (default) an offline rules model
+  plugs into the same `streamText` loop: same tools, real retrieval, guards,
+  streaming and persistence; the answer is composed only from tool results
+  and retrieved passages.
+- **Tools** (Zod, strict, read-only): `searchKnowledgeBase`,
+  `getUserInsuranceProfile`, `checkBenefitEligibility`, `calculateBenefit`,
+  `compareLeaveScenarios`, `getRequiredDocuments`, `getRelevantDeadlines`,
+  `getBenefitTimeline`. None accepts SQL, table names or user ids; none writes.
+  Profile or plan changes happen only in the wizard/calculator/planner.
+- **Tool policy**: the intent classifier lists required tools (retrieval for
+  every legal question; eligibility → `checkBenefitEligibility`, amounts →
+  `calculateBenefit`, plans → `compareLeaveScenarios`, documents →
+  `getRequiredDocuments`, deadlines → `getRelevantDeadlines`). `prepareStep`
+  forces each one (`toolChoice`), max two attempts, last step answers.
+- **RAG**: passages are filtered by validity date (`asOf`), labelled `S1…` per
+  turn, sent to the model as `<untrusted_source>` data (neutralised), and shown
+  as clickable citations with locator, page and validity window. Citation-only
+  sources are never quoted. Earlier turns reach the model as plain text without
+  old citations or tool output.
+- **Guards** (`data-grounding`): unknown `[S#]` labels, numbers not present in
+  tool results/sources/user messages, eligibility wording without the
+  eligibility tool, legal answers without citations.
+- **Privacy & security**: PESEL, account, ID-document, e-mail and phone
+  numbers are removed before the model and the database see them; logs carry
+  ids/counts only; a signed `zpr_sid` cookie owns conversations (every read
+  and delete is owner-filtered in SQL); profile use needs the per-request
+  toggle, a session bound by onboarding, and AI consent; rate limits per
+  address and per session.
 
 ### Database layout
 
@@ -330,16 +372,31 @@ Z-3 vs Z-3a, „Za życiem”, urlop rodzicielski, zasiłek macierzyński), meta
 and access filters, versioned legal sources and no-result outcomes.
 
 The suite also covers calculator normalization and amounts, money rounding, env
-validation (including production secret rejection), timeline milestones, document warnings, assistant grounding, API
+validation (including production secret rejection), timeline milestones, document warnings, API
 problem responses, all route headings, calculator/assistant flows, and axe
 accessibility checks on `/`, `/kalkulator`, and `/asystent` at desktop and
 mobile sizes.
 
+Assistant tests (`packages/ai`, `apps/web/tests/assistant-security.test.ts`,
+`apps/web/e2e/assistant.spec.ts`): tool selection for all supported question
+types, policy forcing tools on a non-cooperating LLM (mock model),
+source-grounded answers and evidence parts, fabricated citations and numbers,
+missing evidence and retrieval outages, missing user facts (one follow-up
+question, no invented income), prompt injection in user text, history and
+retrieved passages, invalid tool arguments (schema + in-tool validation, loop
+cap), profile authorization and minimisation, forged session cookies,
+conversation ownership and deletion, PII removal, streaming order, provider
+failure and abort, and multi-turn continuity.
+
 ## Known limitations
 
 - Calculator amounts are a labelled preview; Q-29 and Q-15 are unapproved.
-- The assistant is deterministic retrieval + quotation; it does not use an LLM
-  and deliberately refuses to invent amounts or decisions.
+- Without `AI_PROVIDER` the assistant runs in offline rules mode: grounded and
+  structured, but phrasing is templated. Configure an LLM for natural answers.
+- The curated knowledge base is small (e.g. no KP art. 182¹e text on combining
+  leave with work), so some questions honestly end in "no evidence".
+- Sessions are demo-grade: onboarding with an e-mail binds that synthetic user
+  to the browser; there is no real authentication.
 - Document analysis checks PDF signatures and returns deterministic sample
   fields; it does not perform OCR.
 - The admin area is a read-only skeleton with a demo login.

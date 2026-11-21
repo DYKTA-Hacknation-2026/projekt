@@ -14,6 +14,7 @@ export default defineConfig({
       "@zpr/contracts/env": `${workspace}/packages/contracts/src/env.ts`,
       "@zpr/contracts/onboarding": `${workspace}/packages/contracts/src/onboarding.ts`,
       "@zpr/contracts/calculator": `${workspace}/packages/contracts/src/calculator.ts`,
+      "@zpr/contracts/assistant-tools": `${workspace}/packages/contracts/src/assistant-tools.ts`,
       "@zpr/contracts/assistant": `${workspace}/packages/contracts/src/assistant.ts`,
       "@zpr/contracts/knowledge": `${workspace}/packages/contracts/src/knowledge.ts`,
       "@zpr/contracts/mobywatel": `${workspace}/packages/contracts/src/mobywatel.ts`,
@@ -25,6 +26,7 @@ export default defineConfig({
       "@zpr/db/embeddings": `${workspace}/packages/db/src/embeddings.ts`,
       "@zpr/db/schema": `${workspace}/packages/db/src/schema/index.ts`,
       "@zpr/db": `${workspace}/packages/db/src/index.ts`,
+      "@zpr/ai": `${workspace}/packages/ai/src/index.ts`,
     },
   },
   test: {

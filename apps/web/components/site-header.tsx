@@ -52,7 +52,7 @@ export function SiteHeader() {
           </Button>
           <button
             type="button"
-            className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none lg:hidden"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-border bg-background text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none lg:hidden"
             aria-expanded={open}
             aria-controls="mobile-nav"
             onClick={() => setOpen((value) => !value)}
@@ -83,7 +83,7 @@ export function SiteHeader() {
                   onClick={() => setOpen(false)}
                   aria-current={isActive(pathname, item.href) ? "page" : undefined}
                   className={cn(
-                    "flex min-h-10 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    "flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                     isActive(pathname, item.href) && "bg-secondary text-foreground"
                   )}
                 >

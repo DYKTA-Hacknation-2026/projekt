@@ -3,6 +3,7 @@ export * from "./env"
 export * from "./onboarding"
 export * from "./calculator"
 export * from "./assistant"
+export * from "./assistant-tools"
 export * from "./knowledge"
 export * from "./mobywatel"
 
