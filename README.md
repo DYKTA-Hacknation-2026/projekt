@@ -53,6 +53,11 @@ required for the standard local setup. To override values, create:
 - `packages/db/.env` for migration/seed/smoke scripts.
 - `packages/rag/.env` for knowledge-base scripts (`kb:*`).
 
+To disable dark mode, set `NEXT_PUBLIC_DISABLE_DARK_MODE=true` in
+`apps/web/.env.local`. This forces light mode even with a saved dark preference,
+hides the theme toggle, and disables the `D` shortcut. The default is `false`.
+Restart development or rebuild production after changing this flag.
+
 `.env.example` lists every supported variable. Never commit a real `.env` or
 production secret. The two apps must share the same `SESSION_SECRET` and
 `ADMIN_GATE_ENABLED` values. The API defaults to `http://127.0.0.1:3001` locally.
