@@ -109,6 +109,12 @@ machine-readable contract.
 | `/api/v1/onboarding`           | POST   | Create a household, user profile, and benefit case       |
 | `/api/v1/calculations`         | GET    | Recent calculations                                      |
 | `/api/v1/calculations`         | POST   | Deterministic calculation; persists input and trace      |
+| `/api/v1/eligibility/evaluate` | POST   | Deterministic eligibility per parent and benefit (engine) |
+| `/api/v1/benefits/calculate`   | POST   | Full assessment: periods, breakdown, totals, allocation, sources |
+| `/api/v1/scenarios/compare`    | POST   | One household, up to 5 leave plans, difference vs the first |
+| `/api/v1/timeline`             | POST   | Benefit periods and dated deadlines                      |
+| `/api/v1/documents/required`   | POST   | Required documents, forms and where to submit them       |
+| `/api/v1/rulesets`             | GET    | Rule set versions, parameters with verification status, rules, assumptions, unsupported scenarios |
 | `/api/v1/documents/analyze`    | GET    | Available synthetic sample documents                     |
 | `/api/v1/documents/analyze`    | POST   | Analyze a PDF or `sampleCase` multipart field            |
 | `/api/v1/admin/login`          | POST   | Demo admin login, sets an HMAC-signed HttpOnly cookie    |
@@ -376,9 +382,25 @@ cap), profile authorization and minimisation, forged session cookies,
 conversation ownership and deletion, PII removal, streaming order, provider
 failure and abort, and multi-turn continuity.
 
+### Calculation engine
+
+`@zpr/domain/engine` decides eligibility and calculates parental benefits
+without an LLM: exact BigInt-rational money, rules and rates versioned by
+effective date (`2026.07-Z1`, `2026.10-Z1`, `2027.01-Z1`), an assessment with
+eligibility, applicable benefits, breakdown, totals, periods, per-parent
+allocation, applied rules, sources, assumptions, missing evidence, warnings and
+next steps. The REST endpoints above and the assistant tools are adapters over
+the same `evaluate`. See [docs/calculation-engine.md](docs/calculation-engine.md).
+
 ## Known limitations
 
-- Calculator amounts are a labelled preview; Q-29 and Q-15 are unapproved.
+- Amounts are estimates, never ZUS decisions. The deterministic engine
+  (`docs/calculation-engine.md`) uses exact arithmetic and versioned rules, but
+  Q-29 (minimum wage, świadczenie rodzicielskie, average wage) is not in the
+  provided sources, so affected results are labelled lower/upper bounds, and
+  rounding (Q-15) is a documented assumption. The 20 unsupported legal
+  scenarios are listed in that document. The official ZUS sample cases were
+  not available, so no agreement with them is claimed.
 - Without `AI_PROVIDER` the assistant runs in offline rules mode: grounded and
   structured, but phrasing is templated. Configure an LLM for natural answers.
 - The curated knowledge base is small (e.g. no KP art. 182¹e text on combining

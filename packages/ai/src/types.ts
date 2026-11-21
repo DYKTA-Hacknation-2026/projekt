@@ -7,21 +7,28 @@ import type {
 } from "@zpr/contracts/assistant"
 import type { SearchKnowledgeBaseInput } from "@zpr/contracts/assistant-tools"
 import type { KnowledgeSearchResult } from "@zpr/contracts/knowledge"
+import type { CaseFacts, DeadlineReport, DeadlineTopic } from "@zpr/domain"
 import type {
-  BenefitCode,
-  CalculatorInput,
-  CalculatorResult,
-  CaseFacts,
-  DeadlineReport,
-  DeadlineTopic,
-  DocumentChecklist,
-  EligibilityAssessment,
-  LeaveScenario,
-  ScenarioBase,
-  ScenarioComparison,
-  TimelineInput,
-  TimelinePlan,
-} from "@zpr/domain"
+  Assessment,
+  AssessmentInput,
+  DocumentsReport,
+  EligibilityReport,
+  ScenarioComparisonReport,
+  ScenarioInput,
+  TimelineReport,
+} from "@zpr/domain/engine"
+
+/**
+ * The deterministic engine, injected as a port. The assistant never computes
+ * eligibility, periods or amounts itself — every number comes from here.
+ */
+export interface EngineServices {
+  evaluateEligibility(input: AssessmentInput): EligibilityReport
+  calculateParentalBenefits(input: AssessmentInput): Assessment
+  compareBenefitScenarios(base: Omit<AssessmentInput, "plan">, scenarios: readonly ScenarioInput[]): ScenarioComparisonReport
+  generateBenefitTimeline(input: AssessmentInput): TimelineReport
+  identifyRequiredDocuments(input: AssessmentInput): DocumentsReport
+}
 
 export const ASSISTANT_TOOL_NAMES = [
   "searchKnowledgeBase",
@@ -63,21 +70,12 @@ export interface AssistantServices {
   today(): string
   searchKnowledge(input: SearchKnowledgeBaseInput): Promise<KnowledgeSearchResult>
   loadProfile(): Promise<ProfileAccess>
-  assessEligibility(
-    facts: CaseFacts,
-    options: { asOf: string; benefits?: readonly BenefitCode[] }
-  ): EligibilityAssessment
-  calculate(input: CalculatorInput): CalculatorResult
-  compareScenarios(
-    base: ScenarioBase,
-    scenarios: readonly LeaveScenario[]
-  ): ScenarioComparison
-  requiredDocuments(benefit: BenefitCode, facts: CaseFacts): DocumentChecklist
+  engine: EngineServices
+  /** Catalogue of statutory deadlines (dates only, no eligibility), parameters from the rule set. */
   deadlines(
     facts: CaseFacts,
     options: { topics?: readonly DeadlineTopic[] }
   ): DeadlineReport
-  timeline(input: TimelineInput): TimelinePlan
 }
 
 export interface AssistantDataParts {

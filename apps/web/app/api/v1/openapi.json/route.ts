@@ -5,16 +5,30 @@ import {
   assistantReplySchema,
   assistantStreamRequestSchema,
 } from "@zpr/contracts/assistant"
+import { assessmentInputSchema, scenarioComparisonSchema } from "@zpr/contracts/engine"
 
 import { apiRoute, json } from "@/server/http/route"
 
 export const dynamic = "force-static"
 
+const engineRequestBody = {
+  required: true,
+  content: { "application/json": { schema: z.toJSONSchema(assessmentInputSchema, { io: "input" }) } },
+}
+
+function engineResponses(description: string) {
+  return {
+    "200": { description },
+    "422": { description: "Błąd walidacji lub niespójne dane wejściowe", content: { "application/problem+json": { schema: { $ref: "#/components/schemas/Problem" } } } },
+    "429": { description: "Limit żądań" },
+  }
+}
+
 const document = {
   openapi: "3.1.0",
   info: {
     title: "Zasiłkowy Przewodnik — REST API",
-    version: "0.1.0-scaffold",
+    version: "1.0.0",
     description:
       "Kontrakt demonstracyjny. Wszystkie odpowiedzi z danymi rządowymi są oznaczone jako symulacja.",
   },
@@ -141,6 +155,51 @@ const document = {
     },
     "/assistant/session": {
       get: { summary: "Dostępność profilu dla asystenta i tryb odpowiedzi (bez danych osobowych)" },
+    },
+    "/eligibility/evaluate": {
+      post: {
+        summary: "Ocena uprawnień (silnik deterministyczny)",
+        description:
+          "Ustalenia per rodzic i świadczenie (ELIGIBLE, CONDITIONAL, NOT_ELIGIBLE, NEEDS_INPUT, MANUAL_REVIEW) z przyczynami, warunkami, brakującymi informacjami, ryzykami, zastosowanymi regułami i źródłami. Szacunek, nie decyzja ZUS.",
+        requestBody: engineRequestBody,
+        responses: engineResponses("Ocena uprawnień"),
+      },
+    },
+    "/benefits/calculate": {
+      post: {
+        summary: "Pełne wyliczenie świadczeń (okresy, kwoty, podział między rodziców)",
+        description:
+          "Dokładna arytmetyka wymierna, jedno zaokrąglenie na pozycję (do grosza, połówki w górę). Brak podstawy wymiaru → kwota `null` i status BASIS_UNKNOWN zamiast szacunku.",
+        requestBody: engineRequestBody,
+        responses: engineResponses("Pełna ocena: breakdown, totals, periods, allocation, appliedRules, sources, assumptions, missingEvidence, warnings, nextSteps"),
+      },
+    },
+    "/scenarios/compare": {
+      post: {
+        summary: "Porównanie planów urlopowych dla tych samych faktów",
+        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(scenarioComparisonSchema, { io: "input" }) } } },
+        responses: engineResponses("Wyniki scenariuszy z różnicą względem pierwszego"),
+      },
+    },
+    "/timeline": {
+      post: {
+        summary: "Oś czasu: okresy świadczeń i terminy z datami",
+        requestBody: engineRequestBody,
+        responses: engineResponses("Okresy, terminy i podział między rodziców"),
+      },
+    },
+    "/documents/required": {
+      post: {
+        summary: "Wymagane dokumenty i miejsce złożenia dla każdego świadczenia",
+        requestBody: engineRequestBody,
+        responses: engineResponses("Lista dokumentów (R1316, R322), płatnik i wersja formularzy"),
+      },
+    },
+    "/rulesets": {
+      get: {
+        summary: "Wersje reguł, parametry ze statusem weryfikacji, katalog reguł ze źródłami, założenia i scenariusze nieobsługiwane",
+        responses: { "200": { description: "OK" } },
+      },
     },
     "/onboarding": {
       post: {
