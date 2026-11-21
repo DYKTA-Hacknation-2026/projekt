@@ -18,6 +18,7 @@
     "@workspace/ui": "workspace:*",
     "@zpr/ai": "workspace:*",
     "@zpr/contracts": "workspace:*",
+    "@zpr/data-sources": "workspace:*",
     "@zpr/db": "workspace:*",
     "@zpr/domain": "workspace:*",
     "@zpr/rag": "workspace:*",

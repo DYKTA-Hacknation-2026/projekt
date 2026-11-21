@@ -95,7 +95,8 @@ function determination(
 /** Shared condition of all maternity-type benefits: sickness insurance. */
 function insuranceGate(
   benefit: BenefitCode,
-  facts: CaseFacts
+  facts: CaseFacts,
+  asOf: string
 ): Determination | null {
   if (facts.professionalFosterFamily) {
     return determination(benefit, "NOT_ELIGIBLE", {
@@ -123,6 +124,22 @@ function insuranceGate(
   }
 
   const insurance = effectiveSicknessInsurance(facts)
+
+  const referenceDate = facts.eventDate ?? facts.expectedDueDate ?? asOf
+  if (facts.insuranceEndDate && facts.insuranceEndDate < referenceDate) {
+    return determination(benefit, "NOT_ELIGIBLE", {
+      reasons: [
+        {
+          ruleId: "LR-100",
+          text: `Ubezpieczenie chorobowe ustało ${facts.insuranceEndDate}, a zdarzenie uprawniające przypada na ${referenceDate}. Bez aktywnego tytułu ubezpieczenia zasiłek nie przysługuje.`,
+          legalBasis: "U art. 4 ust. 1; U art. 13",
+        },
+      ],
+      caveats: [
+        "Niektóre sytuacje (np. rozwiązanie umowy z naruszeniem przepisów) mogą zachować prawo do zasiłku — potwierdź w ZUS.",
+      ],
+    })
+  }
 
   if (facts.employmentType === "OTHER") {
     return determination(benefit, "INDETERMINATE", {
@@ -196,9 +213,9 @@ function arrearsCheck(facts: CaseFacts): {
   return { status: null }
 }
 
-function assessMaternity(facts: CaseFacts): Determination {
+function assessMaternity(facts: CaseFacts, asOf: string): Determination {
   const benefit: BenefitCode = "MATERNITY_ALLOWANCE"
-  const gate = insuranceGate(benefit, facts)
+  const gate = insuranceGate(benefit, facts, asOf)
   if (gate) return gate
 
   const reasons: DeterminationReason[] = [
@@ -250,9 +267,9 @@ function assessMaternity(facts: CaseFacts): Determination {
   })
 }
 
-function assessParental(facts: CaseFacts): Determination {
+function assessParental(facts: CaseFacts, asOf: string): Determination {
   const benefit: BenefitCode = "PARENTAL_LEAVE_BENEFIT"
-  const gate = insuranceGate(benefit, facts)
+  const gate = insuranceGate(benefit, facts, asOf)
   if (gate) return gate
 
   const reasons: DeterminationReason[] = [
@@ -275,7 +292,7 @@ function assessParental(facts: CaseFacts): Determination {
   })
 }
 
-function assessPaternity(facts: CaseFacts): Determination {
+function assessPaternity(facts: CaseFacts, asOf: string): Determination {
   const benefit: BenefitCode = "PATERNITY_BENEFIT"
   if (facts.parentRole === "MOTHER") {
     return determination(benefit, "NOT_ELIGIBLE", {
@@ -288,7 +305,7 @@ function assessPaternity(facts: CaseFacts): Determination {
       ],
     })
   }
-  const gate = insuranceGate(benefit, facts)
+  const gate = insuranceGate(benefit, facts, asOf)
   if (gate) return gate
 
   const reasons: DeterminationReason[] = [
@@ -331,6 +348,17 @@ function assessSickness(facts: CaseFacts, asOf: string): Determination {
       ],
     })
   }
+  if (facts.insuranceEndDate && facts.insuranceEndDate < asOf) {
+    return determination(benefit, "NOT_ELIGIBLE", {
+      reasons: [
+        {
+          ruleId: "LR-100",
+          text: `Ubezpieczenie chorobowe ustało ${facts.insuranceEndDate}. Na dzień ${asOf} nie ma aktywnego tytułu ubezpieczenia.`,
+          legalBasis: "U art. 4 ust. 1; U art. 13",
+        },
+      ],
+    })
+  }
   if (insurance === undefined) {
     return determination(benefit, "NEEDS_INPUT", {
       missingFacts: [FACT_QUESTIONS.sicknessInsurance],
@@ -361,6 +389,21 @@ function assessSickness(facts: CaseFacts, asOf: string): Determination {
     "Okres zasiłkowy w ciąży wynosi do 270 dni (U art. 7–9; P s. 24).",
     "Wcześniejsze okresy ubezpieczenia wliczają się, jeśli przerwa nie przekroczyła 30 dni; niektóre osoby (np. absolwenci zgłoszeni w ciągu 90 dni) mają prawo od pierwszego dnia (U art. 4 ust. 2–3).",
   ]
+  if (facts.pregnancySickLeave) {
+    reasons.push({
+      ruleId: "A-15",
+      text: "Historia e-ZLA zawiera zwolnienie związane z ciążą — świadczenie za ten okres wynosi 100% podstawy.",
+      legalBasis: "KP art. 92 § 1 pkt 2; U art. 11 ust. 1",
+    })
+    caveats.push(
+      "Dane z e-ZLA zawierają tylko daty i informację o związku z ciążą, bez diagnozy."
+    )
+  }
+  if (facts.sickLeaveDays !== undefined && facts.sickLeaveDays > 0) {
+    caveats.push(
+      `Historia zwolnień obejmuje ${facts.sickLeaveDays} dni. Limit 270 dni dotyczy jednego okresu zasiłkowego.`
+    )
+  }
   if (facts.employmentType === "EMPLOYMENT") {
     reasons.push({
       ruleId: "A-15",
@@ -420,11 +463,11 @@ export function assessEligibility(
   const determinations = benefits.map((benefit) => {
     switch (benefit) {
       case "MATERNITY_ALLOWANCE":
-        return assessMaternity(facts)
+        return assessMaternity(facts, options.asOf)
       case "PARENTAL_LEAVE_BENEFIT":
-        return assessParental(facts)
+        return assessParental(facts, options.asOf)
       case "PATERNITY_BENEFIT":
-        return assessPaternity(facts)
+        return assessPaternity(facts, options.asOf)
       case "SICKNESS_IN_PREGNANCY":
         return assessSickness(facts, options.asOf)
     }

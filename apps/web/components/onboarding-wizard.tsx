@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useState, type ChangeEvent, type FormEvent } from "react"
-import { ArrowRight, CheckCircle2, Loader2, ShieldCheck } from "lucide-react"
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react"
+import { ArrowRight, CheckCircle2, Loader2, ShieldCheck, Sparkles } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
 import { Button } from "@workspace/ui/components/button"
@@ -18,6 +18,7 @@ import { Label } from "@workspace/ui/components/label"
 import { Progress } from "@workspace/ui/components/progress"
 import { Select } from "@workspace/ui/components/select"
 import type { MobywatelProfile } from "@zpr/contracts/mobywatel"
+import { importPrefillStorageSchema } from "@zpr/contracts/data-import"
 
 type FormState = {
   firstName: string
@@ -110,6 +111,57 @@ export function OnboardingWizard({ mobywatelProfile }: OnboardingWizardProps) {
     caseNumber: string
     nextSteps: string[]
   } | null>(null)
+  const [importSessionId, setImportSessionId] = useState<string | null>(null)
+  const [importLoaded, setImportLoaded] = useState(false)
+
+  useEffect(() => {
+    const raw = window.sessionStorage.getItem("zpr:import-prefill")
+    if (!raw) return
+    try {
+      const parsed = importPrefillStorageSchema.safeParse(JSON.parse(raw))
+      if (!parsed.success) return
+      const data = parsed.data.data
+      setImportSessionId(parsed.data.sessionId)
+      setImportLoaded(true)
+      setForm((current) => ({
+        ...current,
+        ...(data.firstName ? { firstName: data.firstName } : {}),
+        ...(data.lastName ? { lastName: data.lastName } : {}),
+        ...(data.email ? { email: data.email } : {}),
+        ...(data.birthDate ? { birthDate: data.birthDate } : {}),
+        ...(data.city ? { city: data.city } : {}),
+        ...(data.eventType ? { eventType: data.eventType } : {}),
+        ...(data.expectedDueDate
+          ? { expectedDueDate: data.expectedDueDate }
+          : {}),
+        ...(data.eventDate ? { eventDate: data.eventDate } : {}),
+        ...(data.childrenCount
+          ? { childrenCount: String(data.childrenCount) }
+          : {}),
+        ...(data.hasZaZyciem !== undefined
+          ? { hasZaZyciem: data.hasZaZyciem }
+          : {}),
+        ...(data.isPremature !== undefined
+          ? { isPremature: data.isPremature }
+          : {}),
+        ...(data.employmentType
+          ? { employmentType: data.employmentType }
+          : {}),
+        ...(data.employerName ? { employerName: data.employerName } : {}),
+        ...(data.grossMonthlyIncomePln !== undefined
+          ? { grossMonthlyIncomePln: String(data.grossMonthlyIncomePln) }
+          : {}),
+        ...(data.insuranceStartDate
+          ? { insuranceStartDate: data.insuranceStartDate }
+          : {}),
+        ...(data.coverageMode
+          ? { coverageMode: data.coverageMode }
+          : {}),
+      }))
+    } catch {
+      // Ignore a stale or malformed prefill.
+    }
+  }, [])
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }))
@@ -168,6 +220,7 @@ export function OnboardingWizard({ mobywatelProfile }: OnboardingWizardProps) {
         grossMonthlyIncomePln: Number(form.grossMonthlyIncomePln),
         insuranceStartDate: optional(form.insuranceStartDate),
         coverageMode: form.coverageMode,
+        importSessionId: importSessionId ?? undefined,
         consents: {
           healthData: form.healthData,
           aiAssistant: form.aiAssistant,
@@ -287,6 +340,19 @@ export function OnboardingWizard({ mobywatelProfile }: OnboardingWizardProps) {
 
       <form onSubmit={onSubmit}>
         <CardContent className="space-y-5 pt-6">
+          {importLoaded && (
+            <Alert variant="info">
+              <Sparkles aria-hidden="true" />
+              <AlertTitle>Dane z symulowanych źródeł</AlertTitle>
+              <AlertDescription>
+                Pola zostały wstępnie uzupełnione na podstawie raportu pobrania.
+                Sprawdź je i popraw, jeśli coś się nie zgadza.{" "}
+                <Link href="/dane" className="underline underline-offset-4">
+                  Otwórz raport pobrania
+                </Link>
+              </AlertDescription>
+            </Alert>
+          )}
           {step === 1 && (
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">

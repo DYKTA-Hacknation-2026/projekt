@@ -29,6 +29,8 @@ export interface CaseFacts {
   sicknessInsurance?: SicknessInsuranceMode
   /** First day of the current, uninterrupted sickness insurance. */
   insuranceStartDate?: string
+  /** Last day of the insurance title, when it has already ended. */
+  insuranceEndDate?: string
   familyEvent?: FamilyEventKind
   /** Birth or care-taking date, if it already happened. */
   eventDate?: string
@@ -40,6 +42,10 @@ export interface CaseFacts {
   /** Contribution arrears (self-employed and similar, U art. 2a). */
   contributionArrears?: boolean
   payerSize?: PayerSize
+  /** At least one e-ZLA period is marked as related to pregnancy. */
+  pregnancySickLeave?: boolean
+  /** Total days of e-ZLA periods in the analysed history. */
+  sickLeaveDays?: number
 }
 
 export type FactKey = keyof CaseFacts
@@ -77,6 +83,11 @@ export const FACT_QUESTIONS: Record<
     question: "Od kiedy (mniej więcej) nieprzerwanie podlegasz ubezpieczeniu chorobowemu?",
     reason: "Od tego zależy okres wyczekiwania na zasiłek chorobowy.",
   },
+  insuranceEndDate: {
+    key: "insuranceEndDate",
+    question: "Czy i kiedy ustało Twoje ubezpieczenie chorobowe?",
+    reason: "Po ustaniu tytułu ubezpieczenia zasiłek zwykle nie przysługuje, chyba że przepis stanowi inaczej.",
+  },
   familyEvent: {
     key: "familyEvent",
     question: "Czy jesteś w ciąży, dziecko już się urodziło, czy chodzi o adopcję lub rodzinę zastępczą?",
@@ -101,6 +112,16 @@ export const FACT_QUESTIONS: Record<
     key: "payerSize",
     question: "Czy twój pracodawca zgłasza do ubezpieczeń więcej niż 20 osób?",
     reason: "Od tego zależy, czy zasiłek wypłaca pracodawca, czy ZUS (U art. 61).",
+  },
+  pregnancySickLeave: {
+    key: "pregnancySickLeave",
+    question: "Czy któreś ze zwolnień lekarskich było związane z ciążą?",
+    reason: "Zwolnienie w ciąży jest płatne 100% i inaczej liczy się okres zasiłkowy.",
+  },
+  sickLeaveDays: {
+    key: "sickLeaveDays",
+    question: "Ile dni niezdolności do pracy obejmuje historia zwolnień?",
+    reason: "Po 270 dniach okres zasiłkowy wymaga indywidualnej oceny (U art. 7–9).",
   },
 }
 

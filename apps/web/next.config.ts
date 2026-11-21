@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     "@workspace/ui",
     "@zpr/domain",
     "@zpr/contracts",
+    "@zpr/data-sources",
     "@zpr/db",
     "@zpr/rag",
     "@zpr/ai",

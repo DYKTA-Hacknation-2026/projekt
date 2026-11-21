@@ -41,6 +41,9 @@ importers:
       '@zpr/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@zpr/data-sources':
+        specifier: workspace:*
+        version: link:../../packages/data-sources
       '@zpr/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -163,6 +166,34 @@ importers:
       zod:
         specifier: ^4.6.7
         version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: ^20
+        version: 20.19.43
+      '@workspace/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@workspace/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      eslint:
+        specifier: ^10
+        version: 10.15.0(jiti@2.7.0)(supports-color@7.2.0)
+      typescript:
+        specifier: ^5
+        version: 5.9.3
+      vitest:
+        specifier: ^5.1.1
+        version: 5.1.1(@types/node@20.19.43)(vite@8.3.8(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
+  packages/data-sources:
+    dependencies:
+      '@zpr/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@zpr/domain':
+        specifier: workspace:*
+        version: link:../domain
     devDependencies:
       '@types/node':
         specifier: ^20

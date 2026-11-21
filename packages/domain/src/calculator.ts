@@ -46,6 +46,10 @@ function normalizeInput(input: CalculatorInput): CalculatorInput {
       0,
       Math.round(input.grossMonthlyIncomeGrosze)
     ),
+    monthlyBasisOverrideGrosze:
+      input.monthlyBasisOverrideGrosze === undefined
+        ? undefined
+        : Math.max(0, Math.round(input.monthlyBasisOverrideGrosze)),
     childrenCount: clamp(Math.round(input.childrenCount), 1, 5),
     maternityWeeksBeforeBirth: clamp(
       Math.round(input.maternityWeeksBeforeBirth),
@@ -100,10 +104,12 @@ export function calculateBenefits(input: CalculatorInput): CalculatorResult {
     motherParentalWeeks * normalized.parentalWorkFraction
   )
 
-  const basisGrosze = multiplyGrosze(
-    normalized.grossMonthlyIncomeGrosze,
-    1 - CONTRIBUTION_DEDUCTION
-  )
+  const basisGrosze =
+    normalized.monthlyBasisOverrideGrosze ??
+    multiplyGrosze(
+      normalized.grossMonthlyIncomeGrosze,
+      1 - CONTRIBUTION_DEDUCTION
+    )
   const dailyBasisGrosze = dailyBasis(basisGrosze)
 
   const lines: CalculationLine[] = []
@@ -194,6 +200,11 @@ export function calculateBenefits(input: CalculatorInput): CalculatorResult {
       "Maksymalnie 6 tygodni urlopu macierzyńskiego można wykorzystać przed przewidywanym terminem porodu; potrzebne jest zaświadczenie lekarskie."
     )
   }
+  if (normalized.monthlyBasisOverrideGrosze !== undefined) {
+    warnings.push(
+      "Podstawa wymiaru pochodzi z danych pobranych z symulowanego ZUS. Jeśli poprawiłeś wynagrodzenie, sprawdź, czy podstawa nadal jest aktualna."
+    )
+  }
 
   const trace: CalculationTraceStep[] = [
     {
@@ -219,7 +230,10 @@ export function calculateBenefits(input: CalculatorInput): CalculatorResult {
     {
       ruleId: "LR-112",
       label: "Podstawa wymiaru po potrąceniu składki chorobowej",
-      detail: "Podstawa miesięczna = wynagrodzenie brutto × (1 − 13,71%). Podstawa dzienna = 1/30 podstawy miesięcznej.",
+      detail:
+        normalized.monthlyBasisOverrideGrosze === undefined
+          ? "Podstawa miesięczna = wynagrodzenie brutto × (1 − 13,71%). Podstawa dzienna = 1/30 podstawy miesięcznej."
+          : "Podstawa miesięczna pochodzi z pobranych podstaw wymiaru składek ZUS (symulacja). Sprawdź ją przed złożeniem wniosku.",
       legalReference: "U art. 36, 38; P s. 24",
     },
     {

@@ -78,6 +78,30 @@ export default async function StartPage() {
         <OnboardingWizard mobywatelProfile={session?.profile ?? null} />
 
         <div className="space-y-4">
+          {session && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Sparkles aria-hidden="true" className="size-4 text-primary" />
+                  Uzupełnij dane automatycznie
+                </CardTitle>
+                <CardDescription>
+                  Pobierz dane z symulowanych ZUS, pracodawcy, e-ZLA, USC i
+                  PUE/eZUS. Zdecydujesz, jakie zakresy udostępnić, a potem
+                  sprawdzisz każdą informację.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild className="w-full">
+                  <Link href="/dane">
+                    Pobierz dane z symulowanych źródeł
+                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {!session && (
             <Card className="border-primary/30 bg-primary/5">
               <CardHeader>

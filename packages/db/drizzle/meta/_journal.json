@@ -22,6 +22,13 @@
       "when": 1795275284489,
       "tag": "0002_assistant_conversation_owner",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795282039401,
+      "tag": "0003_solid_sasquatch",
+      "breakpoints": true
     }
   ]
 }

@@ -8,6 +8,12 @@ export const calculatorInputSchema = z.object({
     .int()
     .min(0)
     .max(100_000_000, "Kwota jest zbyt duża"),
+  monthlyBasisOverrideGrosze: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(100_000_000, "Kwota jest zbyt duża")
+    .optional(),
   childrenCount: z.coerce.number().int().min(1).max(5).default(1),
   hasZaZyciem: z.boolean().default(false),
   paymentOption: z

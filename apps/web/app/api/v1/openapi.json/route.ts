@@ -148,6 +148,87 @@ const document = {
         responses: { "201": { description: "Sprawa utworzona" } },
       },
     },
+    "/data-import/sources": {
+      get: {
+        summary: "Dostępne symulowane źródła, zakresy zgody i kroki pobierania",
+        responses: {
+          "200": { description: "Katalog źródeł bez danych osobowych" },
+        },
+      },
+    },
+    "/data-import/sessions": {
+      post: {
+        summary: "Rozpoczęcie pobierania po zgodzie na wybrane zakresy danych",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["scopes"],
+                properties: {
+                  scopes: {
+                    type: "array",
+                    minItems: 1,
+                    items: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Sesja pobierania i puste wyniki źródeł" },
+          "401": { description: "Brak sesji mObywatel (symulacja)" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}": {
+      get: {
+        summary: "Stan sesji, wyniki źródeł i podsumowanie",
+        responses: {
+          "200": { description: "Sesja z wynikami i proweniencją" },
+          "404": { description: "Brak lub cudza sesja" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}/summary": {
+      get: {
+        summary: "Podsumowanie pobrania: pobrane, niedostępne, ręczne, niespójności",
+        responses: { "200": { description: "Raport podsumowania" } },
+      },
+    },
+    "/data-import/sessions/{sessionId}/sources/{sourceId}": {
+      post: {
+        summary: "Pobranie danych z jednego symulowanego źródła",
+        responses: {
+          "200": { description: "Wynik źródła i zaktualizowana sesja" },
+          "409": { description: "Sesja już zakończona" },
+          "422": { description: "Zakres zgody nie obejmuje źródła" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}/preview": {
+      post: {
+        summary: "Mapowanie danych, analiza uprawnień i podgląd kalkulacji bez zapisu",
+        responses: { "200": { description: "Podgląd danych i wyników reguł" } },
+      },
+    },
+    "/data-import/sessions/{sessionId}/accept": {
+      post: {
+        summary: "Zapis zaakceptowanych danych i przygotowanie prefillu formularza",
+        responses: {
+          "200": { description: "Zaakceptowana sesja, prefill i wynik analizy" },
+          "422": { description: "Brak wymaganych pól" },
+        },
+      },
+    },
+    "/data-import/sessions/{sessionId}/skip": {
+      post: {
+        summary: "Rezygnacja z pobierania i przejście do ręcznego formularza",
+        responses: { "200": { description: "Sesja oznaczona jako pominięta" } },
+      },
+    },
     "/documents/analyze": {
       get: { summary: "Lista przykładów dokumentów" },
       post: {
@@ -201,6 +282,7 @@ const document = {
             type: "object",
             properties: {
               grossMonthlyIncomeGrosze: { type: "integer", minimum: 0 },
+              monthlyBasisOverrideGrosze: { type: "integer", minimum: 0 },
               childrenCount: { type: "integer", minimum: 1, maximum: 5 },
               hasZaZyciem: { type: "boolean" },
               paymentOption: {

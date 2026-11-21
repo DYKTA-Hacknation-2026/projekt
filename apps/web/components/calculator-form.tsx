@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 
 import type { CalculatorResult, PaymentOption } from "@zpr/domain"
+import { importPrefillStorageSchema } from "@zpr/contracts/data-import"
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -60,8 +61,37 @@ export function CalculatorForm() {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ResponseBody | null>(null)
+  const [monthlyBasis, setMonthlyBasis] = useState<number | undefined>()
+  const [useImportedBasis, setUseImportedBasis] = useState(true)
+  const [importLoaded, setImportLoaded] = useState(false)
 
   useEffect(() => {
+    const rawImport = window.sessionStorage.getItem("zpr:import-prefill")
+    if (rawImport) {
+      try {
+        const parsed = importPrefillStorageSchema.safeParse(JSON.parse(rawImport))
+        if (parsed.success) {
+          const data = parsed.data.data
+          if (data.grossMonthlyIncomePln !== undefined) {
+            setIncome(String(data.grossMonthlyIncomePln))
+          }
+          if (data.childrenCount !== undefined) {
+            setChildren(String(Math.min(5, Math.max(1, data.childrenCount))))
+          }
+          if (data.hasZaZyciem !== undefined) {
+            setHasZaZyciem(data.hasZaZyciem)
+          }
+          if (data.monthlyBasisGrosze !== undefined) {
+            setMonthlyBasis(data.monthlyBasisGrosze)
+            setUseImportedBasis(true)
+          }
+          setImportLoaded(true)
+        }
+      } catch {
+        // Ignore a stale or malformed prefill.
+      }
+    }
+
     const raw = window.sessionStorage.getItem("zpr:document-prefill")
     if (!raw) return
     window.sessionStorage.removeItem("zpr:document-prefill")
@@ -69,6 +99,7 @@ export function CalculatorForm() {
       const parsed = JSON.parse(raw) as { income?: string }
       if (parsed.income && Number.isFinite(Number(parsed.income))) {
         setIncome(parsed.income)
+        setMonthlyBasis(undefined)
       }
     } catch {
       // Ignore a stale or malformed prefill.
@@ -92,6 +123,10 @@ export function CalculatorForm() {
         body: JSON.stringify({
           input: {
             grossMonthlyIncomeGrosze: Math.round(incomePln * 100),
+            monthlyBasisOverrideGrosze:
+              useImportedBasis && monthlyBasis !== undefined
+                ? monthlyBasis
+                : undefined,
             childrenCount: Number(children),
             hasZaZyciem,
             paymentOption,
@@ -140,6 +175,17 @@ export function CalculatorForm() {
         </CardHeader>
         <form onSubmit={onSubmit} aria-busy={pending}>
           <CardContent className="space-y-5">
+            {importLoaded && (
+              <Alert variant="info">
+                <Info aria-hidden="true" />
+                <AlertTitle>Dane z symulowanych źródeł</AlertTitle>
+                <AlertDescription>
+                  Dochód i liczba dzieci pochodzą z zaakceptowanego raportu
+                  pobrania. Możesz je zmienić — kalkulator nadal liczy
+                  deterministycznie.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="income">Miesięczny dochód brutto (zł)</Label>
@@ -153,6 +199,27 @@ export function CalculatorForm() {
                   onChange={(event) => setIncome(event.target.value)}
                   required
                 />
+                {monthlyBasis !== undefined && (
+                  <label className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 size-4 accent-[var(--primary)]"
+                      checked={useImportedBasis}
+                      onChange={(event) =>
+                        setUseImportedBasis(event.target.checked)
+                      }
+                    />
+                    <span>
+                      <span className="font-medium">
+                        Użyj podstawy wymiaru z ZUS (symulacja)
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {formatPln(monthlyBasis)} miesięcznie. Odznacz, aby
+                        wyliczyć podstawę z podanego wynagrodzenia.
+                      </span>
+                    </span>
+                  </label>
+                )}
               </div>
 
               <div className="space-y-2">

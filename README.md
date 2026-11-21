@@ -82,6 +82,7 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 | `/`              | Landing page, roadmap, safety and simulation disclosures                  |
 | `/panel`         | Dashboard: case, nearest deadlines, calculations, knowledge base status   |
 | `/start`         | Guided onboarding wizard that creates a synthetic household and case      |
+| `/dane`          | Consent, retrieval, summary and verification of simulated ZUS/e-ZLA/USC data |
 | `/mobywatel`     | Simulated mObywatel / login.gov.pl flow that prefills the onboarding wizard |
 | `/kalkulator`    | Unified calculator with assumptions, trace, and persisted result          |
 | `/asystent`      | Streaming conversational assistant: tools, citations, history, deletion   |
@@ -108,6 +109,14 @@ machine-readable contract.
 | `/api/v1/assistant/conversations/{id}` | GET/DELETE | History with tool results and sources / delete |
 | `/api/v1/assistant/session`    | GET    | Profile availability and answer mode (no personal data)  |
 | `/api/v1/onboarding`           | POST   | Create a household, user profile, and benefit case       |
+| `/api/v1/data-import/sources`  | GET    | Simulated institutions, consent scopes and progress steps |
+| `/api/v1/data-import/sessions` | POST   | Start a consented retrieval session                      |
+| `/api/v1/data-import/sessions/{id}` | GET | Session state, source results and summary             |
+| `/api/v1/data-import/sessions/{id}/summary` | GET | Downloaded / unavailable / manual / inconsistent report |
+| `/api/v1/data-import/sessions/{id}/sources/{source}` | POST | Fetch one simulated source             |
+| `/api/v1/data-import/sessions/{id}/preview` | POST | Map data, run eligibility rules and preview the calculator |
+| `/api/v1/data-import/sessions/{id}/accept` | POST | Save accepted data and return the form prefill |
+| `/api/v1/data-import/sessions/{id}/skip` | POST | Abandon retrieval without blocking manual entry |
 | `/api/v1/calculations`         | GET    | Recent calculations                                      |
 | `/api/v1/calculations`         | POST   | Deterministic calculation; persists input and trace      |
 | `/api/v1/documents/analyze`    | GET    | Available synthetic sample documents                     |
@@ -166,9 +175,10 @@ apps/web
 └── tests/               # Vitest unit tests
 
 packages/
-├── domain/              # @zpr/domain — pure calculator, eligibility, documents, deadlines, scenarios, timeline
+├── domain/              # @zpr/domain — pure calculator, eligibility, documents, deadlines, scenarios, timeline, e-ZLA analysis
 ├── ai/                  # @zpr/ai — assistant orchestration, tools, guards, provider factory, rules model
-├── contracts/           # @zpr/contracts — env, API, onboarding, calculator Zod schemas
+├── contracts/           # @zpr/contracts — env, API, onboarding, calculator, data-import Zod schemas
+├── data-sources/        # @zpr/data-sources — demo scenarios, per-institution providers, mapping engine
 ├── db/                  # @zpr/db — Drizzle schema, repos, seed, migrations, health
 ├── rag/                 # @zpr/rag — ingestion pipeline, embeddings, hybrid retrieval
 │   ├── knowledge/       #   committed (redistributable) curated sources
@@ -177,9 +187,45 @@ packages/
 ```
 
 Dependency direction: `apps/web → @zpr/contracts → @zpr/domain`,
+`apps/web → @zpr/data-sources → @zpr/contracts, @zpr/domain`,
 `apps/web → @zpr/rag → @zpr/db`, `apps/web → @zpr/ai → @zpr/contracts, @zpr/domain`.
 `@zpr/domain` is pure and performs no I/O; `@zpr/ai` has no database access —
 the web app injects application services through the `AssistantServices` port.
+
+### Simulated data retrieval
+
+`/dane` starts after the existing mObywatel simulation. Nothing is fetched
+until the user selects data scopes and confirms:
+
+1. **Consent** — each institution shows its scopes (insurance history,
+   contribution bases, employment, sick leave, child data, benefit cases).
+2. **Per-source retrieval** — ZUS, employer/payer, e-ZLA, USC and PUE/eZUS run
+   as separate providers with their own progress and failure states.
+3. **Summary** — downloaded, unavailable, manually required fields and
+   cross-source inconsistencies, each with provenance.
+4. **Verification** — every field shows its origin; edits are marked manual.
+   A preview runs the deterministic eligibility rules and the calculator
+   before anything is accepted.
+
+Accepted data is stored in `app.data_import_sessions` and
+`app.data_import_snapshots`, projected into the normalised tables
+(`contribution_bases`, `sick_leave_periods`, `children`, `benefit_applications`,
+`contribution_payers`, `payroll_components`, `payroll_absences`) and linked to
+the household by `importSessionId` during onboarding. The onboarding wizard
+and calculator then read the same accepted prefill; the panel shows the latest
+retrieval report and eligibility result.
+
+Demo scenarios (synthetic, deterministic, no randomness):
+
+| Scenario | Persona | Purpose |
+| -------- | ------- | ------- |
+| `anna-employment` | Anna Kowalska | Employment contract, continuous compulsory insurance, pregnancy-related e-ZLA, USC has no birth record yet |
+| `marek-self-employment` | Marek Wiśniewski | Sole proprietor, voluntary sickness insurance, open contribution arrears, child from USC, PUE cases |
+| `kasia-incomplete` | Kasia Nowak | Mandate ended before birth, insurance gap, e-ZLA outage, empty USC/PUE — manual completion required |
+
+The scenario engine is pure and deterministic. Providers implement one
+interface (`DataSourceProvider`), so a real integration can replace a provider
+without changing the flow, contracts or mapping.
 
 ### Conversational assistant
 
@@ -342,6 +388,9 @@ real ZUS sample cases or personal data:
 - **Anna Kowalska** — employed, one child, standard 100%/70% variant
 - **Tomasz Kowalski** — employed father, paternity/parental split
 - **Kasia Nowak** — mandate contract ending before birth
+- **Marek Wiśniewski** — sole proprietor with voluntary sickness insurance
+- Data-retrieval scenarios: Anna (employment), Marek (self-employment), Kasia
+  (incomplete history), each consistent across ZUS, employer, e-ZLA, USC and PUE
 - `kb:seed`: curated sources in `packages/rag/knowledge/` (statute excerpts in
   two dated versions, Kodeks pracy, form instructions, benefit table, „Za
   życiem”, guide summary, support organisations), chunked and embedded; the
@@ -374,8 +423,16 @@ and access filters, versioned legal sources and no-result outcomes.
 The suite also covers calculator normalization and amounts, money rounding, env
 validation (including production secret rejection), timeline milestones, document warnings, API
 problem responses, all route headings, calculator/assistant flows, and axe
-accessibility checks on `/`, `/kalkulator`, and `/asystent` at desktop and
+accessibility checks on `/`, `/kalkulator`, `/asystent`, `/mobywatel` and `/dane` at desktop and
 mobile sizes.
+
+Data-retrieval tests (`packages/data-sources`): scenario consistency (payer,
+employment and insurance dates, contribution bases vs benefit basis, USC birth
+date vs PUE), deterministic output, consent-scope filtering, empty/error
+sources, self-employment and arrears, incomplete insurance history, mapping to
+the calculator and eligibility rules, and e-ZLA analysis. The API flow is
+covered by `apps/web/e2e/data-import.spec.ts` (consent → retrieval → summary →
+verification → onboarding prefill) and the manual-skip path.
 
 Assistant tests (`packages/ai`, `apps/web/tests/assistant-security.test.ts`,
 `apps/web/e2e/assistant.spec.ts`): tool selection for all supported question
@@ -401,4 +458,7 @@ failure and abort, and multi-turn continuity.
   fields; it does not perform OCR.
 - The admin area is a read-only skeleton with a demo login.
 - Government integrations, applications, and PZ/eZUS flows are not implemented.
+  `/dane` simulates them locally; no request leaves the application.
+- The data-retrieval session is demo-grade: consent and provenance are recorded,
+  but there is no production identity proof or audit trail.
 - The offline embedding model is not suitable for production retrieval quality.

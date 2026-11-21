@@ -26,6 +26,7 @@ export const navItems = [
 
 export const footerLinks = [
   { href: "/start", label: "Kreator startowy" },
+  { href: "/dane", label: "Pobierz dane (symulacja)" },
   { href: "/mobywatel", label: "Logowanie mObywatel (symulacja)" },
   { href: "/o-projekcie", label: "O projekcie i AI" },
   { href: "/admin", label: "Panel administratora" },
@@ -48,6 +49,9 @@ export const statusLabels = {
   QUEUED: "W kolejce",
   RUNNING: "W toku",
   SUCCEEDED: "Zakończone",
+  ELIGIBLE: "Wstępnie spełnia",
+  NOT_ELIGIBLE: "Nie spełnia",
+  NEEDS_INPUT: "Brakuje danych",
 } as const
 
 export const home = {

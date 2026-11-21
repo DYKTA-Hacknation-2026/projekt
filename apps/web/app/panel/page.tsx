@@ -8,6 +8,8 @@ import {
   FileText,
   Gauge,
   Scale,
+  ShieldCheck,
+  Sparkles,
   Users,
 } from "lucide-react"
 
@@ -33,10 +35,15 @@ import { PageHeader } from "@/components/page-header"
 import { StatCard } from "@/components/stat-card"
 import { formatDate, formatNumber, formatPln } from "@/lib/format"
 import { dashboard, statusLabels } from "@/messages/pl"
+import { getCurrentUserId } from "@/server/auth/current"
 import {
   getDashboardData,
   type DashboardData,
 } from "@/server/services/dashboard"
+import {
+  getLatestImportForUser,
+  type LatestImportForUser,
+} from "@/server/services/data-import"
 
 export const dynamic = "force-dynamic"
 
@@ -70,8 +77,104 @@ function statusLabel(status: string): string {
   return (statusLabels as Record<string, string>)[status] ?? status
 }
 
-function CasesTable({ data }: { data: DashboardData }) {
+function ImportedDataCard({ imported }: { imported: LatestImportForUser }) {
+  const { preview } = imported
+
   return (
+    <Card className="border-primary/25">
+      <CardHeader className="border-b border-border/70">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles aria-hidden="true" className="size-4 text-primary" />
+              Dane z symulowanych źródeł
+            </CardTitle>
+            <CardDescription>
+              {imported.scenarioLabel} · zaakceptowano{" "}
+              {formatDate(imported.acceptedAt?.slice(0, 10))}
+            </CardDescription>
+          </div>
+          <Badge variant="warning">Symulacja</Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-lg bg-secondary/40 p-3">
+            <p className="text-xs text-muted-foreground">Źródła z danymi</p>
+            <p className="mt-0.5 text-xl font-semibold tabular-nums">
+              {preview.summary.counts.downloaded}
+            </p>
+          </div>
+          <div className="rounded-lg bg-secondary/40 p-3">
+            <p className="text-xs text-muted-foreground">Niedostępne</p>
+            <p className="mt-0.5 text-xl font-semibold tabular-nums">
+              {preview.summary.counts.unavailable}
+            </p>
+          </div>
+          <div className="rounded-lg bg-secondary/40 p-3">
+            <p className="text-xs text-muted-foreground">Uzupełnione ręcznie</p>
+            <p className="mt-0.5 text-xl font-semibold tabular-nums">
+              {
+                Object.values(preview.fieldSources).filter(
+                  (source) => source?.origin === "MANUAL"
+                ).length
+              }
+            </p>
+          </div>
+          <div className="rounded-lg bg-secondary/40 p-3">
+            <p className="text-xs text-muted-foreground">Podstawa z ZUS</p>
+            <p className="mt-0.5 text-xl font-semibold tabular-nums">
+              {preview.data.monthlyBasisGrosze !== undefined
+                ? formatPln(preview.data.monthlyBasisGrosze)
+                : "—"}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-2">
+          {preview.eligibility.determinations.map((determination) => (
+            <div
+              key={determination.benefit}
+              className="flex items-start justify-between gap-3 rounded-lg border border-border/70 p-3 text-sm"
+            >
+              <span className="text-pretty">{determination.label}</span>
+              <Badge
+                variant={
+                  determination.status === "ELIGIBLE"
+                    ? "success"
+                    : determination.status === "NOT_ELIGIBLE"
+                      ? "destructive"
+                      : determination.status === "INDETERMINATE"
+                        ? "warning"
+                        : "secondary"
+                }
+              >
+                {statusLabel(determination.status)}
+              </Badge>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm">
+            <Link href="/kalkulator">
+              <Calculator data-icon="inline-start" aria-hidden="true" />
+              Policz z pobranymi danymi
+            </Link>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <Link href="/dane">
+              <ShieldCheck data-icon="inline-start" aria-hidden="true" />
+              Otwórz raport pobrania
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function CasesTable({ data }: { data: DashboardData }) {  return (
     <Card>
       <CardHeader className="border-b border-border/70">
         <div className="flex items-center justify-between gap-3">
@@ -136,6 +239,7 @@ function CasesTable({ data }: { data: DashboardData }) {
 
 export default async function PanelPage() {
   let data: DashboardData
+  let imported: LatestImportForUser | null = null
 
   try {
     data = await getDashboardData()
@@ -150,6 +254,15 @@ export default async function PanelPage() {
         <DbOffline error={error} />
       </div>
     )
+  }
+
+  try {
+    const userId = await getCurrentUserId()
+    imported = userId ? await getLatestImportForUser(userId) : null
+  } catch {
+    // The panel remains usable when no import session exists or the migration
+    // has not been applied yet.
+    imported = null
   }
 
   return (
@@ -210,6 +323,8 @@ export default async function PanelPage() {
           />
         </div>
       </section>
+
+      {imported && <ImportedDataCard imported={imported} />}
 
       <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <CasesTable data={data} />

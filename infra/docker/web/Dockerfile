@@ -10,6 +10,7 @@ COPY apps/web/package.json apps/web/package.json
 COPY packages/ui/package.json packages/ui/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/domain/package.json packages/domain/package.json
+COPY packages/data-sources/package.json packages/data-sources/package.json
 COPY packages/db/package.json packages/db/package.json
 COPY packages/rag/package.json packages/rag/package.json
 COPY packages/ai/package.json packages/ai/package.json
@@ -27,6 +28,7 @@ COPY --from=deps /app/packages/rag/node_modules ./packages/rag/node_modules
 COPY --from=deps /app/packages/ai/node_modules ./packages/ai/node_modules
 COPY --from=deps /app/packages/contracts/node_modules ./packages/contracts/node_modules
 COPY --from=deps /app/packages/domain/node_modules ./packages/domain/node_modules
+COPY --from=deps /app/packages/data-sources/node_modules ./packages/data-sources/node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm --filter web build

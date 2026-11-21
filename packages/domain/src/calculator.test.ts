@@ -45,6 +45,21 @@ describe("calculateBenefits", () => {
     expect(result.dailyBasisGrosze).toBe(28_763)
   })
 
+  it("uses a retrieved ZUS basis instead of recomputing it from gross pay", () => {
+    const result = calculateBenefits(
+      input({
+        grossMonthlyIncomeGrosze: 1_000_000,
+        monthlyBasisOverrideGrosze: 700_000,
+      })
+    )
+
+    expect(result.basisGrosze).toBe(700_000)
+    expect(result.trace.find((step) => step.ruleId === "LR-112")?.detail).toContain(
+      "ZUS"
+    )
+    expect(result.warnings.join(" ")).toContain("symulowanego ZUS")
+  })
+
   it("clamps out-of-range input instead of throwing", () => {
     const result = calculateBenefits(
       input({

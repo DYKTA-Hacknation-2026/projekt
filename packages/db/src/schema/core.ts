@@ -94,6 +94,61 @@ export const recipientEnum = appSchema.enum("application_recipient", [
   "ZUS",
 ])
 
+export const dataSourceEnum = appSchema.enum("data_source_id", [
+  "ZUS",
+  "EMPLOYER",
+  "EZLA",
+  "USC",
+  "PUE",
+])
+
+export const sourceFetchStatusEnum = appSchema.enum("source_fetch_status", [
+  "PENDING",
+  "SUCCESS",
+  "PARTIAL",
+  "EMPTY",
+  "ERROR",
+])
+
+export const importSessionStatusEnum = appSchema.enum("import_session_status", [
+  "CONSENTED",
+  "RUNNING",
+  "COMPLETED",
+  "ACCEPTED",
+  "SKIPPED",
+])
+
+export const payerTypeEnum = appSchema.enum("payer_type", [
+  "EMPLOYER",
+  "SELF_EMPLOYED",
+  "MANDATE_PRINCIPAL",
+])
+
+export const salaryComponentKindEnum = appSchema.enum(
+  "salary_component_kind",
+  ["BASE", "BONUS", "ALLOWANCE", "OVERTIME", "OTHER"]
+)
+
+export const absenceKindEnum = appSchema.enum("absence_kind", [
+  "SICK_LEAVE",
+  "MATERNITY",
+  "PARENTAL",
+  "UNPAID",
+  "OTHER",
+])
+
+export const sickLeaveKindEnum = appSchema.enum("sick_leave_kind", [
+  "SICKNESS",
+  "PREGNANCY",
+  "CARE",
+  "REHABILITATION",
+])
+
+export const benefitApplicationStatusEnum = appSchema.enum(
+  "benefit_application_status",
+  ["SUBMITTED", "IN_PROGRESS", "DECISION_ISSUED", "PAID", "REJECTED"]
+)
+
 export const verificationStatusEnum = legalSchema.enum("verification_status", [
   "VERIFIED",
   "UNVERIFIED",
@@ -472,6 +527,252 @@ export const applicationDrafts = appSchema.table(
   (table) => [
     index("application_drafts_case_idx").on(table.caseId),
     index("application_drafts_status_idx").on(table.status),
+  ]
+)
+
+/* -------------------------------------------------------------------------- */
+/* app — simulated external data, accepted snapshots and provenance            */
+/* -------------------------------------------------------------------------- */
+
+export const dataImportSessions = appSchema.table(
+  "data_import_sessions",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    ownerKey: text("owner_key").notNull(),
+    userId: uuid("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    personaId: text("persona_id").notNull(),
+    scenarioId: text("scenario_id").notNull(),
+    scopes: jsonb("scopes").$type<string[]>().notNull().default([]),
+    status: importSessionStatusEnum("status").notNull().default("CONSENTED"),
+    acceptedData: jsonb("accepted_data")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    fieldSources: jsonb("field_sources")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    summary: jsonb("summary")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    engineVersion: text("engine_version").notNull().default("1.0.0-sim"),
+    createdAt,
+    updatedAt,
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("data_import_sessions_owner_idx").on(table.ownerKey, table.createdAt),
+    index("data_import_sessions_user_idx").on(table.userId, table.acceptedAt),
+    index("data_import_sessions_status_idx").on(table.status),
+  ]
+)
+
+export const dataImportSnapshots = appSchema.table(
+  "data_import_snapshots",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => dataImportSessions.id, { onDelete: "cascade" }),
+    sourceId: dataSourceEnum("source_id").notNull(),
+    status: sourceFetchStatusEnum("status").notNull().default("PENDING"),
+    payload: jsonb("payload")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    issues: jsonb("issues").$type<unknown[]>().notNull().default([]),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }),
+    createdAt,
+  },
+  (table) => [
+    uniqueIndex("data_import_snapshots_session_source_uq").on(
+      table.sessionId,
+      table.sourceId
+    ),
+    index("data_import_snapshots_session_idx").on(table.sessionId),
+  ]
+)
+
+export const contributionPayers = appSchema.table(
+  "contribution_payers",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    payerType: payerTypeEnum("payer_type").notNull().default("EMPLOYER"),
+    taxId: text("tax_id").notNull(),
+    city: text("city"),
+    isCurrent: boolean("is_current").notNull().default(true),
+    source: text("source").notNull().default("SIMULATED"),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [index("contribution_payers_user_idx").on(table.userId)]
+)
+
+export const payrollComponents = appSchema.table(
+  "payroll_components",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    employmentRecordId: uuid("employment_record_id")
+      .notNull()
+      .references(() => employmentRecords.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    kind: salaryComponentKindEnum("kind").notNull().default("BASE"),
+    amountGrosze: integer("amount_grosze").notNull().default(0),
+    validFrom: date("valid_from").notNull(),
+    validTo: date("valid_to"),
+    createdAt,
+  },
+  (table) => [
+    index("payroll_components_employment_idx").on(table.employmentRecordId),
+  ]
+)
+
+export const contributionBases = appSchema.table(
+  "contribution_bases",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    insurancePeriodId: uuid("insurance_period_id").references(
+      () => insurancePeriods.id,
+      { onDelete: "set null" }
+    ),
+    periodStart: date("period_start").notNull(),
+    periodEnd: date("period_end").notNull(),
+    basisGrosze: integer("basis_grosze").notNull().default(0),
+    sicknessContributionGrosze: integer("sickness_contribution_grosze")
+      .notNull()
+      .default(0),
+    paid: boolean("paid").notNull().default(true),
+    paidAt: date("paid_at"),
+    source: text("source").notNull().default("SIMULATED_ZUS"),
+    createdAt,
+  },
+  (table) => [
+    index("contribution_bases_user_idx").on(table.userId),
+    index("contribution_bases_period_idx").on(table.periodStart, table.periodEnd),
+  ]
+)
+
+export const sickLeavePeriods = appSchema.table(
+  "sick_leave_periods",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    days: integer("days").notNull(),
+    kind: sickLeaveKindEnum("kind").notNull().default("SICKNESS"),
+    pregnancyRelated: boolean("pregnancy_related").notNull().default(false),
+    certificateRef: text("certificate_ref").notNull(),
+    payerName: text("payer_name").notNull(),
+    status: text("status").notNull().default("FINISHED"),
+    source: text("source").notNull().default("SIMULATED_EZLA"),
+    createdAt,
+  },
+  (table) => [index("sick_leave_periods_user_idx").on(table.userId, table.startDate)]
+)
+
+export const importedChildren = appSchema.table(
+  "children",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    familyEventId: uuid("family_event_id").references(() => familyEvents.id, {
+      onDelete: "set null",
+    }),
+    firstName: text("first_name"),
+    birthDate: date("birth_date").notNull(),
+    childrenInBirth: integer("children_in_birth").notNull().default(1),
+    isAdopted: boolean("is_adopted").notNull().default(false),
+    adoptionDate: date("adoption_date"),
+    birthPlace: text("birth_place"),
+    source: text("source").notNull().default("SIMULATED_USC"),
+    createdAt,
+  },
+  (table) => [index("children_user_idx").on(table.userId, table.birthDate)]
+)
+
+export const benefitApplications = appSchema.table(
+  "benefit_applications",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    caseNumber: text("case_number").notNull(),
+    applicationType: text("application_type").notNull(),
+    benefitKind: text("benefit_kind").notNull(),
+    status: benefitApplicationStatusEnum("status")
+      .notNull()
+      .default("SUBMITTED"),
+    submittedAt: date("submitted_at").notNull(),
+    decisionNumber: text("decision_number"),
+    decisionDate: date("decision_date"),
+    periodFrom: date("period_from"),
+    periodTo: date("period_to"),
+    amountGrosze: integer("amount_grosze"),
+    documents: jsonb("documents")
+      .$type<Record<string, unknown>[]>()
+      .notNull()
+      .default([]),
+    source: text("source").notNull().default("SIMULATED_PUE"),
+    createdAt,
+  },
+  (table) => [
+    uniqueIndex("benefit_applications_user_case_uq").on(
+      table.userId,
+      table.caseNumber
+    ),
+    index("benefit_applications_user_idx").on(table.userId, table.submittedAt),
+  ]
+)
+
+export const payrollAbsences = appSchema.table(
+  "payroll_absences",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    employmentRecordId: uuid("employment_record_id")
+      .notNull()
+      .references(() => employmentRecords.id, { onDelete: "cascade" }),
+    kind: absenceKindEnum("kind").notNull().default("OTHER"),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    note: text("note"),
+    createdAt,
+  },
+  (table) => [
+    index("payroll_absences_employment_idx").on(table.employmentRecordId),
   ]
 )
 
