@@ -130,8 +130,8 @@ export const calculator = {
 } as const
 
 export const assistant = {
-  title: "Asystent wiedzy",
-  lead: "Odpowiada na podstawie zaindeksowanych źródeł. Nie wymyśla kwot — do obliczeń kieruje do kalkulatora.",
+  title: "Asystent zasiłkowy",
+  lead: "Rozmowa po polsku o zasiłku macierzyńskim, urlopach, dokumentach i terminach. Każda informacja prawna ma źródło, a kwoty i terminy pochodzą z deterministycznego modułu.",
 } as const
 
 export const documents = {

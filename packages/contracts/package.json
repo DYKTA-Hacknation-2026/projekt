@@ -10,7 +10,8 @@
     "./calculator": "./src/calculator.ts",
     "./assistant": "./src/assistant.ts",
     "./knowledge": "./src/knowledge.ts",
-    "./common": "./src/common.ts"
+    "./common": "./src/common.ts",
+    "./assistant-tools": "./src/assistant-tools.ts"
   },
   "scripts": {
     "lint": "eslint",

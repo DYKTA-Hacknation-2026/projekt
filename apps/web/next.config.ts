@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
     "@zpr/contracts",
     "@zpr/db",
     "@zpr/rag",
+    "@zpr/ai",
   ],
   // PDF extraction is only used by CLI ingestion; keep it out of the bundle.
   serverExternalPackages: ["unpdf"],

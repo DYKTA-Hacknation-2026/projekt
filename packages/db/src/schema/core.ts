@@ -743,6 +743,11 @@ export const conversations = chatSchema.table(
     userId: uuid("user_id").references(() => users.id, {
       onDelete: "cascade",
     }),
+    /**
+     * Opaque owner of the conversation (signed session id). Every read and
+     * delete is filtered by it, so a guest can only reach their own chats.
+     */
+    ownerKey: text("owner_key"),
     title: text("title").notNull().default("Nowa rozmowa"),
     status: conversationStatusEnum("status").notNull().default("ACTIVE"),
     isSimulated: boolean("is_simulated").notNull().default(true),
@@ -752,6 +757,7 @@ export const conversations = chatSchema.table(
   (table) => [
     index("conversations_user_idx").on(table.userId),
     index("conversations_updated_idx").on(table.updatedAt),
+    index("conversations_owner_idx").on(table.ownerKey, table.updatedAt),
   ]
 )
 
