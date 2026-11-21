@@ -1,6 +1,7 @@
 import type { Database } from "../client"
 import { DrizzleBenefitRepository } from "./benefits"
 import { DrizzleContentRepository } from "./content"
+import { DrizzleDocumentRepository } from "./documents"
 import { DrizzleConversationRepository } from "./conversations"
 import { DrizzleImportRepository } from "./imports"
 import { DrizzleKnowledgeRepository } from "./knowledge"
@@ -9,6 +10,7 @@ import { DrizzleHouseholdRepository, DrizzleUserRepository } from "./users"
 
 export * from "./interfaces"
 export * from "./content"
+export * from "./documents"
 
 export interface Repositories {
   users: DrizzleUserRepository
@@ -19,6 +21,7 @@ export interface Repositories {
   knowledge: DrizzleKnowledgeRepository
   content: DrizzleContentRepository
   conversations: DrizzleConversationRepository
+  documents: DrizzleDocumentRepository
 }
 
 export function createRepositories(db: Database): Repositories {
@@ -31,5 +34,6 @@ export function createRepositories(db: Database): Repositories {
     knowledge: new DrizzleKnowledgeRepository(db),
     content: new DrizzleContentRepository(db),
     conversations: new DrizzleConversationRepository(db),
+    documents: new DrizzleDocumentRepository(db),
   }
 }

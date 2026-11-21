@@ -47,3 +47,11 @@ export async function closeDatabase(): Promise<void> {
 }
 
 export { schema }
+
+/** Applies the committed SQL migrations (`packages/db/drizzle`) — scripts and integration tests. */
+export async function applyMigrations(db: Database): Promise<void> {
+  const { migrate } = await import("drizzle-orm/node-postgres/migrator")
+  const { fileURLToPath } = await import("node:url")
+  const path = await import("node:path")
+  await migrate(db, { migrationsFolder: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../drizzle") })
+}
