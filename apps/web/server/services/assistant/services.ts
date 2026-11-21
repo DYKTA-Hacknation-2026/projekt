@@ -1,16 +1,14 @@
 import type { AssistantServices, ProfileAccess, ProfileSnapshot } from "@zpr/ai"
 import { warsawToday } from "@zpr/ai"
 import type { AssistantProfileRecord } from "@zpr/db/repositories"
+import { groszeToPln, relevantDeadlines, type CaseFacts } from "@zpr/domain"
 import {
-  assessEligibility,
-  buildTimeline,
-  calculateBenefits,
-  compareLeaveScenarios,
-  groszeToPln,
-  relevantDeadlines,
-  requiredDocuments,
-  type CaseFacts,
-} from "@zpr/domain"
+  calculateParentalBenefits,
+  compareBenefitScenarios,
+  evaluateEligibility,
+  generateBenefitTimeline,
+  identifyRequiredDocuments,
+} from "@zpr/domain/engine"
 
 import type { Principal } from "@/server/auth/session"
 import { getContainer } from "@/server/container"
@@ -79,11 +77,13 @@ export function createAssistantServices(input: {
         sourceTypes: query.sourceTypes,
       }),
     loadProfile: () => loadProfileFor(input.principal, input.profileEnabled),
-    assessEligibility,
-    calculate: calculateBenefits,
-    compareScenarios: compareLeaveScenarios,
-    requiredDocuments,
+    engine: {
+      evaluateEligibility,
+      calculateParentalBenefits,
+      compareBenefitScenarios,
+      generateBenefitTimeline,
+      identifyRequiredDocuments,
+    },
     deadlines: relevantDeadlines,
-    timeline: buildTimeline,
   }
 }

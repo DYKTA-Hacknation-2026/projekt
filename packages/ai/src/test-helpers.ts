@@ -3,14 +3,14 @@ import type {
   KnowledgeChunkResult,
   KnowledgeSearchResult,
 } from "@zpr/contracts/knowledge"
+import { relevantDeadlines } from "@zpr/domain"
 import {
-  assessEligibility,
-  buildTimeline,
-  calculateBenefits,
-  compareLeaveScenarios,
-  relevantDeadlines,
-  requiredDocuments,
-} from "@zpr/domain"
+  calculateParentalBenefits,
+  compareBenefitScenarios,
+  evaluateEligibility,
+  generateBenefitTimeline,
+  identifyRequiredDocuments,
+} from "@zpr/domain/engine"
 
 import type { AssistantServices, ProfileAccess } from "./types"
 
@@ -94,12 +94,14 @@ export function fakeServices(options: FakeServicesOptions = {}) {
       profileLoads += 1
       return options.profile ?? { status: "NOT_ENABLED" }
     },
-    assessEligibility,
-    calculate: calculateBenefits,
-    compareScenarios: compareLeaveScenarios,
-    requiredDocuments,
+    engine: {
+      evaluateEligibility,
+      calculateParentalBenefits,
+      compareBenefitScenarios,
+      generateBenefitTimeline,
+      identifyRequiredDocuments,
+    },
     deadlines: relevantDeadlines,
-    timeline: buildTimeline,
   }
   return {
     services,

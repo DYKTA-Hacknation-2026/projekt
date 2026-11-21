@@ -10,6 +10,7 @@ export default defineConfig({
     alias: {
       "@": root,
       "@workspace/ui": `${workspace}/packages/ui/src`,
+      "@zpr/domain/engine": `${workspace}/packages/domain/src/engine/index.ts`,
       "@zpr/domain": `${workspace}/packages/domain/src/index.ts`,
       "@zpr/contracts/env": `${workspace}/packages/contracts/src/env.ts`,
       "@zpr/contracts/onboarding": `${workspace}/packages/contracts/src/onboarding.ts`,
@@ -17,6 +18,7 @@ export default defineConfig({
       "@zpr/contracts/assistant-tools": `${workspace}/packages/contracts/src/assistant-tools.ts`,
       "@zpr/contracts/assistant": `${workspace}/packages/contracts/src/assistant.ts`,
       "@zpr/contracts/knowledge": `${workspace}/packages/contracts/src/knowledge.ts`,
+      "@zpr/contracts/engine": `${workspace}/packages/contracts/src/engine.ts`,
       "@zpr/contracts/common": `${workspace}/packages/contracts/src/common.ts`,
       "@zpr/contracts": `${workspace}/packages/contracts/src/index.ts`,
       "@zpr/db/client": `${workspace}/packages/db/src/client.ts`,

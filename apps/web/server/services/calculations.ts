@@ -1,5 +1,6 @@
 import type { CalculationRequest } from "@zpr/contracts/calculator"
 import { calculateBenefits } from "@zpr/domain"
+import { ENGINE_VERSION as CORE_ENGINE_VERSION } from "@zpr/domain/engine"
 
 import { getContainer } from "@/server/container"
 
@@ -11,7 +12,8 @@ export interface CalculationResponse {
   result: ReturnType<typeof calculateBenefits>
 }
 
-const ENGINE_VERSION = "0.1.0-scaffold"
+/** The simplified calculator runs on the deterministic engine; its version is stored with every result. */
+const ENGINE_VERSION = `${CORE_ENGINE_VERSION}-calculator`
 
 export async function runCalculation(
   request: CalculationRequest

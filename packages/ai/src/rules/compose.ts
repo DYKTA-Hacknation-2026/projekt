@@ -28,6 +28,10 @@ const PREPARED_BY: Record<string, string> = {
   PAYER: "wystawia płatnik składek",
   DOCTOR: "wystawia lekarz",
   CIVIL_REGISTRY: "z urzędu stanu cywilnego",
+  OTHER_PARENT: "składa drugi rodzic",
+  HOSPITAL: "wystawia szpital",
+  COURT: "wydaje sąd",
+  ZUS: "wydaje ZUS",
 }
 
 function stems(text: string): string[] {

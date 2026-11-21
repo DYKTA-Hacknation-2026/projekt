@@ -11,7 +11,8 @@ import {
   getUserInsuranceProfileInputSchema,
   searchKnowledgeBaseInputSchema,
 } from "@zpr/contracts/assistant-tools"
-import { plnToGrosze, type CalculatorResult } from "@zpr/domain"
+import { addDays, calculatorToLeavePlan, type CalculatorInput } from "@zpr/domain"
+import { latestRuleSet, type AssessmentInput, type ParentInput } from "@zpr/domain/engine"
 
 import type { EvidenceSource } from "@zpr/contracts/assistant"
 
@@ -19,6 +20,7 @@ import { formatDatePl, formatPln } from "../format"
 import { locator, type TurnState } from "../turn"
 import type { AssistantServices, AssistantToolName } from "../types"
 import { PROFILE_STATUS_MESSAGES, resolveFacts } from "./facts"
+import { documentsView, eligibilityView, engineMeta, householdInput, plnToExactGrosze } from "./household"
 
 export interface SearchToolOutput {
   status: "OK" | "NO_EVIDENCE" | "INVALID_INPUT" | "ERROR"
@@ -84,38 +86,36 @@ function guarded<S extends z.ZodType, O>(
   }
 }
 
-function summarizeCalculation(result: CalculatorResult) {
+/** Date used only to place a what-if plan in time when the user gave none (A-24). */
+function nominalDate(today: string): string {
+  const effective = latestRuleSet().effectiveFrom
+  const candidate = addDays(today, 120)
+  return candidate > effective ? candidate : effective
+}
+
+const PARENT_OWNER = { MOTHER: "MAMA", FATHER: "TATA", BOTH: "OBOJE" } as const
+
+function legacyCalculatorInput(
+  input: {
+    grossMonthlyIncomePln: number
+    childrenCount?: number
+    hasZaZyciem?: boolean
+    paymentOption?: CalculatorInput["paymentOption"]
+    maternityWeeksBeforeBirth?: number
+    secondParentParentalWeeks?: number
+    parentalWorkFraction?: number
+    paternityDays?: number
+  }
+): CalculatorInput {
   return {
-    verified: result.verified,
-    calculationStatus: result.status,
-    maternityWeeks: result.maternityWeeks,
-    preBirthWeeks: result.preBirthWeeks,
-    postBirthWeeks: result.postBirthWeeks,
-    parentalPoolWeeks: result.parentalPoolWeeks,
-    motherParentalWeeks: result.motherParentalWeeks,
-    secondParentWeeks: result.secondParentWeeks,
-    extensionWeeks: result.extensionWeeks,
-    paternityDays: result.paternityDays,
-    basisGrosze: result.basisGrosze,
-    basisFormatted: formatPln(result.basisGrosze),
-    lines: result.lines.map((line) => ({
-      kind: line.kind,
-      label: line.label,
-      weeks: line.weeks,
-      days: line.days,
-      ratePercent: Math.round(line.rate * 1000) / 10,
-      amountGrosze: line.amountGrosze,
-      amountFormatted: formatPln(line.amountGrosze),
-      legalReference: line.legalReference,
-    })),
-    totalGrosze: result.totalGrosze,
-    totalFormatted: formatPln(result.totalGrosze),
-    warnings: result.warnings,
-    trace: result.trace.map((step) => ({
-      ruleId: step.ruleId,
-      label: step.label,
-      legalReference: step.legalReference,
-    })),
+    grossMonthlyIncomeGrosze: plnToExactGrosze(input.grossMonthlyIncomePln),
+    childrenCount: input.childrenCount ?? 1,
+    hasZaZyciem: input.hasZaZyciem ?? false,
+    paymentOption: input.paymentOption ?? "STANDARD_100_70",
+    maternityWeeksBeforeBirth: input.maternityWeeksBeforeBirth ?? 0,
+    secondParentParentalWeeks: input.secondParentParentalWeeks ?? 0,
+    parentalWorkFraction: input.parentalWorkFraction ?? 0,
+    paternityDays: input.paternityDays ?? 0,
   }
 }
 
@@ -195,17 +195,24 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
 
     checkBenefitEligibility: tool({
       description:
-        "Preliminary, rule-based eligibility check for maternity, parental, paternity and sickness-in-pregnancy benefits. Use for every question about whether a benefit is due. Pass only facts the user stated; missing facts produce NEEDS_INPUT with a follow-up question.",
+        "Preliminary, rule-based eligibility check (deterministic engine) for maternity, parental, paternity and sickness-in-pregnancy benefits, including special situations. Use for every question about whether a benefit is due. Pass only facts the user stated; missing facts produce NEEDS_INPUT with a follow-up question.",
       inputSchema: checkBenefitEligibilityInputSchema,
       execute: guarded("checkBenefitEligibility", checkBenefitEligibilityInputSchema, turn, async (input) => {
         const resolved = await resolveFacts(input.facts, services, turn)
-        const assessment = services.assessEligibility(resolved.facts, {
-          asOf: turn.asOf,
-          benefits: input.benefits,
-        })
+        const household = householdInput(resolved.facts, { asOf: turn.asOf })
+        const report = services.engine.evaluateEligibility(household.input)
         return {
           status: "OK" as const,
-          assessment,
+          assessment: eligibilityView(report, household.role, input.benefits, household.roleKnown),
+          engine: {
+            assessmentStatus: report.status,
+            ruleSetVersion: report.ruleSet.version,
+            inputHash: report.inputHash,
+            appliedRules: report.appliedRules.map((rule) => ({ ruleId: rule.ruleId, sources: rule.sources })),
+            assumptions: report.assumptions,
+            warnings: report.warnings.map((warning) => warning.text),
+            missingEvidence: report.missingEvidence.map((item) => item.question),
+          },
           factsUsed: resolved.facts,
           factSources: resolved.sources,
           conflicts: resolved.conflicts,
@@ -217,7 +224,7 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
 
     calculateBenefit: tool({
       description:
-        "Deterministic benefit calculator (amounts and week counts). Use for every question about amounts. Never compute amounts yourself. Requires gross monthly income — from the user or the confirmed profile.",
+        "Deterministic benefit calculator (amounts and week counts, exact decimal arithmetic). Use for every question about amounts. Never compute amounts yourself. Requires gross monthly income — from the user or the confirmed profile.",
       inputSchema: calculateBenefitInputSchema,
       execute: guarded("calculateBenefit", calculateBenefitInputSchema, turn, async (input) => {
         const resolved = await resolveFacts(undefined, services, turn)
@@ -229,24 +236,63 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
             profileStatus: resolved.profileStatus,
           }
         }
-        const result = services.calculate({
-          grossMonthlyIncomeGrosze: plnToGrosze(income),
+        const facts = {
+          ...resolved.facts,
           childrenCount: input.childrenCount ?? resolved.facts.childrenCount ?? 1,
           hasZaZyciem: input.hasZaZyciem ?? resolved.facts.hasZaZyciem ?? false,
-          paymentOption: input.paymentOption ?? "STANDARD_100_70",
-          maternityWeeksBeforeBirth: input.maternityWeeksBeforeBirth ?? 0,
-          secondParentParentalWeeks: input.secondParentParentalWeeks ?? 0,
-          parentalWorkFraction: input.parentalWorkFraction ?? 0,
-          paternityDays: input.paternityDays ?? 0,
+        }
+        const calc = legacyCalculatorInput({ ...input, grossMonthlyIncomePln: income, childrenCount: facts.childrenCount, hasZaZyciem: facts.hasZaZyciem })
+        const withFather = calc.secondParentParentalWeeks > 0 || calc.paternityDays > 0
+        const household = householdInput(facts, {
+          asOf: turn.asOf,
+          grossMonthlyIncomePln: income,
+          plan: calculatorToLeavePlan(calc),
+          secondParentLikeFirst: withFather,
+          assumeEmployeeIfUnknown: true,
+          nominalDueDate: nominalDate(turn.asOf),
         })
+        const assessment = services.engine.calculateParentalBenefits(household.input)
+        const lines = assessment.breakdown.filter((line) => line.amountGrosze !== null || line.period)
+        const basis = assessment.basis.find((item) => item.parent === household.role)
+        const total = assessment.totals.totalGrosze
+        const known = lines.length > 0 && total !== null
         return {
-          status: "OK" as const,
+          status: known ? ("OK" as const) : lines.length === 0 ? ("NOT_APPLICABLE" as const) : ("NEEDS_INPUT" as const),
+          assessmentStatus: assessment.status,
+          amountStatus: assessment.totals.amountStatus,
           incomeSource: input.grossMonthlyIncomePln !== undefined ? "CONVERSATION" : "PROFILE",
           grossMonthlyIncomePln: income,
-          paymentOption: result.input.paymentOption,
-          ...summarizeCalculation(result),
+          paymentOption: calc.paymentOption,
+          basisFormatted: basis?.monthlyBasisGrosze != null ? formatPln(basis.monthlyBasisGrosze) : null,
+          lines: lines.map((line) => ({
+            kind: line.benefit,
+            label: line.label,
+            weeks: Math.floor(line.days / 7),
+            days: line.days,
+            ratePercent: Math.round(Number(line.rate) * Number(line.paidFraction) * 1000) / 10,
+            amountGrosze: line.amountGrosze,
+            amountFormatted: line.amountGrosze === null ? null : formatPln(line.amountGrosze),
+            formula: line.formula,
+            legalReference: [...new Set(line.ruleIds)].join(", "),
+          })),
+          totalGrosze: total,
+          totalFormatted: total === null ? null : formatPln(total),
+          byParent: assessment.totals.byParent.map((entry) => ({
+            parent: entry.parent,
+            totalFormatted: entry.totalGrosze === null ? null : formatPln(entry.totalGrosze),
+          })),
+          periods: assessment.periods.map((period) => ({
+            parent: period.parent,
+            benefit: period.benefit,
+            start: period.start,
+            end: period.end,
+            days: period.days,
+          })),
+          allocation: assessment.allocation,
+          warnings: [...assessment.planAdjustments, ...assessment.warnings.map((warning) => warning.text), ...household.assumptions],
+          engine: engineMeta(assessment),
           disclaimer:
-            "Kwoty brutto (przed zaliczką na PIT), szacunek demonstracyjny — nie decyzja ZUS.",
+            "Kwoty brutto (przed zaliczką na PIT), szacunek na podstawie reguł z przepisów udostępnionych przez ZUS — nie decyzja ZUS.",
           simulated: true as const,
         }
       }),
@@ -254,41 +300,69 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
 
     compareLeaveScenarios: tool({
       description:
-        "Compare up to 3 leave plans (who takes which weeks, 100%/70% vs 81.5%, part-time work, paternity). Use for questions about splitting leave between parents or choosing a variant. Week counts are always returned; amounts only when income is known.",
+        "Compare up to 3 leave plans (who takes which weeks, 100%/70% vs 81.5%, part-time work, paternity) with the deterministic engine. Use for questions about splitting leave between parents or choosing a variant. Week counts are always returned; amounts only when income is known.",
       inputSchema: compareLeaveScenariosInputSchema,
       execute: guarded("compareLeaveScenarios", compareLeaveScenariosInputSchema, turn, async (input) => {
         const resolved = await resolveFacts(undefined, services, turn)
         const income = input.grossMonthlyIncomePln ?? resolved.grossMonthlyIncomePln
         const dueDate = input.dueDate ?? resolved.facts.eventDate ?? resolved.facts.expectedDueDate
-        const comparison = services.compareScenarios(
+        const childrenCount = input.childrenCount ?? resolved.facts.childrenCount ?? 1
+        const hasZaZyciem = input.hasZaZyciem ?? resolved.facts.hasZaZyciem ?? false
+        const household = householdInput(
+          { ...resolved.facts, childrenCount, hasZaZyciem, expectedDueDate: resolved.facts.eventDate ? undefined : dueDate },
           {
-            grossMonthlyIncomeGrosze: income ? plnToGrosze(income) : 0,
-            childrenCount: input.childrenCount ?? resolved.facts.childrenCount ?? 1,
-            hasZaZyciem: input.hasZaZyciem ?? resolved.facts.hasZaZyciem ?? false,
-            dueDate,
-          },
-          input.scenarios
+            asOf: turn.asOf,
+            grossMonthlyIncomePln: income,
+            secondParentLikeFirst: true,
+            assumeEmployeeIfUnknown: true,
+            nominalDueDate: nominalDate(turn.asOf),
+          }
         )
-        const withAmounts = income !== null && income !== undefined
+        const { plan: _plan, ...base } = household.input
+        const comparison = services.engine.compareBenefitScenarios(
+          base,
+          input.scenarios.map((scenario) => ({
+            name: scenario.name,
+            plan: calculatorToLeavePlan(
+              legacyCalculatorInput({
+                ...scenario,
+                grossMonthlyIncomePln: income ?? 0,
+                childrenCount,
+                hasZaZyciem,
+              })
+            ),
+          }))
+        )
+        const withAmounts = income !== null && income !== undefined && comparison.outcomes.every((outcome) => outcome.totalGrosze !== null)
         return {
           status: withAmounts ? ("OK" as const) : ("PARTIAL" as const),
           amountsAvailable: withAmounts,
           missing: withAmounts ? [] : [{ key: "grossMonthlyIncomePln", question: INCOME_QUESTION }],
           dueDate: dueDate ?? null,
-          outcomes: comparison.outcomes.map((outcome) => ({
-            name: outcome.name,
-            paymentOption: outcome.input.paymentOption,
-            maternityWeeks: outcome.maternityWeeks,
-            motherParentalWeeks: outcome.motherParentalWeeks,
-            secondParentWeeks: outcome.secondParentWeeks,
-            extensionWeeks: outcome.extensionWeeks,
-            paternityDays: outcome.paternityDays,
-            parentalWorkFraction: outcome.input.parentalWorkFraction,
-            motherLeaveEnd: outcome.motherLeaveEnd,
-            totalGrosze: withAmounts ? outcome.totalGrosze : null,
-            totalFormatted: withAmounts ? formatPln(outcome.totalGrosze) : null,
-            differenceFormatted: withAmounts ? formatPln(outcome.totalDifferenceGrosze) : null,
-          })),
+          outcomes: comparison.outcomes.map((outcome, index) => {
+            const mother = outcome.allocation.find((entry) => entry.parent === "MOTHER")
+            const father = outcome.allocation.find((entry) => entry.parent === "FATHER")
+            const scenario = input.scenarios[index]!
+            return {
+              name: outcome.name,
+              paymentOption: scenario.paymentOption,
+              maternityWeeks: (mother?.maternityDays ?? 0) / 7,
+              motherParentalWeeks: (mother?.parentalDays ?? 0) / 7,
+              secondParentWeeks: (father?.parentalDays ?? 0) / 7,
+              extensionWeeks: ((mother?.parentalExtensionDays ?? 0) + (father?.parentalExtensionDays ?? 0)) / 7,
+              paternityDays: father?.paternityDays ?? 0,
+              parentalWorkFraction: scenario.parentalWorkFraction,
+              motherLeaveEnd: outcome.lastLeaveDay.MOTHER,
+              totalGrosze: withAmounts ? outcome.totalGrosze : null,
+              totalFormatted: withAmounts && outcome.totalGrosze !== null ? formatPln(outcome.totalGrosze) : null,
+              differenceFormatted:
+                withAmounts && outcome.differenceGrosze !== null ? formatPln(outcome.differenceGrosze) : null,
+              adjustments: outcome.planAdjustments,
+            }
+          }),
+          assumptions: household.assumptions,
+          ruleSetVersion: comparison.ruleSet.version,
+          engineVersion: comparison.engineVersion,
           verified: false as const,
           notes: comparison.notes,
           simulated: true as const,
@@ -298,14 +372,18 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
 
     getRequiredDocuments: tool({
       description:
-        "List required documents and forms for a benefit and where to submit them (employer or ZUS, eZUS). Use for every question about documents, forms or where to send them.",
+        "List required documents and forms for a benefit and where to submit them (employer or ZUS, eZUS), from the deterministic engine. Use for every question about documents, forms or where to send them.",
       inputSchema: getRequiredDocumentsInputSchema,
       execute: guarded("getRequiredDocuments", getRequiredDocumentsInputSchema, turn, async (input) => {
         const resolved = await resolveFacts(input.facts, services, turn)
-        const checklist = services.requiredDocuments(input.benefit, resolved.facts)
+        const household = householdInput(resolved.facts, {
+          asOf: turn.asOf,
+          nominalDueDate: nominalDate(turn.asOf),
+        })
+        const report = services.engine.identifyRequiredDocuments(household.input)
         return {
           status: "OK" as const,
-          ...checklist,
+          ...documentsView(report, household.role, input.benefit),
           factsUsed: resolved.facts,
           conflicts: resolved.conflicts,
           profileStatus: resolved.profileStatus,
@@ -334,7 +412,7 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
 
     getBenefitTimeline: tool({
       description:
-        "Build a two-parent leave timeline (start/end of maternity and parental leave, paternity, key deadlines) from the due date. Use when the user asks when leave starts or ends, or for a plan.",
+        "Build a two-parent leave timeline (start/end of maternity and parental leave, paternity, dated deadlines) from the due date with the deterministic engine. Use when the user asks when leave starts or ends, or for a plan.",
       inputSchema: getBenefitTimelineInputSchema,
       execute: guarded("getBenefitTimeline", getBenefitTimelineInputSchema, turn, async (input) => {
         const resolved = await resolveFacts(undefined, services, turn)
@@ -345,27 +423,57 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
             missing: [{ key: "expectedDueDate", question: DUE_DATE_QUESTION }],
           }
         }
-        const plan = services.timeline({
-          dueDate,
-          childrenCount: input.childrenCount ?? resolved.facts.childrenCount ?? 1,
-          hasZaZyciem: input.hasZaZyciem ?? resolved.facts.hasZaZyciem ?? false,
-          maternityWeeksBeforeBirth: input.maternityWeeksBeforeBirth ?? 0,
-          secondParentParentalWeeks: input.secondParentParentalWeeks ?? 0,
+        const childrenCount = input.childrenCount ?? resolved.facts.childrenCount ?? 1
+        const hasZaZyciem = input.hasZaZyciem ?? resolved.facts.hasZaZyciem ?? false
+        const calc = legacyCalculatorInput({
+          grossMonthlyIncomePln: 0,
+          childrenCount,
+          hasZaZyciem,
+          maternityWeeksBeforeBirth: input.maternityWeeksBeforeBirth,
+          secondParentParentalWeeks: input.secondParentParentalWeeks,
           paternityDays: input.paternityDays ?? 14,
         })
+        const insured: ParentInput["insurance"] = { title: "EMPLOYMENT" }
+        const request: AssessmentInput = {
+          asOf: turn.asOf,
+          event: resolved.facts.eventDate && !input.dueDate
+            ? { kind: "BIRTH", birthDate: resolved.facts.eventDate, childrenCount, zaZyciem: hasZaZyciem }
+            : { kind: "PREGNANCY", expectedDueDate: dueDate, childrenCount, zaZyciem: hasZaZyciem },
+          parents: [
+            { role: "MOTHER", insurance: insured },
+            { role: "FATHER", insurance: insured },
+          ],
+          plan: calculatorToLeavePlan(calc),
+        }
+        const report = services.engine.generateBenefitTimeline(request)
+        const mother = report.allocation.find((entry) => entry.parent === "MOTHER")
+        const father = report.allocation.find((entry) => entry.parent === "FATHER")
+        const preBirth = calc.maternityWeeksBeforeBirth
+        const maternityWeeks = (mother?.maternityDays ?? 0) / 7
         return {
           status: "OK" as const,
           dueDate,
-          maternityWeeks: plan.maternityWeeks,
-          postBirthWeeks: plan.postBirthWeeks,
-          parentalPoolWeeks: plan.parentalPoolWeeks,
-          motherParentalWeeks: plan.motherParentalWeeks,
-          secondParentWeeks: plan.secondParentWeeks,
-          milestones: plan.milestones.map((milestone) => ({
-            ...milestone,
-            dateFormatted: formatDatePl(milestone.date),
-            endDateFormatted: milestone.endDate ? formatDatePl(milestone.endDate) : null,
+          maternityWeeks,
+          postBirthWeeks: maternityWeeks - preBirth,
+          parentalPoolWeeks: (mother?.maxOwnParentalWeeks ?? 0) + (mother?.reservedParentalWeeks ?? 0),
+          motherParentalWeeks: (mother?.parentalDays ?? 0) / 7,
+          secondParentWeeks: (father?.parentalDays ?? 0) / 7,
+          milestones: report.timeline.map((entry) => ({
+            id: entry.id,
+            date: entry.date,
+            endDate: entry.endDate,
+            title: entry.title,
+            description: entry.detail,
+            owner: PARENT_OWNER[entry.parent ?? "BOTH"],
+            category: entry.kind === "PERIOD" ? "LEAVE" : "DEADLINE",
+            legalReference: entry.ruleId ?? "",
+            estimated: entry.estimated,
+            dateFormatted: formatDatePl(entry.date),
+            endDateFormatted: entry.endDate ? formatDatePl(entry.endDate) : null,
           })),
+          planAdjustments: report.planAdjustments,
+          ruleSetVersion: report.ruleSet.version,
+          assumptions: report.assumptions,
           simulated: true as const,
         }
       }),

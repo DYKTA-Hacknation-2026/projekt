@@ -1,9 +1,6 @@
-import {
-  dailyBasis,
-  daysAmount,
-  multiplyGrosze,
-  weeklyAmount,
-} from "./money"
+import { evaluate } from "./engine/evaluate"
+import { latestRuleSet } from "./engine/rulesets"
+import type { AssessmentInput, ParentInput } from "./engine/types"
 
 import type {
   CalculatorInput,
@@ -12,28 +9,32 @@ import type {
   CalculationTraceStep,
 } from "./types"
 
+/**
+ * The simplified, date-free calculator used by the integrated calculator UI.
+ *
+ * It is an adapter over the deterministic engine (`./engine`), so it applies
+ * exactly the same rules, rates and rounding. Simplifications, all reported in
+ * `warnings`:
+ * - the mother is an employee with sickness insurance on the birth date;
+ * - one gross monthly income is used for both parents (assumption A-29);
+ * - dates are nominal (due date = start of the current rule set), because the
+ *   amounts do not depend on calendar dates.
+ */
+
 /** KP art. 180 §1 — 20/31/33/35/37 weeks. */
-export const MATERNITY_WEEKS_BY_CHILDREN: Record<number, number> = {
-  1: 20,
-  2: 31,
-  3: 33,
-  4: 35,
-  5: 37,
-}
+export const MATERNITY_WEEKS_BY_CHILDREN: Record<number, number> = latestRuleSet().parameters.maternity.weeksByChildren
 
 /** KP art. 182¹a — 41/43 weeks, or 65/67 with a "Za życiem" certificate. */
-export const PARENTAL_POOL_WEEKS = {
-  single: 41,
-  multiple: 43,
-  zaZyciemSingle: 65,
-  zaZyciemMultiple: 67,
-} as const
+export const PARENTAL_POOL_WEEKS = latestRuleSet().parameters.parental.poolWeeks
 
-export const PARENTAL_NON_TRANSFERABLE_WEEKS = 9
-export const CONTRIBUTION_DEDUCTION = 0.1371
+export const PARENTAL_NON_TRANSFERABLE_WEEKS = latestRuleSet().parameters.parental.nonTransferableWeeks
+export const CONTRIBUTION_DEDUCTION = Number(latestRuleSet().parameters.basis.contributionDeduction)
 export const MATERNITY_RATE = 1
 export const PARENTAL_RATE = 0.7
 export const FLAT_RATE = 0.815
+
+const SIMPLIFICATION_WARNING =
+  "Kalkulator uproszczony: matka jest pracownicą ubezpieczoną w dniu porodu, a dla drugiego rodzica przyjęto ten sam dochód. Kwoty są szacunkiem — kwota świadczenia rodzicielskiego i minimalne wynagrodzenie (Q-29) nie są zawarte w źródłach, a zasady zaokrąglania (Q-15) przyjęliśmy jako założenie."
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
@@ -42,214 +43,129 @@ function clamp(value: number, min: number, max: number): number {
 function normalizeInput(input: CalculatorInput): CalculatorInput {
   return {
     ...input,
-    grossMonthlyIncomeGrosze: Math.max(
-      0,
-      Math.round(input.grossMonthlyIncomeGrosze)
-    ),
+    grossMonthlyIncomeGrosze: Math.max(0, Math.round(input.grossMonthlyIncomeGrosze)),
     childrenCount: clamp(Math.round(input.childrenCount), 1, 5),
-    maternityWeeksBeforeBirth: clamp(
-      Math.round(input.maternityWeeksBeforeBirth),
-      0,
-      6
-    ),
-    secondParentParentalWeeks: clamp(
-      Math.round(input.secondParentParentalWeeks),
-      0,
-      PARENTAL_NON_TRANSFERABLE_WEEKS
-    ),
+    maternityWeeksBeforeBirth: clamp(Math.round(input.maternityWeeksBeforeBirth), 0, 6),
+    secondParentParentalWeeks: clamp(Math.round(input.secondParentParentalWeeks), 0, PARENTAL_NON_TRANSFERABLE_WEEKS),
     parentalWorkFraction: clamp(input.parentalWorkFraction, 0, 0.5),
     paternityDays: clamp(Math.round(input.paternityDays), 0, 14),
   }
 }
 
-/**
- * Deterministic, explainable preview used by the scaffold calculator.
- *
- * It intentionally returns `verified: false` for absolute amounts: the
- * minimum-wage and świadczenie rodzicielskie values (Q-29) and the final
- * rounding policy (Q-15) are not yet configured. The calculation engine will
- * replace this preview with the full `@zpr/domain.evaluate` implementation.
- */
-export function calculateBenefits(input: CalculatorInput): CalculatorResult {
+/** Leave plan equivalent to the simplified calculator input (mother uses pool − 9 weeks, father the reserved part). */
+export function calculatorToLeavePlan(input: CalculatorInput): NonNullable<AssessmentInput["plan"]> {
   const normalized = normalizeInput(input)
-  const children = normalized.childrenCount
-  const maternityWeeks = MATERNITY_WEEKS_BY_CHILDREN[children] ?? 37
-  const postBirthWeeks = Math.max(
-    0,
-    maternityWeeks - normalized.maternityWeeksBeforeBirth
-  )
-
-  const parentalPoolWeeks = normalized.hasZaZyciem
-    ? children > 1
+  const poolWeeks = normalized.hasZaZyciem
+    ? normalized.childrenCount > 1
       ? PARENTAL_POOL_WEEKS.zaZyciemMultiple
       : PARENTAL_POOL_WEEKS.zaZyciemSingle
-    : children > 1
+    : normalized.childrenCount > 1
       ? PARENTAL_POOL_WEEKS.multiple
       : PARENTAL_POOL_WEEKS.single
+  return {
+    paymentOption: normalized.paymentOption,
+    maternityWeeksBeforeBirth: normalized.maternityWeeksBeforeBirth,
+    parentalSegments: [
+      {
+        parent: "MOTHER",
+        weeks: poolWeeks - PARENTAL_NON_TRANSFERABLE_WEEKS,
+        workFraction: normalized.parentalWorkFraction > 0 ? String(normalized.parentalWorkFraction) : undefined,
+      },
+      ...(normalized.secondParentParentalWeeks > 0
+        ? [{ parent: "FATHER" as const, weeks: normalized.secondParentParentalWeeks }]
+        : []),
+    ],
+    paternity: normalized.paternityDays > 0 ? [{ days: normalized.paternityDays }] : [],
+  }
+}
 
-  const secondParentWeeks = Math.min(
-    normalized.secondParentParentalWeeks,
-    PARENTAL_NON_TRANSFERABLE_WEEKS,
-    parentalPoolWeeks
-  )
-  const motherParentalWeeks = Math.max(0, parentalPoolWeeks - secondParentWeeks)
+/** Maps the simplified calculator input to an engine assessment request. */
+export function calculatorToAssessmentInput(input: CalculatorInput): AssessmentInput {
+  const normalized = normalizeInput(input)
+  const nominalDueDate = latestRuleSet().effectiveFrom
+  const basis: ParentInput["basis"] =
+    normalized.grossMonthlyIncomeGrosze > 0
+      ? { method: "GROSS_MONTHLY", grossMonthlyGrosze: normalized.grossMonthlyIncomeGrosze }
+      : undefined
+  const withFather = normalized.secondParentParentalWeeks > 0 || normalized.paternityDays > 0
+  const parents: ParentInput[] = [{ role: "MOTHER", insurance: { title: "EMPLOYMENT" }, basis }]
+  if (withFather) parents.push({ role: "FATHER", insurance: { title: "EMPLOYMENT" }, basis })
+  return {
+    asOf: nominalDueDate,
+    event: {
+      kind: "PREGNANCY",
+      expectedDueDate: nominalDueDate,
+      childrenCount: normalized.childrenCount,
+      zaZyciem: normalized.hasZaZyciem,
+    },
+    parents,
+    plan: calculatorToLeavePlan(normalized),
+  }
+}
 
-  // KP art. 182¹e–f: working part-time extends the leave proportionally.
-  // The demo formula follows the handbook example (16 weeks × ½ = 8 weeks).
-  const extensionWeeks = Math.round(
-    motherParentalWeeks * normalized.parentalWorkFraction
-  )
+const KIND_ORDER: CalculationLine["kind"][] = ["MATERNITY", "PARENTAL", "WORK_COMBINATION_EXTENSION", "PATERNITY"]
 
-  const basisGrosze = multiplyGrosze(
-    normalized.grossMonthlyIncomeGrosze,
-    1 - CONTRIBUTION_DEDUCTION
-  )
-  const dailyBasisGrosze = dailyBasis(basisGrosze)
+/** Deterministic, explainable estimate for the integrated calculator. */
+export function calculateBenefits(input: CalculatorInput): CalculatorResult {
+  const normalized = normalizeInput(input)
+  const { assessment, schedule } = evaluate(calculatorToAssessmentInput(normalized))
+  const children = normalized.childrenCount
+  const maternityWeeks = MATERNITY_WEEKS_BY_CHILDREN[children] ?? 37
+  const motherBasis = assessment.basis.find((basis) => basis.parent === "MOTHER")
+  const basisGrosze = motherBasis?.monthlyBasisGrosze ?? 0
+  const allocation = (role: "MOTHER" | "FATHER") => assessment.allocation.find((entry) => entry.parent === role)
+  const mother = allocation("MOTHER")
+  const father = allocation("FATHER")
 
-  const lines: CalculationLine[] = []
-  const flat = normalized.paymentOption === "FLAT_81_5"
-  const maternityRate = flat ? FLAT_RATE : MATERNITY_RATE
-  const parentalRate = flat ? FLAT_RATE : PARENTAL_RATE
-
-  lines.push({
-    kind: "MATERNITY",
-    label: "Zasiłek macierzyński (urlop macierzyński)",
-    weeks: maternityWeeks,
-    days: maternityWeeks * 7,
-    rate: maternityRate,
-    amountGrosze: weeklyAmount(basisGrosze, maternityRate) * maternityWeeks,
-    legalReference: "KP art. 180 §1; U art. 31 ust. 1",
-  })
-
-  lines.push({
-    kind: "PARENTAL",
-    label: "Zasiłek macierzyński (urlop rodzicielski mamy)",
-    weeks: motherParentalWeeks,
-    days: motherParentalWeeks * 7,
-    rate: parentalRate,
-    amountGrosze:
-      weeklyAmount(basisGrosze, parentalRate) * motherParentalWeeks,
-    legalReference: "KP art. 182¹a; U art. 31 ust. 2–3",
-  })
-
-  if (extensionWeeks > 0) {
-    lines.push({
-      kind: "WORK_COMBINATION_EXTENSION",
-      label: "Przedłużenie urlopu rodzicielskiego (praca łączona)",
-      weeks: extensionWeeks,
-      days: extensionWeeks * 7,
-      rate: parentalRate,
-      amountGrosze:
-        weeklyAmount(
-          basisGrosze,
-          parentalRate * (1 - normalized.parentalWorkFraction)
-        ) * motherParentalWeeks,
-      legalReference: "KP art. 182¹e–f; U art. 31 ust. 4a",
+  const lines: CalculationLine[] = assessment.breakdown
+    .filter((line) => ["MATERNITY", "PARENTAL", "PATERNITY"].includes(line.benefit))
+    .map((line) => {
+      const extension = line.id.endsWith("extension")
+      const kind: CalculationLine["kind"] = extension
+        ? "WORK_COMBINATION_EXTENSION"
+        : (line.benefit as "MATERNITY" | "PARENTAL" | "PATERNITY")
+      return {
+        kind,
+        label: line.label,
+        weeks: Math.floor(line.days / 7),
+        days: line.days,
+        // Display value only; the authoritative amount is `amountGrosze`.
+        rate: Number(line.rate) * Number(line.paidFraction),
+        amountGrosze: line.amountGrosze ?? 0,
+        legalReference: [...new Set(line.ruleIds)].join(", "),
+      }
     })
-  }
+    .sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind))
 
-  if (secondParentWeeks > 0) {
-    lines.push({
-      kind: "PARENTAL",
-      label: "Urlop rodzicielski drugiego rodzica (9 tygodni)",
-      weeks: secondParentWeeks,
-      days: secondParentWeeks * 7,
-      rate: PARENTAL_RATE,
-      amountGrosze: weeklyAmount(basisGrosze, PARENTAL_RATE) * secondParentWeeks,
-      legalReference: "KP art. 182¹a §4; U art. 31 ust. 3f",
-    })
-  }
+  const trace: CalculationTraceStep[] = assessment.appliedRules.map((rule) => ({
+    ruleId: rule.ruleId,
+    label: rule.title,
+    detail: rule.openQuestion ? `Wersja ${rule.ruleSetVersion}; kwestia otwarta ${rule.openQuestion}.` : `Wersja ${rule.ruleSetVersion}.`,
+    legalReference: rule.sources.join("; "),
+  }))
 
-  if (normalized.paternityDays > 0) {
-    lines.push({
-      kind: "PATERNITY",
-      label: "Zasiłek macierzyński (urlop ojcowski)",
-      weeks: 0,
-      days: normalized.paternityDays,
-      rate: MATERNITY_RATE,
-      amountGrosze: daysAmount(
-        basisGrosze,
-        MATERNITY_RATE,
-        normalized.paternityDays
-      ),
-      legalReference: "KP art. 182³; U art. 31 ust. 1",
-    })
-  }
-
-  const totalGrosze = lines.reduce((sum, line) => sum + line.amountGrosze, 0)
-  const warnings: string[] = []
-
-  if (normalized.parentalWorkFraction > 0) {
-    warnings.push(
-      "Łączenie urlopu rodzicielskiego z pracą wymaga wniosku najpóźniej 21 dni przed rozpoczęciem pracy. Pracodawca może odmówić ze względów organizacyjnych."
-    )
-  }
-  if (flat) {
-    warnings.push(
-      "Wariant 81,5% wymaga pisemnego wniosku w ciągu 21 dni od porodu (lub przyjęcia dziecka). Dziewięć tygodni drugiego rodzica zawsze pozostaje na poziomie 70%."
-    )
-  }
-  if (normalized.maternityWeeksBeforeBirth > 0) {
-    warnings.push(
-      "Maksymalnie 6 tygodni urlopu macierzyńskiego można wykorzystać przed przewidywanym terminem porodu; potrzebne jest zaświadczenie lekarskie."
-    )
-  }
-
-  const trace: CalculationTraceStep[] = [
-    {
-      ruleId: "LR-123",
-      label: `Wymiar urlopu macierzyńskiego: ${maternityWeeks} tygodni`,
-      detail: `Liczba dzieci: ${children === 5 ? "5 lub więcej" : children}. Wykorzystano ${normalized.maternityWeeksBeforeBirth} tyg. przed porodem, po porodzie pozostaje ${postBirthWeeks} tyg.`,
-      legalReference: "KP art. 180 §1–2",
-    },
-    {
-      ruleId: "LR-127",
-      label: `Pula urlopu rodzicielskiego: ${parentalPoolWeeks} tygodni`,
-      detail: `Dla mamy: ${motherParentalWeeks} tyg., dla drugiego rodzica: ${secondParentWeeks} tyg. (9 tygodni jest niezbywalne).`,
-      legalReference: "KP art. 182¹a; KP art. 182¹c",
-    },
-    {
-      ruleId: "LR-130",
-      label: flat
-        ? "Wybrano wariant 81,5% dla całego okresu"
-        : "Wybrano wariant 100% (macierzyński) + 70% (rodzicielski)",
-      detail: `Stawki: macierzyński ${Math.round(maternityRate * 100)}%, rodzicielski ${Math.round(parentalRate * 100)}%. Wartości zaokrąglane do groszy.`,
-      legalReference: "U art. 30a, 31 ust. 1–4",
-    },
-    {
-      ruleId: "LR-112",
-      label: "Podstawa wymiaru po potrąceniu składki chorobowej",
-      detail: "Podstawa miesięczna = wynagrodzenie brutto × (1 − 13,71%). Podstawa dzienna = 1/30 podstawy miesięcznej.",
-      legalReference: "U art. 36, 38; P s. 24",
-    },
-    {
-      ruleId: "LR-133",
-      label: `Urlop ojcowski: ${normalized.paternityDays} dni`,
-      detail: "Maksymalnie 14 dni, w jednej lub dwóch częściach; termin do ukończenia 12. miesiąca życia dziecka.",
-      legalReference: "KP art. 182³",
-    },
-  ]
-
+  const amountsKnown = assessment.totals.totalGrosze !== null && basisGrosze > 0
   return {
     input: normalized,
     normalizedChildrenCount: children,
     maternityWeeks,
     preBirthWeeks: normalized.maternityWeeksBeforeBirth,
-    postBirthWeeks,
-    parentalPoolWeeks,
-    secondParentWeeks,
-    motherParentalWeeks,
-    extensionWeeks,
-    paternityDays: normalized.paternityDays,
+    postBirthWeeks: maternityWeeks - normalized.maternityWeeksBeforeBirth,
+    parentalPoolWeeks: schedule?.poolWeeks ?? 0,
+    secondParentWeeks: (father?.parentalDays ?? 0) / 7,
+    motherParentalWeeks: (mother?.parentalDays ?? 0) / 7,
+    extensionWeeks: ((mother?.parentalExtensionDays ?? 0) + (father?.parentalExtensionDays ?? 0)) / 7,
+    paternityDays: father?.paternityDays ?? 0,
     basisGrosze,
-    dailyBasisGrosze,
+    dailyBasisGrosze: Math.round(basisGrosze / 30),
     lines,
-    totalGrosze,
+    totalGrosze: amountsKnown ? (assessment.totals.totalGrosze ?? 0) : 0,
     verified: false,
-    status: "INDETERMINATE",
+    status: amountsKnown && assessment.totals.amountStatus === "CALCULATED" ? "OK" : "INDETERMINATE",
     warnings: [
-      ...warnings,
-      "Kwoty są szacunkiem demonstracyjnym. Minimalna podstawa, maksymalny wymiar i kwota świadczenia rodzicielskiego (Q-29) oraz zasady zaokrąglania (Q-15) wymagają zatwierdzenia.",
+      ...assessment.planAdjustments,
+      ...assessment.warnings.filter((warning) => warning.code !== "VOLUNTARY_DEREGISTRATION").map((warning) => warning.text),
+      SIMPLIFICATION_WARNING,
     ],
     trace,
   }

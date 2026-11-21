@@ -24,7 +24,8 @@ describe("calculateBenefits", () => {
 
     expect(result.maternityWeeks).toBe(20)
     expect(result.parentalPoolWeeks).toBe(41)
-    expect(result.motherParentalWeeks).toBe(41)
+    // KP art. 182¹a § 4: 9 of the 41 weeks are reserved for the other parent and cannot be transferred.
+    expect(result.motherParentalWeeks).toBe(32)
     expect(result.secondParentWeeks).toBe(0)
     expect(result.trace.map((step) => step.ruleId)).toContain("LR-123")
   })
@@ -106,7 +107,8 @@ describe("calculateBenefits", () => {
   it("extends the parental leave proportionally when working part-time", () => {
     const result = calculateBenefits(input({ parentalWorkFraction: 0.5 }))
 
-    expect(result.extensionWeeks).toBe(21)
+    // KP art. 182¹f § 2: extension = weeks combined with work × fraction = 32 × ½.
+    expect(result.extensionWeeks).toBe(16)
     expect(result.lines.map((line) => line.kind)).toContain(
       "WORK_COMBINATION_EXTENSION"
     )
