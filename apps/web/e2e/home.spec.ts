@@ -83,3 +83,34 @@ test("FAQ explains the demo and opens with the keyboard", async ({ page }) => {
     "Nie. To projekt demonstracyjny."
   )
 })
+
+test("hero follows scrolling and returns to a static state for reduced motion", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" })
+  await page.goto("/")
+  const image = page.locator(".home-hero__photo img")
+  await expect
+    .poll(() => image.evaluate((element) => element.style.transform))
+    .not.toBe("")
+  const before = await image.evaluate(
+    (element) => getComputedStyle(element).transform
+  )
+  await page.evaluate(() => window.scrollTo({ top: 500, behavior: "instant" }))
+  await expect
+    .poll(() =>
+      image.evaluate((element) => getComputedStyle(element).transform)
+    )
+    .not.toBe(before)
+
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await expect
+    .poll(() =>
+      image.evaluate((element) => getComputedStyle(element).transform)
+    )
+    .toBe("none")
+  await expect(page.locator("html")).toHaveCSS("scroll-behavior", "auto")
+  await page.locator("#questions-title").scrollIntoViewIfNeeded()
+  await expect(page.locator("#questions-title")).toBeVisible()
+  await expect(page.locator("#questions-title")).toHaveCSS("opacity", "1")
+})

@@ -68,6 +68,8 @@ services:
       context: .
       dockerfile: infra/docker/Dockerfile
       target: web
+      args:
+        NEXT_PUBLIC_DISABLE_DARK_MODE: ${NEXT_PUBLIC_DISABLE_DARK_MODE:-false}
     container_name: zpr-web
     restart: unless-stopped
     environment:

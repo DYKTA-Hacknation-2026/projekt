@@ -7,6 +7,8 @@ function ThemeProvider({
   children,
   ...props
 }: React.ComponentProps<typeof NextThemesProvider>) {
+  const darkModeDisabled = process.env.NEXT_PUBLIC_DISABLE_DARK_MODE === "true"
+
   return (
     <NextThemesProvider
       attribute="class"
@@ -14,8 +16,9 @@ function ThemeProvider({
       enableSystem
       disableTransitionOnChange
       {...props}
+      forcedTheme={darkModeDisabled ? "light" : props.forcedTheme}
     >
-      <ThemeHotkey />
+      {!darkModeDisabled && <ThemeHotkey />}
       {children}
     </NextThemesProvider>
   )
@@ -35,9 +38,11 @@ function isTypingTarget(target: EventTarget | null) {
 }
 
 function ThemeHotkey() {
-  const { resolvedTheme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme, forcedTheme } = useTheme()
 
   React.useEffect(() => {
+    if (forcedTheme) return
+
     function onKeyDown(event: KeyboardEvent) {
       if (event.defaultPrevented || event.repeat) {
         return
@@ -63,7 +68,7 @@ function ThemeHotkey() {
     return () => {
       window.removeEventListener("keydown", onKeyDown)
     }
-  }, [resolvedTheme, setTheme])
+  }, [resolvedTheme, setTheme, forcedTheme])
 
   return null
 }
