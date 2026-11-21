@@ -1,11 +1,9 @@
 import { z } from "zod"
 
-const booleanFromEnv = z
-  .union([z.boolean(), z.string()])
-  .transform((value) => {
-    if (typeof value === "boolean") return value
-    return ["1", "true", "yes", "on"].includes(value.toLowerCase())
-  })
+const booleanFromEnv = z.union([z.boolean(), z.string()]).transform((value) => {
+  if (typeof value === "boolean") return value
+  return ["1", "true", "yes", "on"].includes(value.toLowerCase())
+})
 
 const optionalUrl = z
   .string()
@@ -35,14 +33,62 @@ export const envSchema = z.object({
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
   DATABASE_SSL: booleanFromEnv.default(false),
 
-  EMBEDDING_PROVIDER: z.string().trim().default("local-demo"),
+  /**
+   * `local-demo` is the deterministic offline hashing model. `openai`,
+   * `ollama` and `openai-compatible` call an OpenAI-style `/embeddings` API.
+   * Index time and query time always use this one configuration.
+   */
+  EMBEDDING_PROVIDER: z
+    .enum(["local-demo", "openai", "ollama", "openai-compatible"])
+    .default("local-demo"),
   EMBEDDING_MODEL: z.string().trim().default("zpr-hash-1024"),
   EMBEDDING_DIMENSIONS: z.coerce.number().int().min(64).max(8192).default(1024),
+  EMBEDDING_BASE_URL: optionalUrl,
+  EMBEDDING_API_KEY: z.string().trim().optional(),
+  /** Instruction prefixes for asymmetric models (e.g. e5: "query: "). */
+  EMBEDDING_QUERY_PREFIX: z.string().default(""),
+  EMBEDDING_DOCUMENT_PREFIX: z.string().default(""),
+  EMBEDDING_BATCH_SIZE: z.coerce.number().int().min(1).max(2048).default(64),
+  EMBEDDING_TIMEOUT_MS: z.coerce.number().int().min(1000).default(30000),
 
-  AI_PROVIDER: z.enum(["none", "anthropic", "openai", "ollama"]).default("none"),
+  /**
+   * Access levels the public retrieval API may read. RESTRICTED is never
+   * readable regardless of this value. Use `PUBLIC` for a public deployment;
+   * `PUBLIC,INTERNAL` lets the HackNation demo use competition references.
+   */
+  KB_RETRIEVAL_ACCESS_LEVELS: z
+    .string()
+    .default("PUBLIC,INTERNAL")
+    .transform((value) =>
+      value
+        .split(",")
+        .map((part) => part.trim().toUpperCase())
+        .filter(
+          (part): part is "PUBLIC" | "INTERNAL" =>
+            part === "PUBLIC" || part === "INTERNAL"
+        )
+    ),
+  /** Directory with locally provided (non-committed) source files. */
+  KB_LOCAL_SOURCES_DIR: z.string().trim().optional(),
+
+  /**
+   * Chat model for the assistant. `none` runs the offline rules model: the
+   * same orchestration, tools and retrieval, with answers composed
+   * deterministically from tool results. `ollama` and `openai-compatible`
+   * use an OpenAI-style `/chat/completions` endpoint at AI_BASE_URL.
+   */
+  AI_PROVIDER: z
+    .enum(["none", "anthropic", "openai", "ollama", "openai-compatible"])
+    .default("none"),
   AI_MODEL: z.string().trim().optional(),
   AI_API_KEY: z.string().trim().optional(),
   AI_BASE_URL: optionalUrl,
+  AI_TEMPERATURE: z.coerce.number().min(0).max(1).default(0.2),
+  AI_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(256).max(8192).default(1500),
+  AI_MAX_STEPS: z.coerce.number().int().min(2).max(10).default(8),
+  AI_TIMEOUT_MS: z.coerce.number().int().min(5000).max(300000).default(60000),
+  /** Messages from earlier turns passed to the model (text only). */
+  AI_HISTORY_MESSAGES: z.coerce.number().int().min(0).max(40).default(12),
 
   SESSION_SECRET: z
     .string()
@@ -83,6 +129,25 @@ export function parseEnv(source: NodeJS.ProcessEnv = process.env): Env {
   ) {
     throw new Error(
       "SESSION_SECRET must be set to a strong random value in production."
+    )
+  }
+
+  if (
+    parsed.data.AI_PROVIDER !== "none" &&
+    parsed.data.AI_PROVIDER !== "ollama" &&
+    !parsed.data.AI_API_KEY
+  ) {
+    throw new Error(
+      `AI_API_KEY is required when AI_PROVIDER=${parsed.data.AI_PROVIDER}.`
+    )
+  }
+  if (
+    (parsed.data.AI_PROVIDER === "ollama" ||
+      parsed.data.AI_PROVIDER === "openai-compatible") &&
+    !parsed.data.AI_BASE_URL
+  ) {
+    throw new Error(
+      `AI_BASE_URL is required when AI_PROVIDER=${parsed.data.AI_PROVIDER}.`
     )
   }
 

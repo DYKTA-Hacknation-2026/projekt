@@ -1,12 +1,34 @@
+import { z } from "zod"
+
+import {
+  assistantChatSchema,
+  assistantReplySchema,
+  assistantStreamRequestSchema,
+} from "@zpr/contracts/assistant"
+import { assessmentInputSchema, scenarioComparisonSchema } from "@zpr/contracts/engine"
+
 import { apiRoute, json } from "@/server/http/route"
 
 export const dynamic = "force-static"
+
+const engineRequestBody = {
+  required: true,
+  content: { "application/json": { schema: z.toJSONSchema(assessmentInputSchema, { io: "input" }) } },
+}
+
+function engineResponses(description: string) {
+  return {
+    "200": { description },
+    "422": { description: "Błąd walidacji lub niespójne dane wejściowe", content: { "application/problem+json": { schema: { $ref: "#/components/schemas/Problem" } } } },
+    "429": { description: "Limit żądań" },
+  }
+}
 
 const document = {
   openapi: "3.1.0",
   info: {
     title: "Zasiłkowy Przewodnik — REST API",
-    version: "0.1.0-scaffold",
+    version: "1.0.0",
     description:
       "Kontrakt demonstracyjny. Wszystkie odpowiedzi z danymi rządowymi są oznaczone jako symulacja.",
   },
@@ -15,7 +37,10 @@ const document = {
     "/health": {
       get: {
         summary: "Stan aplikacji, bazy, migracji i pgvector",
-        responses: { "200": { description: "OK" }, "503": { description: "Degraded" } },
+        responses: {
+          "200": { description: "OK" },
+          "503": { description: "Degraded" },
+        },
       },
     },
     "/calculations": {
@@ -38,9 +63,17 @@ const document = {
     },
     "/knowledge/search": {
       get: {
-        summary: "Hybrydowe wyszukiwanie (pgvector + FTS)",
+        summary:
+          "Hybrydowe wyszukiwanie (pgvector + FTS + dokładne terminy, fuzja RRF)",
+        description:
+          "Zwraca fragmenty źródeł obowiązujące w dniu `asOf` (domyślnie dziś) z odwołaniem do strony/przepisu, URL i metadanymi trafności. Gdy brak wystarczających dowodów: `status: NO_EVIDENCE` i `noEvidence.reason`. Dane osobowe w pytaniu są usuwane przed wyszukiwaniem.",
         parameters: [
-          { name: "q", in: "query", required: true, schema: { type: "string" } },
+          {
+            name: "q",
+            in: "query",
+            required: true,
+            schema: { type: "string", minLength: 2, maxLength: 500 },
+          },
           {
             name: "limit",
             in: "query",
@@ -49,19 +82,123 @@ const document = {
           {
             name: "asOf",
             in: "query",
+            description:
+              "Data, na którą przepisy mają obowiązywać (np. termin porodu).",
             schema: { type: "string", format: "date" },
           },
+          {
+            name: "source",
+            in: "query",
+            description:
+              "Slugi źródeł rozdzielone przecinkami, np. kodeks-pracy,ustawa-zasilkowa.",
+            schema: { type: "string" },
+          },
+          {
+            name: "sourceType",
+            in: "query",
+            description: "Typy źródeł, np. LEGAL_ACT,FORM_INSTRUCTION.",
+            schema: { type: "string" },
+          },
+          {
+            name: "tag",
+            in: "query",
+            description: "Tagi świadczeń, np. PARENTAL,MATERNITY.",
+            schema: { type: "string" },
+          },
+          {
+            name: "minRelevance",
+            in: "query",
+            description: "Minimalna skalibrowana trafność 0–1.",
+            schema: { type: "number", minimum: 0, maximum: 1 },
+          },
         ],
-        responses: { "200": { description: "Fragmenty źródeł z oceną" } },
+        responses: {
+          "200": {
+            description: "Status OK/NO_EVIDENCE, fragmenty źródeł z oceną",
+          },
+          "422": { description: "Błąd walidacji" },
+        },
       },
     },
     "/assistant/chat": {
       post: {
-        summary: "Asystent RAG z cytatami (bez wymyślania kwot)",
+        summary: "Asystent — strumień wiadomości (AI SDK UI message stream, SSE)",
+        description:
+          "Treść: { id: uuid rozmowy, message: { id, role: 'user', parts: [{ type: 'text', text }] }, options?: { useProfile, asOf }, trigger? }. Historia jest wczytywana z bazy; klient wysyła tylko najnowszą wiadomość. Części strumienia: text-delta, tool-* (wyniki narzędzi), data-evidence, data-grounding, data-followups.",
+        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(assistantStreamRequestSchema) } } },
         responses: {
-          "200": { description: "Odpowiedź, cytaty i ujawnienie AI" },
+          "200": { description: "text/event-stream" },
+          "404": { description: "Rozmowa należy do innej sesji lub nie istnieje" },
+          "422": { description: "Nieprawidłowa treść żądania" },
           "429": { description: "Limit żądań" },
         },
+      },
+    },
+    "/assistant/messages": {
+      post: {
+        summary: "Asystent — odpowiedź REST (bez strumienia)",
+        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(assistantChatSchema) } } },
+        responses: {
+          "200": { description: "Odpowiedź, źródła, wyniki narzędzi i raport ugruntowania", content: { "application/json": { schema: z.toJSONSchema(assistantReplySchema) } } },
+          "429": { description: "Limit żądań" },
+          "503": { description: "Model lub baza wiedzy chwilowo niedostępne" },
+        },
+      },
+    },
+    "/assistant/conversations": {
+      get: { summary: "Rozmowy bieżącej sesji" },
+      delete: { summary: "Usunięcie wszystkich rozmów bieżącej sesji (z cytatami i wywołaniami narzędzi)" },
+    },
+    "/assistant/conversations/{id}": {
+      get: { summary: "Historia rozmowy z wynikami narzędzi i źródłami", responses: { "404": { description: "Brak lub cudza rozmowa" } } },
+      delete: { summary: "Usunięcie rozmowy", responses: { "204": { description: "Usunięto" }, "404": { description: "Brak lub cudza rozmowa" } } },
+    },
+    "/assistant/session": {
+      get: { summary: "Dostępność profilu dla asystenta i tryb odpowiedzi (bez danych osobowych)" },
+    },
+    "/eligibility/evaluate": {
+      post: {
+        summary: "Ocena uprawnień (silnik deterministyczny)",
+        description:
+          "Ustalenia per rodzic i świadczenie (ELIGIBLE, CONDITIONAL, NOT_ELIGIBLE, NEEDS_INPUT, MANUAL_REVIEW) z przyczynami, warunkami, brakującymi informacjami, ryzykami, zastosowanymi regułami i źródłami. Szacunek, nie decyzja ZUS.",
+        requestBody: engineRequestBody,
+        responses: engineResponses("Ocena uprawnień"),
+      },
+    },
+    "/benefits/calculate": {
+      post: {
+        summary: "Pełne wyliczenie świadczeń (okresy, kwoty, podział między rodziców)",
+        description:
+          "Dokładna arytmetyka wymierna, jedno zaokrąglenie na pozycję (do grosza, połówki w górę). Brak podstawy wymiaru → kwota `null` i status BASIS_UNKNOWN zamiast szacunku.",
+        requestBody: engineRequestBody,
+        responses: engineResponses("Pełna ocena: breakdown, totals, periods, allocation, appliedRules, sources, assumptions, missingEvidence, warnings, nextSteps"),
+      },
+    },
+    "/scenarios/compare": {
+      post: {
+        summary: "Porównanie planów urlopowych dla tych samych faktów",
+        requestBody: { required: true, content: { "application/json": { schema: z.toJSONSchema(scenarioComparisonSchema, { io: "input" }) } } },
+        responses: engineResponses("Wyniki scenariuszy z różnicą względem pierwszego"),
+      },
+    },
+    "/timeline": {
+      post: {
+        summary: "Oś czasu: okresy świadczeń i terminy z datami",
+        requestBody: engineRequestBody,
+        responses: engineResponses("Okresy, terminy i podział między rodziców"),
+      },
+    },
+    "/documents/required": {
+      post: {
+        summary: "Wymagane dokumenty i miejsce złożenia dla każdego świadczenia",
+        requestBody: engineRequestBody,
+        responses: engineResponses("Lista dokumentów (R1316, R322), płatnik i wersja formularzy"),
+      },
+    },
+    "/rulesets": {
+      get: {
+        summary: "Wersje reguł, parametry ze statusem weryfikacji, katalog reguł ze źródłami, założenia i scenariusze nieobsługiwane",
+        responses: { "200": { description: "OK" } },
       },
     },
     "/onboarding": {
@@ -97,9 +234,21 @@ const document = {
                 type: "string",
                 enum: ["STANDARD_100_70", "FLAT_81_5"],
               },
-              maternityWeeksBeforeBirth: { type: "integer", minimum: 0, maximum: 6 },
-              secondParentParentalWeeks: { type: "integer", minimum: 0, maximum: 9 },
-              parentalWorkFraction: { type: "number", minimum: 0, maximum: 0.5 },
+              maternityWeeksBeforeBirth: {
+                type: "integer",
+                minimum: 0,
+                maximum: 6,
+              },
+              secondParentParentalWeeks: {
+                type: "integer",
+                minimum: 0,
+                maximum: 9,
+              },
+              parentalWorkFraction: {
+                type: "number",
+                minimum: 0,
+                maximum: 0.5,
+              },
               paternityDays: { type: "integer", minimum: 0, maximum: 14 },
             },
           },

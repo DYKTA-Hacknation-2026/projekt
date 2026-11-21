@@ -1,0 +1,22 @@
+// Retrieval eval set over the committed (curated) knowledge base.
+// One JSON object per line; see src/ingest/verify-kb.ts for the format.
+{"id":"maternity-duration","query":"Ile tygodni trwa urlop macierzyński przy jednym dziecku?","asOf":"2026-11-21","expect":{"anyOf":[{"legalReferencePrefix":"KP art. 180 ","contentIncludes":"20 tygodni"},{"sourceSlug":"tabela-swiadczen","contentIncludes":"20 tygodni"}]}}
+{"id":"parental-duration","query":"wymiar urlopu rodzicielskiego","asOf":"2026-11-21","expect":{"anyOf":[{"legalReferencePrefix":"KP art. 182¹a"}]}}
+{"id":"parental-one-child","query":"Ile trwa urlop rodzicielski przy jednym dziecku?","asOf":"2026-11-21","expect":{"anyOf":[{"contentIncludes":"41 tygodni"}]}}
+{"id":"paternity","query":"Ile trwa urlop ojcowski i do kiedy trzeba go wykorzystać?","asOf":"2026-11-21","expect":{"anyOf":[{"legalReferencePrefix":"KP art. 182³"}]}}
+{"id":"stillbirth","query":"urodzenie martwego dziecka a urlop macierzyński","asOf":"2026-11-21","expect":{"anyOf":[{"legalReferencePrefix":"KP art. 180¹"},{"contentIncludes":"martwe"}]}}
+{"id":"rate-815","query":"kiedy zasiłek macierzyński wynosi 81,5% podstawy","asOf":"2026-11-21","expect":{"anyOf":[{"legalReferencePrefix":"U art. 31"},{"sourceSlug":"tabela-swiadczen","contentIncludes":"81,5%"}]}}
+{"id":"rate-parental","query":"ile procent podstawy wynosi zasiłek za urlop rodzicielski","asOf":"2026-11-21","expect":{"anyOf":[{"contentIncludes":"70%"}]}}
+{"id":"form-zam","query":"ZAM","asOf":"2026-11-21","expect":{"anyOf":[{"contentIncludes":"ZAM"}]}}
+{"id":"form-z3a","query":"Kto wystawia zaświadczenie Z-3a?","asOf":"2026-11-21","expect":{"anyOf":[{"contentIncludes":"Z-3a"}]}}
+{"id":"form-z3","query":"Z-3","asOf":"2026-11-21","expect":{"anyOf":[{"contentIncludes":"Z-3 "}]}}
+{"id":"ezla","query":"e-ZLA w ciąży","asOf":"2026-11-21","expect":{"anyOf":[{"contentIncludes":"e-ZLA"}]}}
+{"id":"l4-synonym","query":"Czy L4 w ciąży ma specjalny kod?","asOf":"2026-11-21","expect":{"anyOf":[{"contentIncludes":"kodem B"}]}}
+{"id":"za-zyciem","query":"„Za życiem” urlop rodzicielski","asOf":"2026-11-21","expect":{"anyOf":[{"contentIncludes":"65 tygodni"}]}}
+{"id":"za-zyciem-ascii","query":"za zyciem ile tygodni","asOf":"2026-11-21","expect":{"anyOf":[{"contentIncludes":"65 tygodni"}]}}
+{"id":"limitation","query":"po jakim czasie przedawnia się roszczenie o zasiłek macierzyński","asOf":"2026-11-21","expect":{"anyOf":[{"contentIncludes":"6 miesięcy"}]}}
+{"id":"one-benefit-period-2027","query":"jeden okres zasiłkowy niezależnie od liczby tytułów ubezpieczenia","asOf":"2027-02-01","expect":{"anyOf":[{"legalReferencePrefix":"U art. 9","contentIncludes":"jeden okres zasiłkowy"}]}}
+{"id":"support-loss","query":"wsparcie dla rodziców po stracie dziecka","asOf":"2026-11-21","expect":{"anyOf":[{"sourceSlug":"organizacje-wsparcia"}]}}
+{"id":"out-of-scope-pit","query":"Jak rozliczyć PIT za 2026 rok?","asOf":"2026-11-21","expect":{"noEvidence":true}}
+{"id":"out-of-scope-recipe","query":"przepis na sernik z rodzynkami","asOf":"2026-11-21","expect":{"noEvidence":true}}
+{"id":"empty","query":"czy i jak","asOf":"2026-11-21","expect":{"noEvidence":true}}

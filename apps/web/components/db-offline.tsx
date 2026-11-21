@@ -1,7 +1,16 @@
 import { AlertTriangle, Database } from "lucide-react"
 
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card"
 
 export function DbOffline({ error }: { error: unknown }) {
   const message =
@@ -21,7 +30,10 @@ export function DbOffline({ error }: { error: unknown }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Database aria-hidden="true" className="size-4 text-muted-foreground" />
+            <Database
+              aria-hidden="true"
+              className="size-4 text-muted-foreground"
+            />
             Jak naprawić lokalne środowisko
           </CardTitle>
         </CardHeader>
@@ -31,7 +43,7 @@ export function DbOffline({ error }: { error: unknown }) {
             <code>{`docker compose up -d db
 pnpm --filter @zpr/db db:migrate
 pnpm --filter @zpr/db db:seed
-pnpm --filter @zpr/db db:smoke`}</code>
+pnpm --filter @zpr/rag kb:seed`}</code>
           </pre>
           <p className="text-muted-foreground">
             Domyślny adres bazy to{" "}

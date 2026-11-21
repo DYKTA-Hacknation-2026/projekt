@@ -44,6 +44,7 @@ export interface KnowledgeSourceSummary {
   publisher: string
   sourceType: string
   isConfidential: boolean
+  accessLevel: "PUBLIC" | "INTERNAL" | "RESTRICTED"
   documentCount: number
 }
 
@@ -51,7 +52,9 @@ export interface KnowledgeDocumentSummary {
   id: string
   title: string
   version: string
-  status: "PENDING" | "INDEXED" | "FAILED"
+  status: "PENDING" | "INDEXED" | "FAILED" | "SUPERSEDED" | "ARCHIVED"
+  effectiveFrom: string | null
+  effectiveTo: string | null
   sourceTitle: string
   chunkCount: number
 }

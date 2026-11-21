@@ -11,6 +11,9 @@ const responseHeaders = [
   "content-type",
   "vary",
   "x-request-id",
+  "x-vercel-ai-ui-message-stream",
+  "x-conversation-id",
+  "x-accel-buffering",
 ]
 
 function copyHeaders(source: Headers, names: string[]): Headers {

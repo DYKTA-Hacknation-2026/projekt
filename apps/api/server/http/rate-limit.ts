@@ -41,3 +41,18 @@ export function clientKey(request: Request, scope: string): string {
   const ip = forwarded?.split(",")[0]?.trim() ?? "local"
   return `${scope}:${ip}`
 }
+
+/**
+ * Assistant limits: per client address and per session, so neither rotating
+ * sessions nor sharing an address lets one caller exhaust the model budget.
+ */
+export function enforceAssistantRateLimit(
+  request: Request,
+  sid: string,
+  env: { RATE_LIMIT_REQUESTS_PER_MINUTE: number }
+): void {
+  const perMinute = Math.min(env.RATE_LIMIT_REQUESTS_PER_MINUTE, 20)
+  enforceRateLimit(clientKey(request, "assistant"), perMinute)
+  enforceRateLimit(`assistant-session:${sid}`, Math.max(5, Math.floor(perMinute / 2)))
+  enforceRateLimit(`assistant-session-hour:${sid}`, 120, 60 * 60_000)
+}

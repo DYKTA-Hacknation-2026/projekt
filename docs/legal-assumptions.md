@@ -137,3 +137,15 @@ Priorities:
 | Q-25 | Parental parts, notice periods | No minimum part length. Parts are counted by the number of applications, including the insured parent's benefit applications. Notice periods:<br>• parental: ≥ 21 days<br>• work combination: ≥ 21 days<br>• supplementary: ≥ 21 days before maternity leave ends<br>• takeover of part of maternity leave: ≥ 14 days<br>• mother's resignation: ≥ 7 days before returning to work<br>• paternity: ≥ 7 days<br>• maternity-terms leave: within 7 days of taking the child<br>• pre-birth maternity: ≥ 14 days (P) | KP art. 180 §8–9, 180² §4, 182¹d, 182¹e §2, 182³ §2, 183 §6; P p.27 |
 | Q-27 | Simultaneous parental use | Allowed. The **combined total** may not exceed the dimension, so simultaneous use consumes the pool at double rate. | KP art. 182¹a §6–7; U art. 29a ust. 3 |
 | Q-28 | Filing deadlines and limitation | A benefit claim lapses **6 months** after the last day of the period it covers (3 years if the payer or ZUS made an error; the clock is suspended for obstacles beyond the person's control). A small payer forwards documents to ZUS within 7 days. ZUS pays within 30 days of the last clarified fact. Funeral allowance for a stillbirth: 7000 zł, apply within 12 months of the burial. | U art. 61b ust. 5, 64, 67; P p.26, 34–35 |
+
+## 7. Calculation engine (v0.3)
+
+The deterministic engine (`@zpr/domain/engine`, see [calculation-engine.md](calculation-engine.md)) was implemented against the full provided texts of U, KP, R1316, R322, P and T, and re-checked against §6 above. Effects on this register:
+
+- **Q-15 (rounding): still PARTIAL.** The engine rounds the basis to full grosze and each calculation line once, half up, from exact fractions (A-20). The sources do not state a rule for benefits; if ZUS confirms another rule, change `money` in the rule sets only.
+- **Q-16 (temporal applicability): modelled.** Rule sets `2026.07-Z1`, `2026.10-Z1`, `2027.01-Z1` are selected by the day the right arises and applied to the whole period (A-12). Transitional provisions are still not in the extract.
+- **Q-29 (external values): unchanged and enforced.** All four values are `null`; results that depend on them are `CALCULATED_LOWER_BOUND` / `CALCULATED_UPPER_BOUND` and carry a warning. They can be supplied per request with a cited source (`externalParameters`).
+- **Q-30, Q-32, Q-33, Q-34:** implemented as stated in A-17, A-19 and the form versioning; Q-30 sends the case to manual review.
+- **New engine assumptions A-20 … A-36** and **20 unsupported scenarios U-01 … U-20** are listed in [calculation-engine.md](calculation-engine.md) §9–10 and returned by `GET /api/v1/rulesets`. A test verifies that every one is documented.
+- **A-25 (new, open):** the sources give each parent 9 exclusive weeks (KP art. 182¹a § 4) but do not say whether an uninsured or absent parent's share can be used by the other parent. The engine never lets one parent exceed pool − 9 weeks. Needs a ZUS answer before use with such families.
+- **SC (sample cases): still not received.** The engine has no golden cases from ZUS; its tests use independently computed values (calculation-engine.md §8).

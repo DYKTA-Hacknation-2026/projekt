@@ -46,7 +46,8 @@ describe("timeline planner", () => {
       hasZaZyciem: true,
     })
     expect(zaZyciem.parentalPoolWeeks).toBe(65)
-    expect(zaZyciem.motherParentalWeeks).toBe(65)
+    // KP art. 182¹a § 4: the other parent's 9 weeks are not transferable (65 − 9).
+    expect(zaZyciem.motherParentalWeeks).toBe(56)
   })
 
   it("places the 81.5% application deadline 21 days after birth", () => {

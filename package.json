@@ -9,7 +9,10 @@
     "format": "turbo format",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
-    "e2e": "turbo e2e"
+    "e2e": "turbo e2e",
+    "db:setup": "pnpm --filter @zpr/db db:migrate && pnpm --filter @zpr/db db:seed && pnpm --filter @zpr/rag kb:seed",
+    "kb:seed": "pnpm --filter @zpr/rag kb:seed",
+    "kb:verify": "pnpm --filter @zpr/rag kb:verify"
   },
   "devDependencies": {
     "@workspace/eslint-config": "workspace:*",
@@ -21,6 +24,6 @@
   },
   "packageManager": "pnpm@11.25.0",
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22"
   }
 }

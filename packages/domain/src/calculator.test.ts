@@ -27,7 +27,8 @@ describe("calculateBenefits", () => {
 
     expect(result.maternityWeeks).toBe(20)
     expect(result.parentalPoolWeeks).toBe(41)
-    expect(result.motherParentalWeeks).toBe(41)
+    // KP art. 182¹a § 4: 9 of the 41 weeks are reserved for the other parent and cannot be transferred.
+    expect(result.motherParentalWeeks).toBe(32)
     expect(result.secondParentWeeks).toBe(0)
     expect(result.trace.map((step) => step.ruleId)).toContain("LR-123")
   })
@@ -109,7 +110,8 @@ describe("calculateBenefits", () => {
   it("extends the parental leave proportionally when working part-time", () => {
     const result = calculateBenefits(input({ parentalWorkFraction: 0.5 }))
 
-    expect(result.extensionWeeks).toBe(21)
+    // KP art. 182¹f § 2: extension = weeks combined with work × fraction = 32 × ½.
+    expect(result.extensionWeeks).toBe(16)
     expect(result.lines.map((line) => line.kind)).toContain(
       "WORK_COMBINATION_EXTENSION"
     )
@@ -327,16 +329,16 @@ describe("working during parental leave (FR-CALC-02)", () => {
       input({ parentalWorkFraction: 0.5, combineWorkInExtension: true })
     )
 
-    expect(result.extensionWeeks).toBe(41)
+    expect(result.extensionWeeks).toBe(32)
     expect(result.parentalPoolWeeks + result.extensionWeeks).toBeLessThanOrEqual(
       result.extensionCapWeeks
     )
     expect(result.extensionCapWeeks).toBe(82)
 
     const combined = result.lines.find((l) => l.leaveType.includes("praca łączona"))
-    expect(combined?.amountGrosze).toBe(daysAmount(862_900, 0.7 * 0.5, 41 * 7))
+    expect(combined?.amountGrosze).toBe(daysAmount(862_900, 0.7 * 0.5, 32 * 7))
     const extension = result.lines.find((l) => l.kind === "WORK_COMBINATION_EXTENSION")
-    expect(extension?.amountGrosze).toBe(daysAmount(862_900, 0.7 * 0.5, 41 * 7))
+    expect(extension?.amountGrosze).toBe(daysAmount(862_900, 0.7 * 0.5, 32 * 7))
     expect(result.trace.map((s) => s.legalReference).join(" ")).toContain("4a")
   })
 
@@ -389,7 +391,7 @@ describe("individual basis (FR-CALC-05)", () => {
     expect(contractor.basisGrosze).toBe(86_290)
     const parental = contractor.lines.find((l) => l.kind === "PARENTAL")
     expect(parental?.minimumApplied).toBe(true)
-    expect(parental?.amountGrosze).toBe(Math.round((100_000 * 41 * 7) / 30))
+    expect(parental?.amountGrosze).toBe(Math.round((100_000 * 32 * 7) / 30))
   })
 })
 

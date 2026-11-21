@@ -21,7 +21,7 @@ import {
   PARENTAL_RATE,
   PARENTAL_TOTAL_CAP_WEEKS,
 } from "./constants"
-import { addYears, daysBetween, parseIsoDate } from "./dates"
+import { addYears, daysBetween, parseIsoDate } from "./calculator-dates"
 import { dailyBasis, daysAmount } from "./money"
 
 import type {
@@ -388,7 +388,10 @@ export function calculateBenefits(input: CalculatorInput): CalculatorResult {
       secondParentWeeks,
       PARENTAL_NON_TRANSFERABLE_WEEKS
     )
-    motherParentalWeeks = parentalPoolWeeks - secondParentWeeks
+    motherParentalWeeks = Math.min(
+      Math.max(0, parentalPoolWeeks - PARENTAL_NON_TRANSFERABLE_WEEKS),
+      parentalPoolWeeks - secondParentWeeks
+    )
   } else {
     motherParentalWeeks = clamp(
       Math.round(finite(n.motherParentalWeeks)),
@@ -788,3 +791,5 @@ export function calculateBenefits(input: CalculatorInput): CalculatorResult {
     trace,
   }
 }
+
+export { calculatorToAssessmentInput, calculatorToLeavePlan, calculateEngineBenefits } from "./engine-calculator"

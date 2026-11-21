@@ -3,7 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { ArrowRight, Menu, X } from "lucide-react"
+import { ArrowRight, Menu, Moon, Sun, X } from "lucide-react"
+import { useTheme } from "next-themes"
 
 import { Brand } from "@/components/brand"
 import { Button } from "@workspace/ui/components/button"
@@ -17,6 +18,7 @@ function isActive(pathname: string, href: string) {
 export function SiteHeader() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const { resolvedTheme, setTheme } = useTheme()
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl">
@@ -44,6 +46,16 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Zmień motyw jasny lub ciemny"
+            title="Zmień motyw jasny lub ciemny"
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-border bg-background text-foreground transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+          >
+            <Moon aria-hidden="true" className="size-5 dark:hidden" />
+            <Sun aria-hidden="true" className="hidden size-5 dark:block" />
+          </button>
           <Button asChild size="sm" className="hidden sm:inline-flex">
             <Link href="/start">
               Zacznij
@@ -52,7 +64,7 @@ export function SiteHeader() {
           </Button>
           <button
             type="button"
-            className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none lg:hidden"
+            className="inline-flex size-11 items-center justify-center rounded-lg border border-border bg-background text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none lg:hidden"
             aria-expanded={open}
             aria-controls="mobile-nav"
             onClick={() => setOpen((value) => !value)}
@@ -83,7 +95,7 @@ export function SiteHeader() {
                   onClick={() => setOpen(false)}
                   aria-current={isActive(pathname, item.href) ? "page" : undefined}
                   className={cn(
-                    "flex min-h-10 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    "flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                     isActive(pathname, item.href) && "bg-secondary text-foreground"
                   )}
                 >

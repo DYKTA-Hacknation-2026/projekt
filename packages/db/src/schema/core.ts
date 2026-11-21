@@ -12,11 +12,33 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
-  vector,
+  primaryKey,
+  customType,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core"
+import { sql, type SQL } from "drizzle-orm"
 
-import { EMBEDDING_DIMENSIONS } from "../constants"
 import { uuidv7 } from "../ids"
+
+/**
+ * Dimension-less pgvector column. Each embedding model writes vectors of its
+ * own dimension; retrieval casts to `vector(<dims>)` so that the partial HNSW
+ * index of the active model is used (see `kb.chunk_embeddings`).
+ */
+const anyVector = customType<{ data: number[]; driverData: string }>({
+  dataType: () => "vector",
+  toDriver: (value) => `[${value.join(",")}]`,
+  fromDriver: (value) =>
+    value
+      .slice(1, -1)
+      .split(",")
+      .filter((part) => part.length > 0)
+      .map(Number),
+})
+
+const tsvector = customType<{ data: string }>({
+  dataType: () => "tsvector",
+})
 
 export const appSchema = pgSchema("app")
 export const legalSchema = pgSchema("legal")
@@ -72,10 +94,11 @@ export const recipientEnum = appSchema.enum("application_recipient", [
   "ZUS",
 ])
 
-export const verificationStatusEnum = legalSchema.enum(
-  "verification_status",
-  ["VERIFIED", "UNVERIFIED", "PROPOSED"]
-)
+export const verificationStatusEnum = legalSchema.enum("verification_status", [
+  "VERIFIED",
+  "UNVERIFIED",
+  "PROPOSED",
+])
 
 export const knowledgeSourceTypeEnum = kbSchema.enum("source_type", [
   "LEGAL_ACT",
@@ -84,11 +107,34 @@ export const knowledgeSourceTypeEnum = kbSchema.enum("source_type", [
   "WEB_PAGE",
   "FORM_TEMPLATE",
   "INTERNAL",
+  "OFFICIAL_GUIDANCE",
+  "BENEFIT_TABLE",
+  "FORM_INSTRUCTION",
+  "GOVERNMENT_PAGE",
+  "CHARITY_RESOURCE",
+])
+/**
+ * Who may *see* retrieved content. RESTRICTED sources (e.g. the confidential
+ * ZUS sample cases) are rejected by the ingestion pipeline and never indexed.
+ */
+export const accessLevelEnum = kbSchema.enum("access_level", [
+  "PUBLIC",
+  "INTERNAL",
+  "RESTRICTED",
+])
+/** How retrieved content may be shown to end users. */
+export const redistributionPolicyEnum = kbSchema.enum("redistribution_policy", [
+  "ALLOWED",
+  "ATTRIBUTION",
+  "CITATION_ONLY",
+  "PROHIBITED",
 ])
 export const knowledgeDocumentStatusEnum = kbSchema.enum("document_status", [
   "PENDING",
   "INDEXED",
   "FAILED",
+  "SUPERSEDED",
+  "ARCHIVED",
 ])
 export const ingestionStatusEnum = kbSchema.enum("ingestion_status", [
   "QUEUED",
@@ -156,7 +202,9 @@ export const userProfiles = appSchema.table(
     city: text("city"),
     preferredLanguage: text("preferred_language").notNull().default("pl"),
     healthDataConsent: boolean("health_data_consent").notNull().default(false),
-    aiAssistantConsent: boolean("ai_assistant_consent").notNull().default(false),
+    aiAssistantConsent: boolean("ai_assistant_consent")
+      .notNull()
+      .default(false),
     documentProcessingConsent: boolean("document_processing_consent")
       .notNull()
       .default(false),
@@ -443,6 +491,16 @@ export const embeddingModels = kbSchema.table(
     distanceMetric: distanceMetricEnum("distance_metric")
       .notNull()
       .default("COSINE"),
+    /**
+     * Fingerprint of everything that changes the vector space (provider,
+     * model, dimensions, query/document prefixes, normalisation). Index and
+     * query time must use the same fingerprint.
+     */
+    configFingerprint: char("config_fingerprint", { length: 64 }),
+    settings: jsonb("settings")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
     isActive: boolean("is_active").notNull().default(false),
     description: text("description"),
     createdAt,
@@ -466,11 +524,24 @@ export const knowledgeSources = kbSchema.table(
     url: text("url"),
     description: text("description"),
     isConfidential: boolean("is_confidential").notNull().default(false),
+    accessLevel: accessLevelEnum("access_level").notNull().default("PUBLIC"),
+    redistribution: redistributionPolicyEnum("redistribution")
+      .notNull()
+      .default("ATTRIBUTION"),
+    /** Higher wins when sources conflict (statute > regulation > guide). */
+    authorityRank: integer("authority_rank").notNull().default(50),
+    language: text("language").notNull().default("pl"),
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
     createdAt,
+    updatedAt,
   },
   (table) => [
     uniqueIndex("knowledge_sources_slug_uq").on(table.slug),
     index("knowledge_sources_type_idx").on(table.sourceType),
+    index("knowledge_sources_access_idx").on(table.accessLevel),
   ]
 )
 
@@ -483,18 +554,37 @@ export const knowledgeDocuments = kbSchema.table(
     sourceId: uuid("source_id")
       .notNull()
       .references(() => knowledgeSources.id, { onDelete: "cascade" }),
+    /** Stable identifier of the logical document inside its source. */
+    documentKey: text("document_key").notNull().default("main"),
     title: text("title").notNull(),
     version: text("version").notNull(),
     documentType: text("document_type").notNull().default("LEGAL_EXTRACT"),
     language: text("language").notNull().default("pl"),
+    /** Official identifier, e.g. "Dz.U. 2026 poz. 854". */
+    externalId: text("external_id"),
+    sourceUrl: text("source_url"),
     publishedAt: date("published_at"),
     effectiveFrom: date("effective_from"),
     effectiveTo: date("effective_to"),
+    /** sha256 of the normalised text; the deduplication key. */
     contentHash: char("content_hash", { length: 64 }),
+    /** sha256 of the raw bytes (PDF/HTML) as fetched. */
+    rawHash: char("raw_hash", { length: 64 }),
     storageKey: text("storage_key"),
-    status: knowledgeDocumentStatusEnum("status")
-      .notNull()
-      .default("PENDING"),
+    pageCount: integer("page_count"),
+    /**
+     * Optional per-document restriction. The effective policy is the more
+     * restrictive of the source and the document (e.g. a public statute
+     * source can hold an INTERNAL competition copy of its text).
+     */
+    accessLevel: accessLevelEnum("access_level"),
+    redistribution: redistributionPolicyEnum("redistribution"),
+    status: knowledgeDocumentStatusEnum("status").notNull().default("PENDING"),
+    supersededById: uuid("superseded_by_id").references(
+      (): AnyPgColumn => knowledgeDocuments.id,
+      { onDelete: "set null" }
+    ),
+    lastIngestedAt: timestamp("last_ingested_at", { withTimezone: true }),
     metadata: jsonb("metadata")
       .$type<Record<string, unknown>>()
       .notNull()
@@ -503,13 +593,18 @@ export const knowledgeDocuments = kbSchema.table(
     updatedAt,
   },
   (table) => [
-    uniqueIndex("knowledge_documents_source_title_version_uq").on(
+    uniqueIndex("knowledge_documents_source_key_version_uq").on(
       table.sourceId,
-      table.title,
+      table.documentKey,
       table.version
     ),
     index("knowledge_documents_source_idx").on(table.sourceId),
     index("knowledge_documents_status_idx").on(table.status),
+    index("knowledge_documents_hash_idx").on(table.contentHash),
+    index("knowledge_documents_effective_idx").on(
+      table.effectiveFrom,
+      table.effectiveTo
+    ),
   ]
 )
 
@@ -522,21 +617,33 @@ export const knowledgeChunks = kbSchema.table(
     documentId: uuid("document_id")
       .notNull()
       .references(() => knowledgeDocuments.id, { onDelete: "cascade" }),
-    embeddingModelId: uuid("embedding_model_id")
-      .notNull()
-      .references(() => embeddingModels.id, { onDelete: "restrict" }),
+    chunkIndex: integer("chunk_index").notNull().default(0),
     content: text("content").notNull(),
-    /** pgvector column. Dimensions must match embedding_models.dimensions. */
-    embedding: vector("embedding", { dimensions: EMBEDDING_DIMENSIONS }).notNull(),
     sourceTitle: text("source_title").notNull(),
     sourceUrl: text("source_url"),
     sourceType: text("source_type").notNull(),
     pageNumber: integer("page_number"),
+    pageEnd: integer("page_end"),
     sectionIdentifier: text("section_identifier"),
+    /** Human-readable breadcrumb, e.g. "Ustawa zasiłkowa › Rozdział 4 › Art. 29". */
+    headingPath: text("heading_path"),
     legalReference: text("legal_reference"),
     validFrom: date("valid_from"),
     validTo: date("valid_to"),
     contentHash: char("content_hash", { length: 64 }).notNull(),
+    /** Lower-cased, diacritic-free text used for exact keyword matching. */
+    searchText: text("search_text").notNull().default(""),
+    /** Light Polish stems of `search_text` used for ranked keyword search. */
+    stemText: text("stem_text").notNull().default(""),
+    searchTsv: tsvector("search_tsv").generatedAlwaysAs(
+      (): SQL =>
+        sql`to_tsvector('simple'::regconfig, ${knowledgeChunks.searchText})`
+    ),
+    stemTsv: tsvector("stem_tsv").generatedAlwaysAs(
+      (): SQL =>
+        sql`to_tsvector('simple'::regconfig, ${knowledgeChunks.stemText})`
+    ),
+    isActive: boolean("is_active").notNull().default(true),
     metadata: jsonb("metadata")
       .$type<Record<string, unknown>>()
       .notNull()
@@ -545,15 +652,48 @@ export const knowledgeChunks = kbSchema.table(
     createdAt,
   },
   (table) => [
-    uniqueIndex("knowledge_chunks_document_hash_model_uq").on(
-      table.documentId,
-      table.contentHash,
-      table.embeddingModelId
-    ),
+    // Removed chunks are deactivated, not deleted, so chat evidence keeps
+    // pointing at the text that was shown; only active chunks are ordered.
+    uniqueIndex("knowledge_chunks_document_index_uq")
+      .on(table.documentId, table.chunkIndex)
+      .where(sql`${table.isActive}`),
+    index("knowledge_chunks_active_idx").on(table.documentId, table.isActive),
     index("knowledge_chunks_document_idx").on(table.documentId),
-    index("knowledge_chunks_model_idx").on(table.embeddingModelId),
+    index("knowledge_chunks_hash_idx").on(table.contentHash),
     index("knowledge_chunks_legal_reference_idx").on(table.legalReference),
     index("knowledge_chunks_validity_idx").on(table.validFrom, table.validTo),
+    index("knowledge_chunks_search_tsv_idx").using("gin", table.searchTsv),
+    index("knowledge_chunks_stem_tsv_idx").using("gin", table.stemTsv),
+  ]
+)
+
+/**
+ * One row per (chunk, embedding model). The column has no fixed dimension:
+ * every model gets its own partial HNSW index created by the ingestion
+ * pipeline (`kb.ensure_embedding_index`), so switching provider, model or
+ * dimensions needs no schema change and incompatible vectors never mix.
+ */
+export const chunkEmbeddings = kbSchema.table(
+  "chunk_embeddings",
+  {
+    chunkId: uuid("chunk_id")
+      .notNull()
+      .references(() => knowledgeChunks.id, { onDelete: "cascade" }),
+    embeddingModelId: uuid("embedding_model_id")
+      .notNull()
+      .references(() => embeddingModels.id, { onDelete: "restrict" }),
+    dimensions: integer("dimensions").notNull(),
+    embedding: anyVector("embedding").notNull(),
+    /** Hash of the embedded text, so stale vectors can be detected. */
+    contentHash: char("content_hash", { length: 64 }).notNull(),
+    createdAt,
+  },
+  (table) => [
+    primaryKey({
+      name: "chunk_embeddings_pk",
+      columns: [table.chunkId, table.embeddingModelId],
+    }),
+    index("chunk_embeddings_model_idx").on(table.embeddingModelId),
   ]
 )
 
@@ -567,6 +707,13 @@ export const ingestionJobs = kbSchema.table(
       .notNull()
       .references(() => knowledgeDocuments.id, { onDelete: "cascade" }),
     status: ingestionStatusEnum("status").notNull().default("QUEUED"),
+    /** Last pipeline stage reached (register, extract, … verify). */
+    stage: text("stage"),
+    attempts: integer("attempts").notNull().default(0),
+    embeddingModelId: uuid("embedding_model_id").references(
+      () => embeddingModels.id,
+      { onDelete: "set null" }
+    ),
     chunksCreated: integer("chunks_created").notNull().default(0),
     startedAt: timestamp("started_at", { withTimezone: true }),
     finishedAt: timestamp("finished_at", { withTimezone: true }),
@@ -596,6 +743,11 @@ export const conversations = chatSchema.table(
     userId: uuid("user_id").references(() => users.id, {
       onDelete: "cascade",
     }),
+    /**
+     * Opaque owner of the conversation (signed session id). Every read and
+     * delete is filtered by it, so a guest can only reach their own chats.
+     */
+    ownerKey: text("owner_key"),
     title: text("title").notNull().default("Nowa rozmowa"),
     status: conversationStatusEnum("status").notNull().default("ACTIVE"),
     isSimulated: boolean("is_simulated").notNull().default(true),
@@ -605,6 +757,7 @@ export const conversations = chatSchema.table(
   (table) => [
     index("conversations_user_idx").on(table.userId),
     index("conversations_updated_idx").on(table.updatedAt),
+    index("conversations_owner_idx").on(table.ownerKey, table.updatedAt),
   ]
 )
 

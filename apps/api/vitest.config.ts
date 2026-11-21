@@ -9,6 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": root,
+      "@zpr/domain/engine": `${workspace}/packages/domain/src/engine/index.ts`,
       "@zpr/domain": `${workspace}/packages/domain/src/index.ts`,
       "@zpr/db/client": `${workspace}/packages/db/src/client.ts`,
       "@zpr/db/health": `${workspace}/packages/db/src/health.ts`,

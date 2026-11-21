@@ -36,8 +36,17 @@ services:
       EMBEDDING_PROVIDER: local-demo
       EMBEDDING_MODEL: zpr-hash-1024
       EMBEDDING_DIMENSIONS: "1024"
+      # Public deployments: PUBLIC only. Competition copies (INTERNAL) are
+      # never in the image anyway — they are read from KB_LOCAL_SOURCES_DIR.
+      KB_RETRIEVAL_ACCESS_LEVELS: "PUBLIC,INTERNAL"
       SESSION_SECRET: docker-local-only-session-secret-32-chars
       ADMIN_GATE_ENABLED: "false"
+      # Assistant model; defaults to the offline rules model. Example:
+      # AI_PROVIDER=anthropic AI_API_KEY=... docker compose up
+      AI_PROVIDER: ${AI_PROVIDER:-none}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-}
       NEXT_TELEMETRY_DISABLED: "1"
     depends_on:
       db:
@@ -46,6 +55,7 @@ services:
       sh -c "corepack enable &&
       pnpm --filter @zpr/db db:migrate &&
       pnpm --filter @zpr/db db:seed &&
+      pnpm --filter @zpr/rag kb:seed &&
       pnpm --filter api start --hostname 0.0.0.0"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
