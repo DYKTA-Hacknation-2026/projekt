@@ -175,7 +175,8 @@ The *Req* for P5 is FR-CALC-00, FR-INF-*, FR-PRD-01/05/09 and NFR-01/02/06/07.
 
 ### P8: Admin UI
 
-- [ ] **P8-01** Rule sets: list, clone to a draft, edit parameters with per-key forms (Zod-driven), source links, diff, publish or retire, audit. *Req:* FR-ADM-01.
+- [x] **P8-01** Rule sets: list, clone to a draft, edit parameters with per-key forms (Zod-driven), source links, diff, publish or retire, audit. *Req:* FR-ADM-01.
+  - Shipped as `/admin/reguly`: per-rule immutable versions, shared field catalogue, validation through `buildRuleSet`, effective date, source URL and audit note. Draft/publish workflow is simplified to “new version from a date”.
 - [ ] **P8-02** KB sources: upload a version, set effective dates, ingest, view reports, disable chunks, re-embed. *Req:* FR-PRD-08.
 - [ ] **P8-03** Content: support organisations (with `verified_at`, charitable-only), links, info pages, checklist templates, feature flags. *Req:* FR-ADM-02.
 

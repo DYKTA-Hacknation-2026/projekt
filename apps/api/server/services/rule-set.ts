@@ -4,7 +4,7 @@ import { getRepositories } from "@/server/container"
 import { AppError } from "@zpr/contracts/problem"
 
 /** Calendar date in Europe/Warsaw, the time zone used for legal dates. */
-function warsawToday(now: Date = new Date()): string {
+export function warsawToday(now: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw" }).format(
     now
   )

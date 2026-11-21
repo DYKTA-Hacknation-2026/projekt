@@ -9,6 +9,7 @@ export * from "./content"
 export * from "./mobywatel"
 export * from "./data-import"
 export * from "./engine"
+export * from "./rules-admin"
 
 export const AI_DISCLOSURE =
   "Asystent korzysta ze sztucznej inteligencji wyłącznie w celach informacyjnych. Nie podejmuje decyzji o prawie do zasiłku ani nie ustala kwot — te obliczenia wykonuje deterministyczny moduł."

@@ -59,7 +59,7 @@ Dependency direction: `contracts` (Zod) → `domain/engine` ← `apps/web` (REST
 
 The version in force on the day the right arises (birth, taking the child in, or the first day of incapacity if there is no due date) applies to the whole period (A-12). A request may pin a version to re-check an old calculation (`ruleSetVersion`). Dates before 2026-07-01 are returned as `MANUAL_REVIEW` (`U-01`): the provided sources do not contain that legal text.
 
-Parameters are data (`rulesets.ts`); rule logic is code (AD-01). `GET /api/v1/rulesets` publishes all versions with `parameterMeta` (verification status and sources per parameter). To add a version, append a `RuleSet` with its own `effectiveFrom`, close the previous `effectiveTo`, update `rules`/`parameters`, and add boundary tests on both sides of the date; the contiguity test in `primitives.test.ts` enforces the windows.
+Parameters are data (`rulesets.ts`); rule logic is code (AD-01). `GET /api/v1/rulesets` publishes all versions with `parameterMeta` (verification status and sources per parameter). To add a version, append a `RuleSet` with its own `effectiveFrom`, close the previous `effectiveTo`, update `rules`/`parameters`, and add boundary tests on both sides of the date; the contiguity test in `primitives.test.ts` enforces the windows. Admins do the same at runtime through `/admin/reguly`: the save appends a row in `legal.legal_rule_versions`, closes the previous version and validates the candidate with `buildRuleSet` before writing.
 
 External values that the sources lack (Q-29) can be supplied per request with a cited `sourceNote` (`externalParameters`). The result then carries a derived version `<version>+ext` and the note in `ruleSet.changes`.
 

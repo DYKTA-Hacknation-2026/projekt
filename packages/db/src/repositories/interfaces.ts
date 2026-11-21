@@ -87,6 +87,29 @@ export interface LegalRuleParameterRecord {
   parameters: Record<string, unknown>
 }
 
+export interface LegalRuleVersionDetail extends LegalRuleParameterRecord {
+  ruleId: string
+  title: string
+  description: string
+  category: string
+  legalReference: string
+  sourceUrl: string | null
+  notes: string | null
+  createdAt: Date
+}
+
+export interface CreateLegalRuleVersionInput {
+  ruleId: string
+  version: string
+  effectiveFrom: string
+  parameters: Record<string, unknown>
+  verificationStatus: "VERIFIED" | "UNVERIFIED" | "PROPOSED"
+  sourceUrl: string | null
+  notes: string | null
+  /** Day before `effectiveFrom`; closes the previous open version. */
+  closePreviousTo: string | null
+}
+
 export interface LegalRepository {
   countRules(): Promise<number>
   listRuleVersions(limit?: number): Promise<LegalRuleSummary[]>
@@ -95,6 +118,15 @@ export interface LegalRepository {
    * turns these rows into a `RuleSet`; no legal value lives in application code.
    */
   getRuleParameters(asOf: string): Promise<LegalRuleParameterRecord[]>
+  /** Every version of every active rule, newest first within a rule. */
+  listRuleVersionsDetailed(): Promise<LegalRuleVersionDetail[]>
+  /**
+   * Appends an immutable version. Closes the currently newest version with
+   * `closePreviousTo` so ranges stay contiguous.
+   */
+  createRuleVersion(
+    input: CreateLegalRuleVersionInput
+  ): Promise<LegalRuleVersionDetail>
 }
 
 export type { KnowledgeSourceSummary } from "@zpr/contracts/views"
@@ -249,8 +281,6 @@ export interface ImportRepository {
   markCompleted(sessionId: string): Promise<void>
   markSkipped(sessionId: string, ownerKey: string): Promise<boolean>
   acceptSession(input: AcceptImportSessionInput): Promise<ImportSessionRecord>
-  findLatestAcceptedForUser(
-    userId: string
-  ): Promise<ImportSessionRecord | null>
+  findLatestAcceptedForUser(userId: string): Promise<ImportSessionRecord | null>
   applyToUser(input: { sessionId: string; userId: string }): Promise<void>
 }

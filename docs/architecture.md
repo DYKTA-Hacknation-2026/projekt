@@ -165,6 +165,7 @@ Base path: `/api/v1`. JSON only. OpenAPI 3.1 is generated from the Zod schemas (
 | POST | `/assistant/chat` | Streaming chat (AI SDK UI message stream over SSE) | FR-PRD-07 |
 | GET | `/assistant/conversations/{id}` | History with citations | FR-PRD-07 |
 | * | `/admin/rulesets…`, `/admin/kb/sources…`, `/admin/content…` | Admin (role `ADMIN`) | FR-ADM-01/02 |
+| GET/POST | `/internal/admin-rules` | Rule editor: versions with parameters; appends an immutable version | FR-ADM-01 |
 | GET | `/health` · `/openapi.json` | Ops | NFR-03 |
 
 ## 7. Cross-cutting concerns
