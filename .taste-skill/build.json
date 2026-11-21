@@ -1,0 +1,11 @@
+{
+ "page": null,
+ "url": "http://localhost:3108",
+ "root": null,
+ "kind": "software",
+ "category": "Zasiłki dla rodziców",
+ "primary": "Sprawdź dokumenty",
+ "rounds": 3,
+ "start": "2026-11-21T15:50:45.559Z",
+ "by": "gate.mjs --start"
+}

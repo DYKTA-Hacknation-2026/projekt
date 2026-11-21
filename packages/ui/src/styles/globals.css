@@ -59,13 +59,13 @@
 }
 
 :root {
-    --background: oklch(0.985 0.006 95);
+    --background: #f8faf5;
     --foreground: oklch(0.235 0.025 250);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.235 0.025 250);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.235 0.025 250);
-    --primary: oklch(0.385 0.075 195);
+    --primary: #007834;
     --primary-foreground: oklch(0.985 0.005 95);
     --secondary: oklch(0.955 0.012 95);
     --secondary-foreground: oklch(0.3 0.03 240);
