@@ -38,6 +38,7 @@ import {
   type TimelineCategory,
   type TimelineOwner,
 } from "@/lib/timeline"
+import type { RuleSet } from "@zpr/domain"
 
 const ownerLabel: Record<TimelineOwner, string> = {
   MAMA: "Mama",
@@ -62,27 +63,50 @@ const categoryVariant: Record<
   DEADLINE: "warning",
 }
 
-export function TimelinePlanner() {
+export function TimelinePlanner({ ruleSet }: { ruleSet: RuleSet }) {
   const [dueDate, setDueDate] = useState("2027-03-10")
-  const [preBirthWeeks, setPreBirthWeeks] = useState("2")
+  const [preBirthWeeks, setPreBirthWeeks] = useState(
+    String(Math.min(2, ruleSet.maternity.maxPreBirthWeeks))
+  )
   const [children, setChildren] = useState("1")
-  const [secondParent, setSecondParent] = useState("9")
-  const [paternity, setPaternity] = useState("14")
+  const [secondParent, setSecondParent] = useState(
+    String(ruleSet.parental.nonTransferableWeeks)
+  )
+  const [paternity, setPaternity] = useState(String(ruleSet.paternity.days))
   const [zaZyciem, setZaZyciem] = useState(false)
 
   const validDate = /^\d{4}-\d{2}-\d{2}$/.test(dueDate)
+  const childCounts = Object.keys(ruleSet.maternity.weeksByChildren)
+    .map(Number)
+    .sort((a, b) => a - b)
+  const preBirthOptions = Array.from(
+    { length: ruleSet.maternity.maxPreBirthWeeks + 1 },
+    (_, index) => index
+  )
+  const secondParentOptions = Array.from(
+    { length: ruleSet.parental.nonTransferableWeeks + 1 },
+    (_, index) => index
+  )
+  const paternityOptions = Array.from(
+    new Set([0, ruleSet.paternity.minPartDays, ruleSet.paternity.days])
+  )
+    .filter((days) => days >= 0 && days <= ruleSet.paternity.days)
+    .sort((a, b) => a - b)
 
   const plan = useMemo(() => {
     if (!validDate) return null
     try {
-      return buildTimeline({
-        dueDate,
-        maternityWeeksBeforeBirth: Number(preBirthWeeks),
-        childrenCount: Number(children),
-        secondParentParentalWeeks: Number(secondParent),
-        paternityDays: Number(paternity),
-        hasZaZyciem: zaZyciem,
-      })
+      return buildTimeline(
+        {
+          dueDate,
+          maternityWeeksBeforeBirth: Number(preBirthWeeks),
+          childrenCount: Number(children),
+          secondParentParentalWeeks: Number(secondParent),
+          paternityDays: Number(paternity),
+          hasZaZyciem: zaZyciem,
+        },
+        ruleSet
+      )
     } catch {
       return null
     }
@@ -94,6 +118,7 @@ export function TimelinePlanner() {
     secondParent,
     paternity,
     zaZyciem,
+    ruleSet,
   ])
 
   return (
@@ -127,7 +152,7 @@ export function TimelinePlanner() {
                 value={preBirthWeeks}
                 onChange={(event) => setPreBirthWeeks(event.target.value)}
               >
-                {[0, 1, 2, 3, 4, 5, 6].map((weeks) => (
+                {preBirthOptions.map((weeks) => (
                   <option key={weeks} value={weeks}>
                     {weeks}
                   </option>
@@ -141,9 +166,11 @@ export function TimelinePlanner() {
                 value={children}
                 onChange={(event) => setChildren(event.target.value)}
               >
-                {[1, 2, 3, 4, 5].map((count) => (
+                {childCounts.map((count) => (
                   <option key={count} value={count}>
-                    {count === 5 ? "5+" : count}
+                    {count === ruleSet.maternity.maxChildren
+                      ? `${count}+`
+                      : count}
                   </option>
                 ))}
               </Select>
@@ -155,7 +182,7 @@ export function TimelinePlanner() {
                 value={secondParent}
                 onChange={(event) => setSecondParent(event.target.value)}
               >
-                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((weeks) => (
+                {secondParentOptions.map((weeks) => (
                   <option key={weeks} value={weeks}>
                     {weeks}
                   </option>
@@ -169,7 +196,7 @@ export function TimelinePlanner() {
                 value={paternity}
                 onChange={(event) => setPaternity(event.target.value)}
               >
-                {[0, 7, 14].map((days) => (
+                {paternityOptions.map((days) => (
                   <option key={days} value={days}>
                     {days}
                   </option>
@@ -276,7 +303,9 @@ export function TimelinePlanner() {
                             {categoryLabel[milestone.category]}
                           </Badge>
                         </div>
-                        <h3 className="text-sm font-semibold">{milestone.title}</h3>
+                        <h3 className="text-sm font-semibold">
+                          {milestone.title}
+                        </h3>
                         <p className="text-xs text-pretty text-muted-foreground">
                           {milestone.description}
                         </p>
@@ -307,9 +336,7 @@ export function TimelinePlanner() {
                     Dziewięć tygodni drugiego rodzica nie przechodzi na mamę.
                     Można je wykorzystać później, także w innym roku.
                   </p>
-                  <p>
-                    Wniosek o 81,5% trzeba złożyć w ciągu 21 dni od porodu.
-                  </p>
+                  <p>Wniosek o 81,5% trzeba złożyć w ciągu 21 dni od porodu.</p>
                 </CardContent>
               </Card>
 

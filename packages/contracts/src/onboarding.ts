@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { isoDateSchema } from "./common"
+import { isoDateSchema, uuidSchema } from "./common"
 
 export const employmentTypeSchema = z.enum([
   "EMPLOYMENT",
@@ -40,6 +40,9 @@ export const onboardingSchema = z.object({
     .max(1_000_000),
   insuranceStartDate: isoDateSchema.optional(),
   coverageMode: coverageModeSchema.default("COMPULSORY"),
+
+  /** Links the case to an accepted simulated data-retrieval session. */
+  importSessionId: uuidSchema.optional(),
 
   consents: z.object({
     healthData: z.boolean(),

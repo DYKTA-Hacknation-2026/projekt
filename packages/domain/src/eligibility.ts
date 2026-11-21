@@ -5,6 +5,8 @@ import {
   type MissingFact,
 } from "./case-facts"
 import { daysBetween, isIsoDate } from "./dates"
+import { formatRatePercent } from "./money"
+import type { RuleSet } from "./rule-set"
 
 /**
  * Preliminary eligibility guidance.
@@ -37,10 +39,7 @@ export const BENEFIT_LABELS: Record<BenefitCode, string> = {
 }
 
 export type DeterminationStatus =
-  | "ELIGIBLE"
-  | "NOT_ELIGIBLE"
-  | "INDETERMINATE"
-  | "NEEDS_INPUT"
+  "ELIGIBLE" | "NOT_ELIGIBLE" | "INDETERMINATE" | "NEEDS_INPUT"
 
 export interface DeterminationReason {
   ruleId: string
@@ -70,9 +69,6 @@ export interface EligibilityAssessment {
 export const ELIGIBILITY_DISCLAIMER =
   "Wstępna ocena na podstawie podanych informacji i reguł z wersjonowanego rejestru przepisów. To nie jest decyzja ZUS ani płatnika składek."
 
-/** U art. 4 ust. 1: 30 days of compulsory or 90 days of voluntary insurance. */
-export const WAITING_PERIOD_DAYS = { COMPULSORY: 30, VOLUNTARY: 90 } as const
-
 function determination(
   benefit: BenefitCode,
   status: DeterminationStatus,
@@ -95,7 +91,8 @@ function determination(
 /** Shared condition of all maternity-type benefits: sickness insurance. */
 function insuranceGate(
   benefit: BenefitCode,
-  facts: CaseFacts
+  facts: CaseFacts,
+  asOf: string
 ): Determination | null {
   if (facts.professionalFosterFamily) {
     return determination(benefit, "NOT_ELIGIBLE", {
@@ -124,6 +121,22 @@ function insuranceGate(
 
   const insurance = effectiveSicknessInsurance(facts)
 
+  const referenceDate = facts.eventDate ?? facts.expectedDueDate ?? asOf
+  if (facts.insuranceEndDate && facts.insuranceEndDate < referenceDate) {
+    return determination(benefit, "NOT_ELIGIBLE", {
+      reasons: [
+        {
+          ruleId: "LR-100",
+          text: `Ubezpieczenie chorobowe ustało ${facts.insuranceEndDate}, a zdarzenie uprawniające przypada na ${referenceDate}. Bez aktywnego tytułu ubezpieczenia zasiłek nie przysługuje.`,
+          legalBasis: "U art. 4 ust. 1; U art. 13",
+        },
+      ],
+      caveats: [
+        "Niektóre sytuacje (np. rozwiązanie umowy z naruszeniem przepisów) mogą zachować prawo do zasiłku — potwierdź w ZUS.",
+      ],
+    })
+  }
+
   if (facts.employmentType === "OTHER") {
     return determination(benefit, "INDETERMINATE", {
       reasons: [
@@ -133,7 +146,9 @@ function insuranceGate(
           legalBasis: "U art. 29 ust. 1",
         },
       ],
-      caveats: ["Potwierdź swój tytuł ubezpieczenia w ZUS lub u płatnika składek."],
+      caveats: [
+        "Potwierdź swój tytuł ubezpieczenia w ZUS lub u płatnika składek.",
+      ],
     })
   }
 
@@ -168,7 +183,10 @@ function insuranceGate(
   return null
 }
 
-function arrearsCheck(facts: CaseFacts): {
+function arrearsCheck(
+  facts: CaseFacts,
+  ruleSet: RuleSet
+): {
   status: DeterminationStatus | null
   reason?: DeterminationReason
   missing?: MissingFact
@@ -180,7 +198,7 @@ function arrearsCheck(facts: CaseFacts): {
       status: "INDETERMINATE",
       reason: {
         ruleId: "A-09",
-        text: "Zadłużenie w składkach powyżej 1% minimalnego wynagrodzenia w dniu powstania prawa wstrzymuje wypłatę do czasu spłaty. Brak spłaty w ciągu 6 miesięcy powoduje wygaśnięcie prawa.",
+        text: `Zadłużenie w składkach powyżej ${formatRatePercent(ruleSet.debt.thresholdShareOfMinWage)} minimalnego wynagrodzenia w dniu powstania prawa wstrzymuje wypłatę do czasu spłaty. Brak spłaty w ciągu ${ruleSet.debt.expiryMonths} miesięcy powoduje wygaśnięcie prawa.`,
         legalBasis: "U art. 2a ust. 1–2",
       },
     }
@@ -189,16 +207,19 @@ function arrearsCheck(facts: CaseFacts): {
     return {
       status: null,
       missing: FACT_QUESTIONS.contributionArrears,
-      caveat:
-        "Przedsiębiorca z zaległościami w składkach (powyżej 1% minimalnego wynagrodzenia) nie otrzyma wypłaty do czasu ich spłaty (U art. 2a).",
+      caveat: `Przedsiębiorca z zaległościami w składkach (powyżej ${formatRatePercent(ruleSet.debt.thresholdShareOfMinWage)} minimalnego wynagrodzenia) nie otrzyma wypłaty do czasu ich spłaty (U art. 2a).`,
     }
   }
   return { status: null }
 }
 
-function assessMaternity(facts: CaseFacts): Determination {
+function assessMaternity(
+  facts: CaseFacts,
+  asOf: string,
+  ruleSet: RuleSet
+): Determination {
   const benefit: BenefitCode = "MATERNITY_ALLOWANCE"
-  const gate = insuranceGate(benefit, facts)
+  const gate = insuranceGate(benefit, facts, asOf)
   if (gate) return gate
 
   const reasons: DeterminationReason[] = [
@@ -219,18 +240,18 @@ function assessMaternity(facts: CaseFacts): Determination {
   if (facts.parentRole === "FATHER") {
     reasons.push({
       ruleId: "Q-11",
-      text: "Tata może przejąć część urlopu i zasiłku macierzyńskiego tylko w ustawowych sytuacjach, np. gdy mama po 14 tygodniach zrezygnuje z pozostałej części albo w razie jej hospitalizacji lub śmierci.",
+      text: `Tata może przejąć część urlopu i zasiłku macierzyńskiego tylko w ustawowych sytuacjach, np. gdy mama po ${ruleSet.maternity.motherPersonalWeeks} tygodniach zrezygnuje z pozostałej części albo w razie jej hospitalizacji lub śmierci.`,
       legalBasis: "KP art. 180 § 4–17; U art. 29 ust. 3–10",
     })
     return determination(benefit, "INDETERMINATE", {
       reasons,
       caveats: [
-        "Pierwsze 14 tygodni po porodzie przysługuje wyłącznie mamie (P s. 31).",
+        `Pierwsze ${ruleSet.maternity.motherPersonalWeeks} tygodni po porodzie przysługuje wyłącznie mamie (P s. 31).`,
       ],
     })
   }
 
-  const arrears = arrearsCheck(facts)
+  const arrears = arrearsCheck(facts, ruleSet)
   if (arrears.reason) reasons.push(arrears.reason)
   if (arrears.missing) missingFacts.push(arrears.missing)
   if (arrears.caveat) caveats.push(arrears.caveat)
@@ -250,19 +271,23 @@ function assessMaternity(facts: CaseFacts): Determination {
   })
 }
 
-function assessParental(facts: CaseFacts): Determination {
+function assessParental(
+  facts: CaseFacts,
+  asOf: string,
+  ruleSet: RuleSet
+): Determination {
   const benefit: BenefitCode = "PARENTAL_LEAVE_BENEFIT"
-  const gate = insuranceGate(benefit, facts)
+  const gate = insuranceGate(benefit, facts, asOf)
   if (gate) return gate
 
   const reasons: DeterminationReason[] = [
     {
       ruleId: "LR-127",
-      text: "Urlop rodzicielski to wspólna pula 41 tygodni (43 przy więcej niż jednym dziecku). Każdy z rodziców ma wyłączne prawo do 9 tygodni, których nie można przenieść.",
+      text: `Urlop rodzicielski to wspólna pula ${ruleSet.parental.poolWeeks.single} tygodni (${ruleSet.parental.poolWeeks.multiple} przy więcej niż jednym dziecku). Każdy z rodziców ma wyłączne prawo do ${ruleSet.parental.nonTransferableWeeks} tygodni, których nie można przenieść.`,
       legalBasis: "KP art. 182¹a § 1, § 4; U art. 31 ust. 3f",
     },
   ]
-  const arrears = arrearsCheck(facts)
+  const arrears = arrearsCheck(facts, ruleSet)
   if (arrears.reason) reasons.push(arrears.reason)
 
   return determination(benefit, arrears.status ?? "ELIGIBLE", {
@@ -270,12 +295,16 @@ function assessParental(facts: CaseFacts): Determination {
     missingFacts: arrears.missing ? [arrears.missing] : [],
     caveats: [
       ...(arrears.caveat ? [arrears.caveat] : []),
-      "Prawo do 9 tygodni dotyczy rodzica objętego ubezpieczeniem chorobowym (U art. 30a, art. 31 ust. 3f).",
+      `Prawo do ${ruleSet.parental.nonTransferableWeeks} tygodni dotyczy rodzica objętego ubezpieczeniem chorobowym (U art. 30a, art. 31 ust. 3f).`,
     ],
   })
 }
 
-function assessPaternity(facts: CaseFacts): Determination {
+function assessPaternity(
+  facts: CaseFacts,
+  asOf: string,
+  ruleSet: RuleSet
+): Determination {
   const benefit: BenefitCode = "PATERNITY_BENEFIT"
   if (facts.parentRole === "MOTHER") {
     return determination(benefit, "NOT_ELIGIBLE", {
@@ -288,13 +317,13 @@ function assessPaternity(facts: CaseFacts): Determination {
       ],
     })
   }
-  const gate = insuranceGate(benefit, facts)
+  const gate = insuranceGate(benefit, facts, asOf)
   if (gate) return gate
 
   const reasons: DeterminationReason[] = [
     {
       ruleId: "LR-133",
-      text: "Ojciec ma prawo do 2 tygodni urlopu ojcowskiego, do ukończenia przez dziecko 12 miesięcy, jednorazowo albo w 2 częściach po co najmniej tydzień.",
+      text: `Ojciec ma prawo do ${ruleSet.paternity.days} dni urlopu ojcowskiego, do ukończenia przez dziecko ${ruleSet.paternity.deadlineMonths} miesięcy, jednorazowo albo w ${ruleSet.paternity.maxParts} częściach po co najmniej ${ruleSet.paternity.minPartDays} dni.`,
       legalBasis: "KP art. 182³ § 1, § 1¹",
     },
   ]
@@ -312,7 +341,11 @@ function assessPaternity(facts: CaseFacts): Determination {
   return determination(benefit, "ELIGIBLE", { reasons, missingFacts })
 }
 
-function assessSickness(facts: CaseFacts, asOf: string): Determination {
+function assessSickness(
+  facts: CaseFacts,
+  asOf: string,
+  ruleSet: RuleSet
+): Determination {
   const benefit: BenefitCode = "SICKNESS_IN_PREGNANCY"
   if (!facts.employmentType) {
     return determination(benefit, "NEEDS_INPUT", {
@@ -331,13 +364,24 @@ function assessSickness(facts: CaseFacts, asOf: string): Determination {
       ],
     })
   }
+  if (facts.insuranceEndDate && facts.insuranceEndDate < asOf) {
+    return determination(benefit, "NOT_ELIGIBLE", {
+      reasons: [
+        {
+          ruleId: "LR-100",
+          text: `Ubezpieczenie chorobowe ustało ${facts.insuranceEndDate}. Na dzień ${asOf} nie ma aktywnego tytułu ubezpieczenia.`,
+          legalBasis: "U art. 4 ust. 1; U art. 13",
+        },
+      ],
+    })
+  }
   if (insurance === undefined) {
     return determination(benefit, "NEEDS_INPUT", {
       missingFacts: [FACT_QUESTIONS.sicknessInsurance],
       reasons: [
         {
           ruleId: "LR-100",
-          text: "Przy umowie zlecenia i własnej działalności zasiłek chorobowy przysługuje tylko z dobrowolnym ubezpieczeniem chorobowym, po 90 dniach jego opłacania.",
+          text: `Przy umowie zlecenia i własnej działalności zasiłek chorobowy przysługuje tylko z dobrowolnym ubezpieczeniem chorobowym, po ${ruleSet.coverage.voluntaryDays} dniach jego opłacania.`,
           legalBasis: "U art. 4 ust. 1",
         },
       ],
@@ -349,7 +393,10 @@ function assessSickness(facts: CaseFacts, asOf: string): Determination {
     })
   }
 
-  const waitingDays = WAITING_PERIOD_DAYS[insurance]
+  const waitingDays =
+    insurance === "COMPULSORY"
+      ? ruleSet.coverage.compulsoryDays
+      : ruleSet.coverage.voluntaryDays
   const reasons: DeterminationReason[] = [
     {
       ruleId: "LR-100",
@@ -358,13 +405,28 @@ function assessSickness(facts: CaseFacts, asOf: string): Determination {
     },
   ]
   const caveats = [
-    "Okres zasiłkowy w ciąży wynosi do 270 dni (U art. 7–9; P s. 24).",
-    "Wcześniejsze okresy ubezpieczenia wliczają się, jeśli przerwa nie przekroczyła 30 dni; niektóre osoby (np. absolwenci zgłoszeni w ciągu 90 dni) mają prawo od pierwszego dnia (U art. 4 ust. 2–3).",
+    `Okres zasiłkowy w ciąży wynosi do ${ruleSet.sickness.maxPeriodDays} dni (U art. 7–9; P s. 24).`,
+    `Wcześniejsze okresy ubezpieczenia wliczają się, jeśli przerwa nie przekroczyła ${ruleSet.coverage.gapToleranceDays} dni; niektóre osoby (np. absolwenci zgłoszeni w ciągu ${ruleSet.coverage.dayOneGraduateDays} dni) mają prawo od pierwszego dnia (U art. 4 ust. 2–3).`,
   ]
+  if (facts.pregnancySickLeave) {
+    reasons.push({
+      ruleId: "A-15",
+      text: "Historia e-ZLA zawiera zwolnienie związane z ciążą — świadczenie za ten okres wynosi 100% podstawy.",
+      legalBasis: "KP art. 92 § 1 pkt 2; U art. 11 ust. 1",
+    })
+    caveats.push(
+      "Dane z e-ZLA zawierają tylko daty i informację o związku z ciążą, bez diagnozy."
+    )
+  }
+  if (facts.sickLeaveDays !== undefined && facts.sickLeaveDays > 0) {
+    caveats.push(
+      `Historia zwolnień obejmuje ${facts.sickLeaveDays} dni. Limit 270 dni dotyczy jednego okresu zasiłkowego.`
+    )
+  }
   if (facts.employmentType === "EMPLOYMENT") {
     reasons.push({
       ruleId: "A-15",
-      text: "Przez pierwsze 33 dni niezdolności w roku (14 dni po 50. roku życia) pracodawca wypłaca wynagrodzenie chorobowe; w ciąży wynosi ono 100%.",
+      text: `Przez pierwsze ${ruleSet.coverage.employerPaidDays} dni niezdolności w roku (${ruleSet.coverage.employerPaidDaysAfter50} dni po 50. roku życia) pracodawca wypłaca wynagrodzenie chorobowe; w ciąży wynosi ono 100%.`,
       legalBasis: "KP art. 92 § 1 pkt 2",
     })
   } else {
@@ -375,7 +437,7 @@ function assessSickness(facts: CaseFacts, asOf: string): Determination {
     })
   }
 
-  const arrears = arrearsCheck(facts)
+  const arrears = arrearsCheck(facts, ruleSet)
   if (arrears.reason) reasons.push(arrears.reason)
   if (arrears.caveat) caveats.push(arrears.caveat)
 
@@ -411,7 +473,11 @@ function assessSickness(facts: CaseFacts, asOf: string): Determination {
 
 export function assessEligibility(
   facts: CaseFacts,
-  options: { asOf: string; benefits?: readonly BenefitCode[] }
+  options: {
+    asOf: string
+    ruleSet: RuleSet
+    benefits?: readonly BenefitCode[]
+  }
 ): EligibilityAssessment {
   if (!isIsoDate(options.asOf)) {
     throw new RangeError("asOf musi być datą RRRR-MM-DD")
@@ -420,13 +486,13 @@ export function assessEligibility(
   const determinations = benefits.map((benefit) => {
     switch (benefit) {
       case "MATERNITY_ALLOWANCE":
-        return assessMaternity(facts)
+        return assessMaternity(facts, options.asOf, options.ruleSet)
       case "PARENTAL_LEAVE_BENEFIT":
-        return assessParental(facts)
+        return assessParental(facts, options.asOf, options.ruleSet)
       case "PATERNITY_BENEFIT":
-        return assessPaternity(facts)
+        return assessPaternity(facts, options.asOf, options.ruleSet)
       case "SICKNESS_IN_PREGNANCY":
-        return assessSickness(facts, options.asOf)
+        return assessSickness(facts, options.asOf, options.ruleSet)
     }
   })
 

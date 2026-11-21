@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 import type { ContentItemType, ContentStatus } from "@zpr/contracts/content"
 
 import { getAdminSession } from "@/server/auth/admin-session"
-import { getContainer } from "@/server/container"
+import { setContentStatus } from "@/server/services/knowledge-center"
 
 const TYPES: ContentItemType[] = [
   "ARTICLE",
@@ -35,7 +35,7 @@ export async function setContentStatusAction(formData: FormData) {
     throw new Error("Nieprawidłowe dane akcji.")
   }
 
-  await getContainer().repositories.content.setContentStatus(type, slug, status)
+  await setContentStatus(type, slug, status)
 
   revalidatePath("/admin/wiedza")
   revalidatePath("/wiedza")

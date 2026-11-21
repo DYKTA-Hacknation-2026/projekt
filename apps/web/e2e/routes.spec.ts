@@ -21,6 +21,8 @@ const routes = [
   ["/wiedza/slownik", /Słownik pojęć/i],
   ["/wiedza/slownik/tytul-ubezpieczenia", /Tytuł ubezpieczenia/i],
   ["/wiedza/zrodla", /Źródła i podstawy prawne/i],
+  ["/mobywatel", /Logowanie przez mObywatel/i],
+  ["/dane", /Uzupełnij dane automatycznie/i],
   ["/admin", /Panel administratora/i],
   ["/admin/wiedza", /Centrum wiedzy/i],
   ["/admin/login", /Dostęp do konfiguracji/i],

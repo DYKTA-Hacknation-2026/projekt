@@ -27,22 +27,44 @@ export const RULES_MODEL_ID = "zpr-rules-1"
  */
 
 const USAGE: LanguageModelV4Usage = {
-  inputTokens: { total: 0, noCache: 0, cacheRead: undefined, cacheWrite: undefined },
+  inputTokens: {
+    total: 0,
+    noCache: 0,
+    cacheRead: undefined,
+    cacheWrite: undefined,
+  },
   outputTokens: { total: 0, text: 0, reasoning: undefined },
 }
 
-function chooseBenefits(text: string, extracted: ExtractedFacts): BenefitCode[] {
+function chooseBenefits(
+  text: string,
+  extracted: ExtractedFacts
+): BenefitCode[] {
   const lower = text.toLowerCase()
   const benefits: BenefitCode[] = []
-  if (/(l-?4|zwolnieni|chorobow)/.test(lower)) benefits.push("SICKNESS_IN_PREGNANCY")
-  if (/(ojcowsk)/.test(lower) || (extracted.facts.parentRole === "FATHER" && !/(przej|rodzicielsk)/.test(lower))) {
+  if (/(l-?4|zwolnieni|chorobow)/.test(lower))
+    benefits.push("SICKNESS_IN_PREGNANCY")
+  if (
+    /(ojcowsk)/.test(lower) ||
+    (extracted.facts.parentRole === "FATHER" &&
+      !/(przej|rodzicielsk)/.test(lower))
+  ) {
     benefits.push("PATERNITY_BENEFIT")
   }
-  if (/(rodzicielsk|przej|podzie)/.test(lower)) benefits.push("PARENTAL_LEAVE_BENEFIT")
-  if (/(macierzy[nń]sk|zasi[lł]e?k|urlop|ryzyk|utrat|strac)/.test(lower) || benefits.length === 0) {
-    if (extracted.facts.parentRole !== "FATHER" || /macierzy/.test(lower)) benefits.unshift("MATERNITY_ALLOWANCE")
+  if (/(rodzicielsk|przej|podzie)/.test(lower))
+    benefits.push("PARENTAL_LEAVE_BENEFIT")
+  if (
+    /(macierzy[nń]sk|zasi[lł]e?k|urlop|ryzyk|utrat|strac)/.test(lower) ||
+    benefits.length === 0
+  ) {
+    if (extracted.facts.parentRole !== "FATHER" || /macierzy/.test(lower))
+      benefits.unshift("MATERNITY_ALLOWANCE")
   }
-  if (extracted.facts.familyEvent === "PREGNANCY" && /(co\s+(powinn|musz|mam|trzeba)|kroki|dalej)/.test(lower) && !benefits.includes("SICKNESS_IN_PREGNANCY")) {
+  if (
+    extracted.facts.familyEvent === "PREGNANCY" &&
+    /(co\s+(powinn|musz|mam|trzeba)|kroki|dalej)/.test(lower) &&
+    !benefits.includes("SICKNESS_IN_PREGNANCY")
+  ) {
     benefits.push("SICKNESS_IN_PREGNANCY")
   }
   return [...new Set(benefits)].slice(0, 4)
@@ -53,21 +75,29 @@ function primaryBenefit(text: string, extracted: ExtractedFacts): BenefitCode {
 }
 
 const STOPWORDS = new Set(
-  "czy mi mnie mam masz jest jestem jak jaki jaka jakie jakich gdzie kiedy ile się i w we na do od o z ze za to ten ta te co a ale lub oraz że by być mogę może moja mój moje moim nas nam was ich jej jego po przy dla tak nie już też tylko bardzo powinnam powinienem zrobić muszę trzeba".split(" ")
+  "czy mi mnie mam masz jest jestem jak jaki jaka jakie jakich gdzie kiedy ile się i w we na do od o z ze za to ten ta te co a ale lub oraz że by być mogę może moja mój moje moim nas nam was ich jej jego po przy dla tak nie już też tylko bardzo powinnam powinienem zrobić muszę trzeba".split(
+    " "
+  )
 )
 
 /** Legal vocabulary per intent: the knowledge base is written in it. */
-const INTENT_TERMS: Partial<Record<IntentClassification["intents"][number], string>> = {
+const INTENT_TERMS: Partial<
+  Record<IntentClassification["intents"][number], string>
+> = {
   ELIGIBILITY: "zasiłek macierzyński przysługuje ubezpieczenie chorobowe",
-  NEXT_STEPS: "zasiłek macierzyński przysługuje ubezpieczenie chorobowe wniosek",
+  NEXT_STEPS:
+    "zasiłek macierzyński przysługuje ubezpieczenie chorobowe wniosek",
   DURATION: "wymiar urlopu macierzyńskiego rodzicielskiego tygodni",
-  SCENARIOS: "podział urlopu rodzicielskiego wyłączne prawo drugi rodzic rezygnacja",
-  WORK_DURING_LEAVE: "łączenie urlopu rodzicielskiego z pracą wymiar czasu pracy",
+  SCENARIOS:
+    "podział urlopu rodzicielskiego wyłączne prawo drugi rodzic rezygnacja",
+  WORK_DURING_LEAVE:
+    "łączenie urlopu rodzicielskiego z pracą wymiar czasu pracy",
   DOCUMENTS: "wniosek zaświadczenie płatnika składek ZAM odpis aktu urodzenia",
   SUBMISSION: "jak złożyć wniosek eZUS płatnik ZUS wypłaca",
   DEADLINES: "termin wniosek przedawnienie roszczenia",
   RISKS: "przedawnienie roszczenia o wypłatę zasiłku",
-  SPECIAL_SITUATION: "urodzenie martwego dziecka zgon dziecka Za życiem wsparcie organizacje",
+  SPECIAL_SITUATION:
+    "urodzenie martwego dziecka zgon dziecka Za życiem wsparcie organizacje",
   AMOUNT: "wysokość zasiłku macierzyńskiego podstawy wymiaru",
 }
 
@@ -93,12 +123,15 @@ export function rulesSearchQuery(
   const last = userTexts.at(-1) ?? ""
   const previous = userTexts.at(-2)
   const base = last.length < 45 && previous ? `${previous} ${last}` : last
-  const content = (base.toLowerCase().match(/[a-ząćęłńóśźż0-9-]+/g) ?? [])
-    .filter((word) => word.length > 2 && !STOPWORDS.has(word))
+  const content = (
+    base.toLowerCase().match(/[a-ząćęłńóśźż0-9-]+/g) ?? []
+  ).filter((word) => word.length > 2 && !STOPWORDS.has(word))
   const specific = intent.intents.filter((name) => name !== "GENERAL_LEGAL")
   const terms = [
     ...specific.map((name) => INTENT_TERMS[name]).filter(Boolean),
-    extracted.facts.employmentType ? TITLE_TERMS[extracted.facts.employmentType] : undefined,
+    extracted.facts.employmentType
+      ? TITLE_TERMS[extracted.facts.employmentType]
+      : undefined,
     FATHER_WORD.test(base.toLowerCase()) ? "urlop ojcowski ojciec" : undefined,
   ].filter(Boolean)
   const words = [...new Set([...content, ...terms.join(" ").split(" ")])]
@@ -123,22 +156,47 @@ export function plannedToolInput(
       return { benefits: chooseBenefits(text, extracted), facts }
     case "calculateBenefit":
       return {
-        ...(extracted.grossMonthlyIncomePln !== undefined ? { grossMonthlyIncomePln: extracted.grossMonthlyIncomePln } : {}),
-        ...(facts.childrenCount ? { childrenCount: Math.min(facts.childrenCount, 5) } : {}),
-        ...(facts.hasZaZyciem !== undefined ? { hasZaZyciem: facts.hasZaZyciem } : {}),
+        ...(extracted.grossMonthlyIncomePln !== undefined
+          ? { grossMonthlyIncomePln: extracted.grossMonthlyIncomePln }
+          : {}),
+        ...(facts.childrenCount ? { childrenCount: facts.childrenCount } : {}),
+        ...(facts.hasZaZyciem !== undefined
+          ? { hasZaZyciem: facts.hasZaZyciem }
+          : {}),
         ...(extracted.prefersFlatRate ? { paymentOption: "FLAT_81_5" } : {}),
-        ...(extracted.secondParentWeeks !== undefined ? { secondParentParentalWeeks: extracted.secondParentWeeks } : {}),
-        ...(extracted.parentalWorkFraction !== undefined ? { parentalWorkFraction: extracted.parentalWorkFraction } : {}),
+        ...(extracted.secondParentWeeks !== undefined
+          ? { secondParentParentalWeeks: extracted.secondParentWeeks }
+          : {}),
+        ...(extracted.parentalWorkFraction !== undefined
+          ? { parentalWorkFraction: extracted.parentalWorkFraction }
+          : {}),
       }
     case "compareLeaveScenarios":
       return {
-        ...(extracted.grossMonthlyIncomePln !== undefined ? { grossMonthlyIncomePln: extracted.grossMonthlyIncomePln } : {}),
-        ...(facts.childrenCount ? { childrenCount: Math.min(facts.childrenCount, 5) } : {}),
-        ...(facts.expectedDueDate ?? facts.eventDate ? { dueDate: facts.eventDate ?? facts.expectedDueDate } : {}),
+        ...(extracted.grossMonthlyIncomePln !== undefined
+          ? { grossMonthlyIncomePln: extracted.grossMonthlyIncomePln }
+          : {}),
+        ...(facts.childrenCount ? { childrenCount: facts.childrenCount } : {}),
+        ...((facts.expectedDueDate ?? facts.eventDate)
+          ? { dueDate: facts.eventDate ?? facts.expectedDueDate }
+          : {}),
         scenarios: [
-          { name: "Mama wykorzystuje całą pulę", secondParentParentalWeeks: 0, paternityDays: 14 },
-          { name: "Tata bierze swoje 9 tygodni", secondParentParentalWeeks: 9, paternityDays: 14 },
-          { name: "Wariant 81,5% i 9 tygodni taty", paymentOption: "FLAT_81_5", secondParentParentalWeeks: 9, paternityDays: 14 },
+          {
+            name: "Mama wykorzystuje całą pulę",
+            secondParentParentalWeeks: 0,
+            paternityDays: 14,
+          },
+          {
+            name: "Tata bierze swoje 9 tygodni",
+            secondParentParentalWeeks: 9,
+            paternityDays: 14,
+          },
+          {
+            name: "Wariant 81,5% i 9 tygodni taty",
+            paymentOption: "FLAT_81_5",
+            secondParentParentalWeeks: 9,
+            paternityDays: 14,
+          },
         ],
       }
     case "getRequiredDocuments":
@@ -151,14 +209,22 @@ export function plannedToolInput(
       }
       if (intent.intents.includes("RISKS")) topics.add("PAYMENT")
       // An explicit deadline question gets every deadline.
-      if (intent.intents.includes("DEADLINES") || intent.intents.includes("NEXT_STEPS")) topics.clear()
+      if (
+        intent.intents.includes("DEADLINES") ||
+        intent.intents.includes("NEXT_STEPS")
+      )
+        topics.clear()
       return { facts, ...(topics.size ? { topics: [...topics] } : {}) }
     }
     case "getBenefitTimeline":
       return {
-        ...(facts.eventDate ?? facts.expectedDueDate ? { dueDate: facts.eventDate ?? facts.expectedDueDate } : {}),
-        ...(facts.childrenCount ? { childrenCount: Math.min(facts.childrenCount, 5) } : {}),
-        ...(extracted.secondParentWeeks !== undefined ? { secondParentParentalWeeks: extracted.secondParentWeeks } : {}),
+        ...((facts.eventDate ?? facts.expectedDueDate)
+          ? { dueDate: facts.eventDate ?? facts.expectedDueDate }
+          : {}),
+        ...(facts.childrenCount ? { childrenCount: facts.childrenCount } : {}),
+        ...(extracted.secondParentWeeks !== undefined
+          ? { secondParentParentalWeeks: extracted.secondParentWeeks }
+          : {}),
       }
   }
 }
@@ -181,7 +247,10 @@ export function createRulesModel(options: RulesModelOptions): LanguageModelV4 {
   function plan(call: LanguageModelV4CallOptions): LanguageModelV4Content[] {
     callCount += 1
     const lastRole = call.prompt.at(-1)?.role
-    const forced = call.toolChoice?.type === "tool" ? (call.toolChoice.toolName as AssistantToolName) : null
+    const forced =
+      call.toolChoice?.type === "tool"
+        ? (call.toolChoice.toolName as AssistantToolName)
+        : null
     const toolsAllowed = call.toolChoice?.type !== "none"
 
     const pending: AssistantToolName[] = forced
@@ -193,7 +262,12 @@ export function createRulesModel(options: RulesModelOptions): LanguageModelV4 {
     if (toolsAllowed && pending.length > 0) {
       const calls: LanguageModelV4Content[] = []
       for (const name of pending.filter((tool) => !options.turn.called(tool))) {
-        const input = plannedToolInput(name, options.userTexts, options.turn.asOf, options.intent)
+        const input = plannedToolInput(
+          name,
+          options.userTexts,
+          options.turn.asOf,
+          options.intent
+        )
         calls.push({
           type: "tool-call",
           toolCallId: `rules-${callCount}-${calls.length + 1}`,
@@ -203,7 +277,11 @@ export function createRulesModel(options: RulesModelOptions): LanguageModelV4 {
         // Retrieval runs twice: in knowledge-base vocabulary and in the
         // user's own words. The evidence ledger merges duplicate passages.
         const raw = (options.userTexts.at(-1) ?? "").trim().slice(0, 300)
-        if (name === "searchKnowledgeBase" && raw.length >= 3 && raw !== input.query) {
+        if (
+          name === "searchKnowledgeBase" &&
+          raw.length >= 3 &&
+          raw !== input.query
+        ) {
           calls.push({
             type: "tool-call",
             toolCallId: `rules-${callCount}-${calls.length + 1}`,
@@ -238,7 +316,10 @@ export function createRulesModel(options: RulesModelOptions): LanguageModelV4 {
       const hasTools = content.some((part) => part.type === "tool-call")
       return {
         content,
-        finishReason: { unified: hasTools ? "tool-calls" : "stop", raw: undefined },
+        finishReason: {
+          unified: hasTools ? "tool-calls" : "stop",
+          raw: undefined,
+        },
         usage: USAGE,
         warnings: [],
       }
@@ -246,7 +327,9 @@ export function createRulesModel(options: RulesModelOptions): LanguageModelV4 {
     async doStream(call) {
       const content = plan(call)
       const hasTools = content.some((part) => part.type === "tool-call")
-      const parts: LanguageModelV4StreamPart[] = [{ type: "stream-start", warnings: [] }]
+      const parts: LanguageModelV4StreamPart[] = [
+        { type: "stream-start", warnings: [] },
+      ]
       for (const part of content) {
         if (part.type === "tool-call") {
           parts.push(part)
@@ -260,7 +343,10 @@ export function createRulesModel(options: RulesModelOptions): LanguageModelV4 {
       }
       parts.push({
         type: "finish",
-        finishReason: { unified: hasTools ? "tool-calls" : "stop", raw: undefined },
+        finishReason: {
+          unified: hasTools ? "tool-calls" : "stop",
+          raw: undefined,
+        },
         usage: USAGE,
       })
       const stream = new ReadableStream<LanguageModelV4StreamPart>({

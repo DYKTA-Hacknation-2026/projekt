@@ -37,7 +37,8 @@ import { StatCard } from "@/components/stat-card"
 import { formatDate, formatNumber } from "@/lib/format"
 import { statusLabels } from "@/messages/pl"
 import { getAdminSession } from "@/server/auth/admin-session"
-import { getAdminData, type AdminData } from "@/server/services/admin"
+import type { AdminData } from "@zpr/contracts/views"
+import { getAdminData } from "@/server/api-client"
 
 export const dynamic = "force-dynamic"
 
@@ -203,7 +204,7 @@ function AdminContent({ data }: { data: AdminData }) {
                     <p className="line-clamp-1 font-medium">{job.documentTitle}</p>
                     <p className="text-xs text-muted-foreground">
                       {job.chunksCreated} fragmentów ·{" "}
-                      {formatDate(job.createdAt)}
+                      {formatDate(new Date(job.createdAt))}
                     </p>
                   </div>
                   <Badge variant={statusVariant(job.status)}>

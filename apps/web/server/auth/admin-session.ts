@@ -2,7 +2,7 @@ import { cookies } from "next/headers"
 
 import { getEnv } from "@zpr/contracts/env"
 
-import { ADMIN_COOKIE, verifyAdminToken } from "./admin-token"
+import { ADMIN_COOKIE, verifyAdminToken } from "@zpr/contracts/admin-token"
 
 export interface AdminSession {
   authenticated: boolean

@@ -1,6 +1,6 @@
 # Zasiłkowy Przewodnik (ZPR)
 
-A working scaffold for a Polish parental-benefits guide: one Next.js application
+A working scaffold for a Polish parental-benefits guide: separate web and REST API projects
 with a deterministic calculator, grounded knowledge assistant, document-analysis
 demo, personalised timeline, and an admin skeleton. Everything runs locally
 without AI API keys or government integrations.
@@ -20,7 +20,7 @@ without AI API keys or government integrations.
 - **Drizzle ORM** with generated SQL migrations
 - **Vitest** unit tests and **Playwright** e2e/a11y tests
 - **pnpm workspaces + Turborepo**
-- **Docker Compose** for PostgreSQL and the web image
+- **Docker Compose** for PostgreSQL and both applications
 
 ## Quick start
 
@@ -38,7 +38,7 @@ pnpm --filter @zpr/db db:migrate
 pnpm --filter @zpr/db db:seed
 pnpm kb:seed            # ingest committed sources + run kb:verify (idempotent)
 
-# Start the web app
+# Start the web and API apps
 pnpm dev
 ```
 
@@ -48,12 +48,14 @@ Open <http://localhost:3000>. The API health check is at
 The defaults in `.env.example` match the Compose database, so no `.env` file is
 required for the standard local setup. To override values, create:
 
-- `apps/web/.env.local` for the Next.js app, and
-- `packages/db/.env` for migration/seed scripts, and
+- `apps/web/.env.local` for `API_URL` and web session settings,
+- `apps/api/.env.local` for database, embedding, rate limit, and admin settings, and
+- `packages/db/.env` for migration/seed/smoke scripts.
 - `packages/rag/.env` for knowledge-base scripts (`kb:*`).
 
 `.env.example` lists every supported variable. Never commit a real `.env` or
-production secret.
+production secret. The two apps must share the same `SESSION_SECRET` and
+`ADMIN_GATE_ENABLED` values. The API defaults to `http://127.0.0.1:3001` locally.
 
 ### Full Docker Compose
 
@@ -61,8 +63,9 @@ production secret.
 docker compose up --build -d
 ```
 
-This builds the web image, waits for a healthy database, runs migrations, the
-demo seed and the knowledge-base seed, then starts Next.js on <http://localhost:3000>. The database is exposed on
+The API waits for PostgreSQL, applies migrations, seeds the demo data and knowledge base, and serves
+requests on the Compose network. The web service waits for the API health check
+and serves <http://localhost:3000>. The database is exposed on
 `${POSTGRES_PORT:-5435}`.
 
 ### Host port already in use?
@@ -82,6 +85,8 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 | `/`              | Landing page, roadmap, safety and simulation disclosures                  |
 | `/panel`         | Dashboard: case, nearest deadlines, calculations, knowledge base status   |
 | `/start`         | Guided onboarding wizard that creates a synthetic household and case      |
+| `/dane`          | Consent, retrieval, summary and verification of simulated ZUS/e-ZLA/USC data |
+| `/mobywatel`     | Simulated mObywatel / login.gov.pl flow that prefills the onboarding wizard |
 | `/kalkulator`    | Unified calculator with assumptions, trace, and persisted result          |
 | `/asystent`      | Streaming conversational assistant: tools, citations, history, deletion   |
 | `/dokumenty`     | Document analysis demo (sample ZUS forms or a PDF signature check)        |
@@ -100,27 +105,53 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 
 ## REST API
 
+The web server forwards the existing `/api/*` paths to the API service.
 All JSON endpoints use `application/json`; errors use RFC 9457 problem+json with
 a stable `code` and an `x-request-id` header. See `/api/v1/openapi.json` for the
 machine-readable contract.
 
-| Endpoint                       | Method | Description                                              |
-| ------------------------------ | ------ | -------------------------------------------------------- |
-| `/api/health`                  | GET    | Liveness plus DB, pgvector, and migration checks         |
-| `/api/v1/health`               | GET    | Versioned health, table checks, and demo row counts      |
-| `/api/v1/knowledge/search`     | GET    | Hybrid retrieval (`q`, `limit`, `asOf`, `source`, `sourceType`, `tag`, `minRelevance`) |
-| `/api/v1/assistant/chat`       | POST   | Streaming chat (AI SDK UI message stream, SSE)           |
-| `/api/v1/assistant/messages`   | POST   | Same orchestration, single JSON reply (REST integration) |
-| `/api/v1/assistant/conversations` | GET/DELETE | List / delete all of this session's conversations |
-| `/api/v1/assistant/conversations/{id}` | GET/DELETE | History with tool results and sources / delete |
-| `/api/v1/assistant/session`    | GET    | Profile availability and answer mode (no personal data)  |
-| `/api/v1/onboarding`           | POST   | Create a household, user profile, and benefit case       |
-| `/api/v1/calculations`         | GET    | Recent calculations                                      |
-| `/api/v1/calculations`         | POST   | Deterministic calculation; persists input and trace      |
-| `/api/v1/documents/analyze`    | GET    | Available synthetic sample documents                     |
-| `/api/v1/documents/analyze`    | POST   | Analyze a PDF or `sampleCase` multipart field            |
-| `/api/v1/admin/login`          | POST   | Demo admin login, sets an HMAC-signed HttpOnly cookie    |
-| `/api/v1/admin/logout`         | POST   | Clears the admin cookie                                  |
+| Endpoint                               | Method     | Description                                                                                       |
+| -------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| `/api/health`                          | GET        | Liveness plus DB, pgvector, and migration checks                                                  |
+| `/api/v1/health`                       | GET        | Versioned health, table checks, and demo row counts                                               |
+| `/api/v1/knowledge/search`             | GET        | Hybrid retrieval (`q`, `limit`, `asOf`, `source`, `sourceType`, `tag`, `minRelevance`)            |
+| `/api/v1/assistant/chat`               | POST       | Streaming chat (AI SDK UI message stream, SSE)                                                    |
+| `/api/v1/assistant/messages`           | POST       | Same orchestration, single JSON reply (REST integration)                                          |
+| `/api/v1/assistant/conversations`      | GET/DELETE | List / delete all of this session's conversations                                                 |
+| `/api/v1/assistant/conversations/{id}` | GET/DELETE | History with tool results and sources / delete                                                    |
+| `/api/v1/assistant/session`            | GET        | Profile availability and answer mode (no personal data)                                           |
+| `/api/v1/onboarding`                   | POST       | Create a household, user profile, and benefit case                                                |
+| `/api/v1/calculations`                 | GET        | Recent calculations                                                                               |
+| `/api/v1/calculations`                 | POST       | Deterministic calculation; persists input and trace                                               |
+| `/api/v1/eligibility/evaluate`         | POST       | Deterministic eligibility per parent and benefit (engine)                                         |
+| `/api/v1/benefits/calculate`           | POST       | Full assessment: periods, breakdown, totals, allocation, sources                                  |
+| `/api/v1/scenarios/compare`            | POST       | One household, up to 5 leave plans, difference vs the first                                       |
+| `/api/v1/timeline`                     | POST       | Benefit periods and dated deadlines                                                               |
+| `/api/v1/documents/required`           | POST       | Required documents, forms and where to submit them                                                |
+| `/api/v1/rulesets`                     | GET        | Rule set versions, parameters with verification status, rules, assumptions, unsupported scenarios |
+| `/api/v1/documents/analyze`            | GET        | Available synthetic sample documents                                                              |
+| `/api/v1/documents/analyze`            | POST       | Analyze a PDF or `sampleCase` multipart field                                                     |
+| `/api/v1/admin/login`                  | POST       | Demo admin login, sets an HMAC-signed HttpOnly cookie                                             |
+| `/api/v1/admin/logout`                 | POST       | Clears the admin cookie                                                                           |
+| `/api/v1/data-import/sources`  | GET    | Simulated institutions, consent scopes and progress steps |
+| `/api/v1/data-import/sessions` | POST   | Start a consented retrieval session                      |
+| `/api/v1/data-import/sessions/{id}` | GET | Session state, source results and summary             |
+| `/api/v1/data-import/sessions/{id}/summary` | GET | Downloaded / unavailable / manual / inconsistent report |
+| `/api/v1/data-import/sessions/{id}/sources/{source}` | POST | Fetch one simulated source             |
+| `/api/v1/data-import/sessions/{id}/preview` | POST | Map data, run eligibility rules and preview the calculator |
+| `/api/v1/data-import/sessions/{id}/accept` | POST | Save accepted data and return the form prefill |
+| `/api/v1/data-import/sessions/{id}/skip` | POST | Abandon retrieval without blocking manual entry |
+| `/api/v1/sim/mobywatel/personas` | GET  | Synthetic profiles for the simulated login              |
+| `/api/v1/sim/mobywatel/authorize` | POST | Set a short-lived signed prefill session                |
+| `/api/v1/sim/mobywatel/logout` | POST   | Clear the simulated mObywatel session                    |
+
+### Simulated mObywatel login
+
+`/mobywatel` mimics the real login.gov.pl → mObywatel flow: choose the method,
+confirm the synthetic persona, review the data scope and confirm with PIN or
+biometrics. The API stores only a persona id in a signed, HttpOnly cookie
+(`zpr_mobywatel`, 10 minutes); `/start` reads it and prefills the wizard. No
+PESEL is requested or stored, and every screen is labelled **SYMULACJA**.
 
 Examples:
 
@@ -147,25 +178,23 @@ curl -s -X POST http://localhost:3000/api/v1/assistant/messages \
 ## Architecture
 
 ```
-apps/web
-├── app/                 # Polish routes, RSC pages, route handlers, error/not-found
-│   └── wiedza/          # Centrum wiedzy: home, FAQ, articles, documents, guides, glossary, sources
-├── components/          # calculator, assistant, timeline, onboarding, shell, knowledge
-├── lib/                 # formatting and the pure timeline builder
-├── messages/pl/         # all Polish copy and labels
-├── server/
-│   ├── container.ts     # composition root (env + repositories)
-│   ├── services/        # dashboard, admin, assistant, calculations, documents, knowledge-center…
-│   ├── http/            # zod parsing, problem+json, rate limiting, route wrapper
-│   └── auth/            # admin cookie/session helpers
-├── proxy.ts             # optional admin gate (Next 16 proxy, not middleware)
-├── e2e/                 # Playwright route, knowledge, calculator, assistant, axe specs
-└── tests/               # Vitest unit tests
+apps/web                 # Next.js UI, admin page gate, and same-origin API forwarding
+├── app/                 # Polish pages, knowledge centre, and /api/* forwarding
+├── components/          # calculator, assistant, timeline, onboarding, shell
+├── server/              # REST client for page data and session reader
+└── e2e/                 # Playwright UI, accessibility, and REST tests
+
+apps/api                 # Next.js REST service
+├── app/api/             # public API handlers
+├── app/internal/        # authenticated dashboard and admin read endpoints
+├── server/              # repositories, business services, parsing, and rate limits
+└── tests/               # backend unit tests
 
 packages/
-├── domain/              # @zpr/domain — pure calculator, eligibility, documents, deadlines, scenarios, timeline
+├── domain/              # @zpr/domain — pure calculator, eligibility, documents, deadlines, scenarios, timeline, e-ZLA analysis
 ├── ai/                  # @zpr/ai — assistant orchestration, tools, guards, provider factory, rules model
-├── contracts/           # @zpr/contracts — env, API, onboarding, calculator Zod schemas
+├── contracts/           # @zpr/contracts — env, API, onboarding, calculator, data-import Zod schemas
+├── data-sources/        # @zpr/data-sources — demo scenarios, per-institution providers, mapping engine
 ├── db/                  # @zpr/db — Drizzle schema, repos, seed, migrations, health
 ├── rag/                 # @zpr/rag — ingestion pipeline, embeddings, hybrid retrieval
 │   ├── knowledge/       #   committed (redistributable) curated sources
@@ -173,10 +202,66 @@ packages/
 └── ui/                  # @workspace/ui — shadcn/ui primitives and theme
 ```
 
-Dependency direction: `apps/web → @zpr/contracts → @zpr/domain`,
-`apps/web → @zpr/rag → @zpr/db`, `apps/web → @zpr/ai → @zpr/contracts, @zpr/domain`.
+The web app calls the API over HTTP. The API owns the database connection and
+business services. Both apps share request and response types through
+`@zpr/contracts`. Dashboard and admin reads use authenticated server-to-server
+requests. With the admin gate enabled, the API also checks the admin session.
+
+Dependency direction: `apps/api → @zpr/contracts → @zpr/domain`,
+`apps/api → @zpr/rag → @zpr/db`, `apps/api → @zpr/ai → @zpr/contracts, @zpr/domain`.
+
+`apps/api → @zpr/data-sources → @zpr/contracts, @zpr/domain`.
 `@zpr/domain` is pure and performs no I/O; `@zpr/ai` has no database access —
-the web app injects application services through the `AssistantServices` port.
+the API injects application services through the `AssistantServices` port.
+
+### OpenRouter
+
+Set these values in your root `.env` (choose a model ID from OpenRouter):
+
+```dotenv
+AI_PROVIDER=openrouter
+AI_MODEL=provider/model-id
+AI_API_KEY=your-openrouter-api-key
+```
+
+Then run `docker compose up --build -d api`. OpenRouter uses
+`https://openrouter.ai/api/v1` by default; `AI_BASE_URL` can override it.
+The model must support tool calling for the assistant's retrieval and calculations.
+
+### Simulated data retrieval
+
+`/dane` starts after the existing mObywatel simulation. Nothing is fetched
+until the user selects data scopes and confirms:
+
+1. **Consent** — each institution shows its scopes (insurance history,
+   contribution bases, employment, sick leave, child data, benefit cases).
+2. **Per-source retrieval** — ZUS, employer/payer, e-ZLA, USC and PUE/eZUS run
+   as separate providers with their own progress and failure states.
+3. **Summary** — downloaded, unavailable, manually required fields and
+   cross-source inconsistencies, each with provenance.
+4. **Verification** — every field shows its origin; edits are marked manual.
+   A preview runs the deterministic eligibility rules and the calculator
+   before anything is accepted.
+
+Accepted data is stored in `app.data_import_sessions` and
+`app.data_import_snapshots`, projected into the normalised tables
+(`contribution_bases`, `sick_leave_periods`, `children`, `benefit_applications`,
+`contribution_payers`, `payroll_components`, `payroll_absences`) and linked to
+the household by `importSessionId` during onboarding. The onboarding wizard
+and calculator then read the same accepted prefill; the panel shows the latest
+retrieval report and eligibility result.
+
+Demo scenarios (synthetic, deterministic, no randomness):
+
+| Scenario | Persona | Purpose |
+| -------- | ------- | ------- |
+| `anna-employment` | Anna Kowalska | Employment contract, continuous compulsory insurance, pregnancy-related e-ZLA, USC has no birth record yet |
+| `marek-self-employment` | Marek Wiśniewski | Sole proprietor, voluntary sickness insurance, open contribution arrears, child from USC, PUE cases |
+| `kasia-incomplete` | Kasia Nowak | Mandate ended before birth, insurance gap, e-ZLA outage, empty USC/PUE — manual completion required |
+
+The scenario engine is pure and deterministic. Providers implement one
+interface (`DataSourceProvider`), so a real integration can replace a provider
+without changing the flow, contracts or mapping.
 
 ### Centrum wiedzy
 
@@ -195,8 +280,8 @@ accent-insensitive and server-side; see
 One turn: **PII scrub → intent classification → tool policy → tool loop
 (`streamText`) → streamed answer → guards → persistence.**
 
-- **Provider-independent** (Vercel AI SDK 7): `AI_PROVIDER=anthropic | openai |
-  ollama | openai-compatible`. With `none` (default) an offline rules model
+- **Provider-independent** (Vercel AI SDK 7): `AI_PROVIDER=anthropic | openai | openrouter |
+ollama | openai-compatible`. With `none` (default) an offline rules model
   plugs into the same `streamText` loop: same tools, real retrieval, guards,
   streaming and persistence; the answer is composed only from tool results
   and retrieved passages.
@@ -229,8 +314,8 @@ One turn: **PII scrub → intent classification → tool policy → tool loop
 
 One PostgreSQL database, four schemas:
 
-| Schema  | Contents                                                                 |
-| ------- | ------------------------------------------------------------------------ |
+| Schema  | Contents                                                                                     |
+| ------- | -------------------------------------------------------------------------------------------- |
 | `app`   | users, profiles, insurance/employment, family events, cases, scenarios, calculations, drafts |
 | `legal` | legal rules and versioned rule sets                                      |
 | `kb`    | knowledge sources/documents/chunks, ingestion jobs, embedding models, Centrum wiedzy content (`content_*`) |
@@ -271,15 +356,15 @@ updating a source.
   Competition PDFs are INTERNAL and citation-only; ZUS sample cases are
   RESTRICTED and refused by the pipeline.
 
-| Command                                   | Purpose                                                   |
-| ----------------------------------------- | --------------------------------------------------------- |
-| `pnpm kb:seed`                            | Reproducible KB from committed sources, then `kb:verify`  |
-| `pnpm kb:seed -- --with-local`            | Also ingest local competition PDFs (`KB_LOCAL_SOURCES_DIR`)|
-| `pnpm kb:verify`                          | Integrity checks + retrieval eval set (recall gate)        |
-| `pnpm --filter @zpr/rag kb:ingest …`      | Ingest / re-ingest one manifest document or source         |
-| `pnpm --filter @zpr/rag kb:inspect <file>`| Dry-run extraction and chunking, no database               |
-| `pnpm --filter @zpr/rag kb:search "<q>"`  | Debug ranking (ranks per list, relevance, dates)           |
-| `pnpm --filter @zpr/rag kb:reembed`       | Re-embed with a new `EMBEDDING_*` configuration            |
+| Command                                    | Purpose                                                     |
+| ------------------------------------------ | ----------------------------------------------------------- |
+| `pnpm kb:seed`                             | Reproducible KB from committed sources, then `kb:verify`    |
+| `pnpm kb:seed -- --with-local`             | Also ingest local competition PDFs (`KB_LOCAL_SOURCES_DIR`) |
+| `pnpm kb:verify`                           | Integrity checks + retrieval eval set (recall gate)         |
+| `pnpm --filter @zpr/rag kb:ingest …`       | Ingest / re-ingest one manifest document or source          |
+| `pnpm --filter @zpr/rag kb:inspect <file>` | Dry-run extraction and chunking, no database                |
+| `pnpm --filter @zpr/rag kb:search "<q>"`   | Debug ranking (ranks per list, relevance, dates)            |
+| `pnpm --filter @zpr/rag kb:reembed`        | Re-embed with a new `EMBEDDING_*` configuration             |
 
 ### Embeddings
 
@@ -299,11 +384,11 @@ run `pnpm --filter @zpr/rag kb:reembed` after a change.
 
 The migration creates NOLOGIN grouping roles:
 
-| Role          | Access                                                        |
-| ------------- | ------------------------------------------------------------- |
-| `zpr_app`     | read `legal`/`kb`; read/write `app` and `chat`                 |
-| `zpr_ingest`  | read `legal`; read/write `kb`                                  |
-| `zpr_readonly`| read-only across all schemas                                   |
+| Role           | Access                                         |
+| -------------- | ---------------------------------------------- |
+| `zpr_app`      | read `legal`/`kb`; read/write `app` and `chat` |
+| `zpr_ingest`   | read `legal`; read/write `kb`                  |
+| `zpr_readonly` | read-only across all schemas                   |
 
 Local development connects as the owner (`zpr`). A deployment attaches login
 roles to these groups instead of using the owner account.
@@ -319,23 +404,45 @@ reachable in a demo. Set it to `true` to protect `/admin` with the demo login:
 The session is an HMAC-signed, HttpOnly `zpr_admin` cookie. Replace the demo
 credential flow before any real deployment.
 
+### Rule parameters
+
+The calculator, UI timeline planner and deadline guidance resolve shared legal
+parameters from `legal.legal_rule_versions.parameters` in `apps/api`. The web
+app reads the validated set through the authenticated `/internal/rule-set` view.
+Changing these percentages, week counts and deadlines is a data change.
+The expanded assessment endpoints and assistant engine tools retain the
+versioned assessment rule catalog described in [calculation-engine.md](docs/calculation-engine.md);
+new adoption, loss and hospitalisation cases retain their statutory rules.
+
+The active set is resolved for a date (`getRuleParameters(asOf)`), mapped by the
+stable rule codes (`LR-123`, `LR-127`, `LR-130`, `LR-112`, `LR-133`, `LR-100`,
+`LR-132`, `LR-134`, `LR-101`, `LR-102`) and validated before use. A missing or malformed parameter
+returns a `503` problem response instead of silently using an old value.
+
+Until the admin editing UI lands (FR-ADM-01), change a value directly in the
+active rule version and re-run the app; `pnpm --filter @zpr/db db:seed` upserts
+the seeded versions and also adds `LR-134`. Results store the rule set version
+and pin `rule_version_id` of the amount rule (`LR-130`).
+
 ## Scripts
 
-| Command                              | Description                              |
-| ------------------------------------ | ---------------------------------------- |
-| `pnpm dev`                           | Start all workspaces in watch mode       |
-| `pnpm build`                         | Build all workspaces                     |
-| `pnpm typecheck`                     | Type-check all workspaces                |
-| `pnpm lint`                          | Lint all workspaces                      |
-| `pnpm test`                          | Run Vitest across workspaces (set `TEST_DATABASE_URL` to include pgvector integration tests) |
-| `pnpm e2e`                           | Run Playwright (builds first via Turbo)  |
-| `pnpm --filter @zpr/db db:migrate`   | Apply Drizzle migrations                 |
-| `pnpm --filter @zpr/db db:seed`      | Seed synthetic demo data (idempotent)    |
-| `pnpm kb:seed` / `pnpm kb:verify`    | Build / verify the knowledge base        |
-| `pnpm db:setup`                      | migrate + demo seed + knowledge base     |
-| `pnpm --filter @zpr/db db:generate`  | Generate a migration after schema edits  |
-| `pnpm --filter @zpr/db db:studio`    | Open Drizzle Studio                      |
-| `pnpm --filter web e2e`              | Run Playwright against a running server  |
+| Command                                                                      | Description                                                                                  |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `pnpm dev`                                                                   | Start all workspaces in watch mode                                                           |
+| `pnpm build`                                                                 | Build all workspaces                                                                         |
+| `pnpm typecheck`                                                             | Type-check all workspaces                                                                    |
+| `pnpm lint`                                                                  | Lint all workspaces                                                                          |
+| `pnpm test`                                                                  | Run Vitest across workspaces (set `TEST_DATABASE_URL` to include pgvector integration tests) |
+| `pnpm e2e`                                                                   | Run Playwright (builds first via Turbo)                                                      |
+| `pnpm --filter @zpr/db db:migrate`                                           | Apply Drizzle migrations                                                                     |
+| `pnpm --filter @zpr/db db:seed`                                              | Seed synthetic demo data (idempotent)                                                        |
+| `pnpm kb:seed` / `pnpm kb:verify`                                            | Build / verify the knowledge base                                                            |
+| `pnpm db:setup`                                                              | migrate + demo seed + knowledge base                                                         |
+| `pnpm --filter @zpr/db db:generate`                                          | Generate a migration after schema edits                                                      |
+| `pnpm --filter @zpr/db db:studio`                                            | Open Drizzle Studio                                                                          |
+| `pnpm --filter web e2e`                                                      | Run Playwright against a running server                                                      |
+| The Playwright suite uses seeded PostgreSQL and starts both apps by default. |
+| Set `PLAYWRIGHT_BASE_URL` to test an already running web and API pair.       |
 
 Playwright needs browsers once:
 
@@ -351,6 +458,9 @@ real ZUS sample cases or personal data:
 - **Anna Kowalska** — employed, one child, standard 100%/70% variant
 - **Tomasz Kowalski** — employed father, paternity/parental split
 - **Kasia Nowak** — mandate contract ending before birth
+- **Marek Wiśniewski** — sole proprietor with voluntary sickness insurance
+- Data-retrieval scenarios: Anna (employment), Marek (self-employment), Kasia
+  (incomplete history), each consistent across ZUS, employer, e-ZLA, USC and PUE
 - `kb:seed`: curated sources in `packages/rag/knowledge/` (statute excerpts in
   two dated versions, Kodeks pracy, form instructions, benefit table, „Za
   życiem”, guide summary, support organisations), chunked and embedded; the
@@ -383,8 +493,16 @@ and access filters, versioned legal sources and no-result outcomes.
 The suite also covers calculator normalization and amounts, money rounding, env
 validation (including production secret rejection), timeline milestones, document warnings, API
 problem responses, all route headings, calculator/assistant flows, and axe
-accessibility checks on `/`, `/kalkulator`, and `/asystent` at desktop and
+accessibility checks on `/`, `/kalkulator`, `/asystent`, `/mobywatel` and `/dane` at desktop and
 mobile sizes.
+
+Data-retrieval tests (`packages/data-sources`): scenario consistency (payer,
+employment and insurance dates, contribution bases vs benefit basis, USC birth
+date vs PUE), deterministic output, consent-scope filtering, empty/error
+sources, self-employment and arrears, incomplete insurance history, mapping to
+the calculator and eligibility rules, and e-ZLA analysis. The API flow is
+covered by `apps/web/e2e/data-import.spec.ts` (consent → retrieval → summary →
+verification → onboarding prefill) and the manual-skip path.
 
 Assistant tests (`packages/ai`, `apps/web/tests/assistant-security.test.ts`,
 `apps/web/e2e/assistant.spec.ts`): tool selection for all supported question
@@ -397,9 +515,25 @@ cap), profile authorization and minimisation, forged session cookies,
 conversation ownership and deletion, PII removal, streaming order, provider
 failure and abort, and multi-turn continuity.
 
+### Calculation engine
+
+`@zpr/domain/engine` decides eligibility and calculates parental benefits
+without an LLM: exact BigInt-rational money, rules and rates versioned by
+effective date (`2026.07-Z1`, `2026.10-Z1`, `2027.01-Z1`), an assessment with
+eligibility, applicable benefits, breakdown, totals, periods, per-parent
+allocation, applied rules, sources, assumptions, missing evidence, warnings and
+next steps. The REST endpoints above and the assistant tools are adapters over
+the same `evaluate`. See [docs/calculation-engine.md](docs/calculation-engine.md).
+
 ## Known limitations
 
-- Calculator amounts are a labelled preview; Q-29 and Q-15 are unapproved.
+- Amounts are estimates, never ZUS decisions. The deterministic engine
+  (`docs/calculation-engine.md`) uses exact arithmetic and versioned rules, but
+  Q-29 (minimum wage, świadczenie rodzicielskie, average wage) is not in the
+  provided sources, so affected results are labelled lower/upper bounds, and
+  rounding (Q-15) is a documented assumption. The 20 unsupported legal
+  scenarios are listed in that document. The official ZUS sample cases were
+  not available, so no agreement with them is claimed.
 - Without `AI_PROVIDER` the assistant runs in offline rules mode: grounded and
   structured, but phrasing is templated. Configure an LLM for natural answers.
 - The curated knowledge base is small (e.g. no KP art. 182¹e text on combining
@@ -410,4 +544,7 @@ failure and abort, and multi-turn continuity.
   fields; it does not perform OCR.
 - The admin area is a read-only skeleton with a demo login.
 - Government integrations, applications, and PZ/eZUS flows are not implemented.
+  `/dane` simulates them locally; no request leaves the application.
+- The data-retrieval session is demo-grade: consent and provenance are recorded,
+  but there is no production identity proof or audit trail.
 - The offline embedding model is not suitable for production retrieval quality.

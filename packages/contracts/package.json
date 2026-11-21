@@ -10,8 +10,15 @@
     "./calculator": "./src/calculator.ts",
     "./assistant": "./src/assistant.ts",
     "./knowledge": "./src/knowledge.ts",
+    "./mobywatel": "./src/mobywatel.ts",
+    "./data-import": "./src/data-import.ts",
     "./common": "./src/common.ts",
+    "./documents": "./src/documents.ts",
+    "./admin-token": "./src/admin-token.ts",
+    "./views": "./src/views.ts",
+    "./problem": "./src/problem.ts",
     "./assistant-tools": "./src/assistant-tools.ts",
+    "./engine": "./src/engine.ts",
     "./content": "./src/content.ts"
   },
   "scripts": {

@@ -5,6 +5,8 @@ for (const path of [
   "/",
   "/kalkulator",
   "/asystent",
+  "/mobywatel",
+  "/dane",
   "/wiedza",
   "/wiedza/faq",
   "/wiedza/artykul/zasilek-macierzynski",
