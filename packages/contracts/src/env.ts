@@ -78,7 +78,7 @@ export const envSchema = z.object({
    * use an OpenAI-style `/chat/completions` endpoint at AI_BASE_URL.
    */
   AI_PROVIDER: z
-    .enum(["none", "anthropic", "openai", "ollama", "openai-compatible"])
+    .enum(["none", "anthropic", "openai", "openrouter", "ollama", "openai-compatible"])
     .default("none"),
   AI_MODEL: z.string().trim().optional(),
   AI_API_KEY: z.string().trim().optional(),

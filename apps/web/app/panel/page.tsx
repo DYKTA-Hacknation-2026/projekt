@@ -33,10 +33,8 @@ import { PageHeader } from "@/components/page-header"
 import { StatCard } from "@/components/stat-card"
 import { formatDate, formatNumber, formatPln } from "@/lib/format"
 import { dashboard, statusLabels } from "@/messages/pl"
-import {
-  getDashboardData,
-  type DashboardData,
-} from "@/server/services/dashboard"
+import type { DashboardData } from "@zpr/contracts/views"
+import { getDashboardData } from "@/server/api-client"
 
 export const dynamic = "force-dynamic"
 
@@ -320,7 +318,7 @@ export default async function PanelPage() {
                         {item.engineVersion}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {formatDate(item.createdAt)}
+                        {formatDate(new Date(item.createdAt))}
                       </TableCell>
                     </TableRow>
                   ))}

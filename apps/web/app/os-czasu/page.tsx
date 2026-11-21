@@ -18,7 +18,7 @@ import { DbOffline } from "@/components/db-offline"
 import { PageHeader } from "@/components/page-header"
 import { TimelinePlanner } from "@/components/timeline-planner"
 import { timeline } from "@/messages/pl"
-import { getActiveRuleSet } from "@/server/services/rule-set"
+import { getActiveRuleSet } from "@/server/api-client"
 
 export const metadata: Metadata = { title: "Oś czasu" }
 export const dynamic = "force-dynamic"

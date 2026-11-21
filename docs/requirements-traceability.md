@@ -83,3 +83,24 @@ Column meanings:
 ## 4. Legal rules → tests
 
 Every `LR-xx` in `requirements.md` §6, including LR-100…136, must map to at least one Vitest case named `LR-xx: <behaviour>`. CI fails if an LR id has no test. The check is a script that greps the test names against the LR list in `packages/domain/src/rules-catalog.ts`.
+
+## 4. Calculation engine coverage (v0.3)
+
+Engine = `@zpr/domain/engine`, endpoints `POST /eligibility/evaluate`, `/benefits/calculate`, `/scenarios/compare`, `/timeline`, `/documents/required`. ✅ = implemented and tested in the engine and its API/assistant adapters; the UI still uses the simplified calculator and planner (both now adapters over the engine).
+
+| Requirement | Engine status | Notes |
+|-------------|---------------|-------|
+| FR-INF-01, FR-CALC-07 | ✅ | sickness in pregnancy, employer sick pay, rehabilitation (rates only, `U-05`), maternity-equivalent |
+| FR-INF-02 | ✅ | `documents.ts`: documents, forms by rule set version, payer routing, due dates |
+| FR-INF-03 | ✅ | `warnings` (LR-70…72, LR-108, D-07), `RISK` severity |
+| FR-INF-06 | ✅ | KP art. 177 fixed-term extension and protection scope; non-employees |
+| FR-INF-08 | ✅ | stillbirth, child death, premature birth, takeover cases; `U-03` (other family members) not supported |
+| FR-CALC-01 | ✅ | durations and amounts; Q-29 values lower/upper bound |
+| FR-CALC-02 | ✅ | KP art. 182¹e–f extension, U art. 31 ust. 4a |
+| FR-CALC-03 | ✅ | two-parent allocation, reserved nine weeks, pool, parts; `U-10` |
+| FR-CALC-04, FR-CALC-06 | ✅ | age caps, court application, professional foster excluded, Q-30 → manual review |
+| FR-CALC-05 | 🟨 | basis methods (U art. 36–38, 48a, 50) done; **ZUS sample cases not available** |
+| FR-CALC-08 | ✅ | exact 81.5% conditions, deadline, 9 reserved weeks at 70%, first-year fallback |
+| FR-CALC-09 | ✅ | rule set version, sources, assumptions, missing evidence on every result |
+| FR-ADM-01 | 🟨 | rule sets are versioned data and published by `GET /rulesets`; admin editing UI not part of the engine |
+| NFR-08, NFR-11 | ✅ | no LLM in the engine; `inputHash` + rule set version reproduce a result |

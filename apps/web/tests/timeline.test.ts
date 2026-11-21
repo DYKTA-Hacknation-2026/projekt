@@ -59,7 +59,8 @@ describe("timeline planner", () => {
       ruleSet
     )
     expect(zaZyciem.parentalPoolWeeks).toBe(65)
-    expect(zaZyciem.motherParentalWeeks).toBe(65)
+    // KP art. 182¹a § 4: the other parent's 9 weeks are not transferable (65 − 9).
+    expect(zaZyciem.motherParentalWeeks).toBe(56)
   })
 
   it("places the 81.5% application deadline 21 days after birth", () => {
@@ -80,4 +81,33 @@ describe("timeline planner", () => {
     )
     expect(deadline?.date).toBe("2027-03-31")
   })
+})
+
+it("uses data changes in the engine schedule and keeps the other parent's weeks reserved", () => {
+  const rules = testRuleSet()
+  rules.maternity.weeksByChildren[1] = 22
+  rules.parental.poolWeeks.single = 45
+  rules.parental.nonTransferableWeeks = 10
+  rules.paternity.deadlineMonths = 15
+  rules.deadlines.flatRateApplicationDays = 25
+  const plan = buildTimeline(
+    {
+      dueDate: "2027-03-10",
+      maternityWeeksBeforeBirth: 0,
+      childrenCount: 1,
+      secondParentParentalWeeks: 0,
+      paternityDays: 14,
+      hasZaZyciem: false,
+    },
+    rules
+  )
+  expect(plan.maternityWeeks).toBe(22)
+  expect(plan.parentalPoolWeeks).toBe(45)
+  expect(plan.motherParentalWeeks).toBe(35)
+  expect(
+    plan.milestones.find((item) => item.id === "application-815")?.date
+  ).toBe("2027-04-04")
+  expect(
+    plan.milestones.find((item) => item.id === "paternity-deadline")?.date
+  ).toBe("2028-06-09")
 })

@@ -17,7 +17,7 @@ import { CalculatorForm } from "@/components/calculator-form"
 import { DbOffline } from "@/components/db-offline"
 import { PageHeader } from "@/components/page-header"
 import { calculator } from "@/messages/pl"
-import { getActiveRuleSet } from "@/server/services/rule-set"
+import { getActiveRuleSet } from "@/server/api-client"
 
 export const metadata: Metadata = { title: "Kalkulator zasiłków" }
 export const dynamic = "force-dynamic"

@@ -3,16 +3,16 @@ import type {
   KnowledgeChunkResult,
   KnowledgeSearchResult,
 } from "@zpr/contracts/knowledge"
-import {
-  assessEligibility,
-  buildTimeline,
-  calculateBenefits,
-  compareLeaveScenarios,
-  relevantDeadlines,
-  requiredDocuments,
-  type RuleSet,
-} from "@zpr/domain"
+import { relevantDeadlines } from "@zpr/domain"
+import { type RuleSet } from "@zpr/domain"
 import { testRuleSet } from "@zpr/domain/testing"
+import {
+  calculateParentalBenefits,
+  compareBenefitScenarios,
+  evaluateEligibility,
+  generateBenefitTimeline,
+  identifyRequiredDocuments,
+} from "@zpr/domain/engine"
 
 import type { AssistantServices, ProfileAccess } from "./types"
 
@@ -102,16 +102,15 @@ export function fakeServices(options: FakeServicesOptions = {}) {
       profileLoads += 1
       return options.profile ?? { status: "NOT_ENABLED" }
     },
-    assessEligibility: (facts, eligibilityOptions) =>
-      assessEligibility(facts, { ...eligibilityOptions, ruleSet }),
-    calculate: (calculatorInput) => calculateBenefits(calculatorInput, ruleSet),
-    compareScenarios: (base, scenarios) =>
-      compareLeaveScenarios(base, scenarios, ruleSet),
-    requiredDocuments: (benefit, facts) =>
-      requiredDocuments(benefit, facts, ruleSet),
-    deadlines: (facts, deadlineOptions) =>
-      relevantDeadlines(facts, { ...deadlineOptions, ruleSet }),
-    timeline: (timelineInput) => buildTimeline(timelineInput, ruleSet),
+    engine: {
+      evaluateEligibility,
+      calculateParentalBenefits,
+      compareBenefitScenarios,
+      generateBenefitTimeline,
+      identifyRequiredDocuments,
+    },
+    deadlines: (facts, options) =>
+      relevantDeadlines(facts, { ...options, ruleSet }),
   }
   return {
     services,

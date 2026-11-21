@@ -121,7 +121,15 @@ describe("createChatModel", () => {
     expect(createChatModel({ provider: "ollama", model: "llama", baseUrl: "http://localhost:11434/v1" })?.provider).toBe("ollama")
   })
 
+  it("uses the OpenRouter chat endpoint by default", () => {
+    const resolved = createChatModel({ provider: "openrouter", apiKey: "k", model: "vendor/model" })
+    expect(resolved?.provider).toBe("openrouter")
+    expect(resolved?.modelId).toBe("vendor/model")
+    expect(resolved?.model).toMatchObject({ provider: "openrouter.chat", modelId: "vendor/model" })
+  })
+
   it("rejects incomplete configuration", () => {
+    expect(() => createChatModel({ provider: "openrouter", apiKey: "k" })).toThrow(/AI_MODEL/)
     expect(() => createChatModel({ provider: "openai", apiKey: "k" })).toThrow(/AI_MODEL/)
     expect(() => createChatModel({ provider: "openai-compatible", model: "m" })).toThrow(/AI_BASE_URL/)
   })

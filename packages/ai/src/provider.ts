@@ -13,6 +13,7 @@ export type ChatProvider =
   | "none"
   | "anthropic"
   | "openai"
+  | "openrouter"
   | "ollama"
   | "openai-compatible"
 
@@ -64,14 +65,16 @@ export function createChatModel(config: ChatModelConfig): ResolvedChatModel | nu
       })
       return { model: provider(modelId), provider: "openai", modelId }
     }
+    case "openrouter":
     case "ollama":
     case "openai-compatible": {
-      if (!config.baseUrl) {
+      const baseURL = config.baseUrl || (config.provider === "openrouter" ? "https://openrouter.ai/api/v1" : undefined)
+      if (!baseURL) {
         throw new ChatModelConfigError(`AI_BASE_URL is required for AI_PROVIDER=${config.provider}.`)
       }
       const provider = createOpenAICompatible({
         name: config.provider,
-        baseURL: config.baseUrl,
+        baseURL,
         apiKey: config.apiKey,
       })
       return { model: provider.chatModel(modelId), provider: config.provider, modelId }
