@@ -33,4 +33,4 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=builder /app ./
 EXPOSE 3000
-CMD ["pnpm", "--filter", "web", "start"]
+CMD ["sh", "-c", "pnpm --filter @zpr/db db:migrate && pnpm --filter @zpr/db db:seed && pnpm --filter web start"]
