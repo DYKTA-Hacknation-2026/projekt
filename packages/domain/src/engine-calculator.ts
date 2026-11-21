@@ -1,4 +1,4 @@
-import { calculateBenefits } from "./calculator"
+import { calculateBenefits } from "./calculator-engine"
 import { evaluate } from "./engine/evaluate"
 import { latestRuleSet } from "./engine/rulesets"
 import type { AssessmentInput, ParentInput } from "./engine/types"
