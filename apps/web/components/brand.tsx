@@ -10,15 +10,16 @@ export function Brand({ compact = false }: { compact?: boolean }) {
     >
       <span
         aria-hidden="true"
-        className="grid size-9 place-items-center rounded-xl bg-primary text-sm font-semibold tracking-tight text-primary-foreground shadow-sm transition-transform group-hover:-rotate-3"
+        className="grid size-9 place-items-center rounded-full bg-brand-navy text-sm font-semibold tracking-tight text-white"
       >
         {APP_SHORT_NAME}
       </span>
-      <span className="flex flex-col leading-tight">
+      <span className="sr-only min-[360px]:hidden">{APP_NAME}</span>
+      <span className="hidden flex-col leading-tight min-[360px]:flex">
         <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>
         {!compact && (
           <span className="text-[11px] text-muted-foreground">
-            ZUS · symulacja demonstracyjna
+            Przewodnik dla rodziców
           </span>
         )}
       </span>

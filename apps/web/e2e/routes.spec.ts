@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 
 const routes = [
-  ["/", /Sprawdź, co ci przysługuje/i],
+  ["/", /Spokojnie zaplanuj czas po narodzinach dziecka/i],
   ["/panel", /Panel sprawy/i],
   ["/start", /Opisz swoją sytuację/i],
   ["/kalkulator", /Kalkulator zasiłków/i],
@@ -32,7 +32,9 @@ for (const [path, heading] of routes) {
   test(`renders ${path}`, async ({ page }) => {
     const response = await page.goto(path)
     expect(response?.status()).toBeLessThan(500)
-    await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { level: 1, name: heading })
+    ).toBeVisible()
     await expect(page.locator("html")).toHaveAttribute("lang", "pl")
   })
 }

@@ -50,7 +50,7 @@ import {
 import { Input } from "@workspace/ui/components/input"
 import { Label } from "@workspace/ui/components/label"
 import { Select } from "@workspace/ui/components/select"
-import { Tabs, TabsList, TabsTrigger } from "@workspace/ui/components/tabs"
+import { cn } from "@workspace/ui/lib/utils"
 import {
   Table,
   TableBody,
@@ -700,20 +700,32 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
                 </AlertDescription>
               </Alert>
             )}
-            <Tabs value={tab} onValueChange={onTabChange}>
-              <TabsList
-                aria-label="Rodzaj sprawy"
-                className="h-auto w-full flex-wrap"
-              >
-                <TabsTrigger value="BIRTH">Narodziny dziecka</TabsTrigger>
-                <TabsTrigger value="ADOPTION">
-                  Adopcja / Rodzina zastępcza
-                </TabsTrigger>
-                <TabsTrigger value="PRESETS">
-                  Zestawy ZUS / przykłady
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <div
+              role="group"
+              aria-label="Rodzaj sprawy"
+              className="inline-flex h-auto w-full flex-wrap items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground"
+            >
+              {(
+                [
+                  ["BIRTH", "Narodziny dziecka"],
+                  ["ADOPTION", "Adopcja / Rodzina zastępcza"],
+                  ["PRESETS", "Przykłady ze spraw ZUS (Zestawy)"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={tab === value}
+                  onClick={() => onTabChange(value)}
+                  className={cn(
+                    "inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    tab === value && "bg-background text-foreground shadow-sm"
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
 
             {tab === "PRESETS" && (
               <div className="space-y-3 rounded-lg border border-border/70 p-3">

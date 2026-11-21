@@ -1,0 +1,15 @@
+ROUND 2 — scoped refinements
+Seen in one second: existing green family hero retained.
+Idea (one sentence): family time is paired with a shared leave preview and ZUS-inspired green.
+Live thing: existing parent switch, tested on desktop and mobile.
+Layout words by section: hero=split / tools=split-list / plan=split-interface / families=split-list / FAQ=wide-accordion / close=horizontal-call
+Scores: design 7.8 · usability 8 · creativity 6 · content 7.7 → overall 7.49
+Caps applied: creativity at 6; concept transferable to other family-benefits guides.
+Top three problems (most visible first), each with the screenshot it shows in and the fix:
+1. desktop-page-01.jpg: baby-hand image still warmer than family photos, but reduced saturation makes the difference quieter. No asset replacement needed for this scope.
+2. desktop-page-01.jpg: split layouts remain in tools and plan; FAQ now interrupts repetition with full-width questions.
+3. mobile-page-01.jpg: long tool list remains deliberate for five working paths; headings now name content directly.
+Validation: production build passed; source lint 0 FAIL/0 WARN; production inspector 0 FAIL/3 WARN at 1440/768/390 (unchanged warnings: no footage, off-centre measurement, secondary grey text). All seven inspector images and FAQ crop viewed.
+Before/after: 4 images / 4 images; longest heading 2 lines / 2 lines; inspector 0 FAIL,3 WARN / 0 FAIL,3 WARN. Existing stock assets and credits retained; no new assets or sample content.
+Tests: 8 home tests passed initially; wizard navigation tests initially failed because local production server lacked SESSION_SECRET. Restarted with an ephemeral session secret; both wizard tests then passed. Ten home scenarios passed across the two runs.
+No draw or redraw: limited changes to existing sections and their photography treatment.

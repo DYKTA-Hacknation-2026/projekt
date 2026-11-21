@@ -1,272 +1,264 @@
+import type { Metadata } from "next"
+import Image from "next/image"
 import Link from "next/link"
-import {
-  ArrowRight,
-  ArrowUpRight,
-  BookOpen,
-  Calculator,
-  Info,
-  FileCheck2,
-  FileText,
-  FolderOpen,
-  LockKeyhole,
-  MessagesSquare,
-  ScanLine,
-  ShieldCheck,
-} from "lucide-react"
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
+import { ArrowRight, ArrowUpRight, Check } from "lucide-react"
 import { home } from "@/messages/pl"
-import { formatPln } from "@/lib/format"
+import { HomeLeavePreview } from "@/components/home-leave-preview"
+import { HomeMotion } from "@/components/home-motion"
 import "./home.css"
 
-const panelRows = [
-  ["Urlop macierzyński", "20 tygodni"],
-  ["Urlop rodzicielski", "41 tygodni"],
-  ["Dla drugiego rodzica", "9 tygodni"],
-]
+export const metadata: Metadata = { title: "Świadczenia i urlopy dla rodziców" }
 
 export default function HomePage() {
   return (
-    <div className="guide">
-      <section className="guide-hero hero wrap" data-enter>
-        <div className="guide-intro">
-          <p className="guide-kicker">
-            <BookOpen size={15} /> Przewodnik dla rodziców
-          </p>
-          <h1>
-            Sprawdź, co ci <em>przysługuje.</em>
+    <div className="home">
+      <HomeMotion />
+      <section className="home-hero home-shell" aria-labelledby="home-title">
+        <div className="home-hero__copy">
+          <h1 id="home-title" data-reveal="heading">
+            Więcej czasu
+            <br />
+            dla rodziny.
           </h1>
-          <p className="guide-lead">
-            Zasiłki, urlopy i dokumenty w jednym miejscu. Sprawdź uprawnienia
-            obojga rodziców i zaplanuj czas po narodzinach dziecka.
+          <p className="home-hero__lead" data-reveal="copy">
+            Sprawdź świadczenia, zaplanuj urlopy i przygotuj dokumenty na
+            narodziny dziecka. Przejdziemy przez to razem.
           </p>
-          <div className="guide-actions">
-            <Link href="/dokumenty">
-              <FileText size={17} /> Sprawdź dokumenty <ArrowRight size={16} />
-            </Link>
-            <Link href="/kalkulator">
-              <Calculator size={17} /> Oblicz zasiłek
-            </Link>
-          </div>
-          <p className="guide-proof">
-            <LockKeyhole size={14} /> Bez logowania <span>·</span> Bez numeru
-            PESEL
-          </p>
+          <Link
+            href="/start"
+            className="home-button home-button--white"
+            data-reveal="copy"
+          >
+            Sprawdź swoje świadczenia{" "}
+            <ArrowRight size={20} aria-hidden="true" />
+          </Link>
+          <Link href="#mozliwosci" className="home-hero__secondary">
+            Poznaj przewodnik
+          </Link>
         </div>
-        <div className="dossier app-frame" data-visual="">
-          <div className="dossier-label">
-            <FolderOpen size={16} /> Teczka świadczeń <span>DEMO</span>
-          </div>
-          <div className="receipt">
-            <div className="receipt-id">
-              <ScanLine size={19} /> ZPR-DEMO-001
-            </div>
-            <p>Szacunek łączny</p>
-            <strong>{formatPln(15_540_000)}</strong>
-            <dl>
-              {panelRows.map(([label, value]) => (
-                <div key={label}>
-                  <dt>{label}</dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
-            </dl>
-            <div className="receipt-end">
-              <span className="barcode" aria-hidden="true" /> S-01 / S-10
-            </div>
-          </div>
-          <p className="dossier-foot">
-            <Info size={14} /> Podstawa 8 000 zł brutto · wynik niezweryfikowany (Q-29)
-          </p>
+        <div className="home-hero__photo" data-reveal="photo">
+          <Image
+            src="/images/hero-rodzice-z-noworodkiem.jpg"
+            alt="Rodzice trzymają nowo narodzone dziecko przy oknie w domu."
+            fill
+            priority
+            sizes="(max-width: 760px) 100vw, 55vw"
+          />
         </div>
       </section>
-      <section className="guide-tools">
-        <div className="guide-wrap wrap">
-          <h2>Narzędzia dla rodziców</h2>
-          <div className="tool-grid">
-            {home.paths.map((path, i) => {
-              const Icon =
-                [FolderOpen, Calculator, MessagesSquare][i] ?? FileText
-              return (
-                <Link href={path.href} key={path.href}>
-                  <span className="tool-icon">
-                    <Icon size={23} />
-                  </span>
-                  <ArrowUpRight className="tool-arrow" size={19} />
-                  <h3>{path.title}</h3>
-                  <p>{path.description}</p>
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-      <section className="border-y border-border/70 bg-secondary/40">
-        <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
-                Jak to działa
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Planowanie urlopu w trzech krokach
-              </h2>
-            </div>
-            <p className="max-w-sm text-sm text-pretty text-muted-foreground">
-              Każdy wynik ma numer reguły, wersję zestawu przepisów i jawne
-              założenia. Braki danych nie zamieniają się w zgadywanie.
+      <div className="home-shell">
+        <ul className="home-trust" aria-label="Korzystanie z przewodnika">
+          {home.trust.map((item) => (
+            <li key={item}>
+              <Check size={18} aria-hidden="true" />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <section
+        className="home-section"
+        id="mozliwosci"
+        aria-labelledby="tools-title"
+      >
+        <div className="home-shell home-tools">
+          <div className="home-tools__intro">
+            <h2 id="tools-title" data-reveal="heading">
+              Świadczenia
+              <br />i dokumenty.
+            </h2>
+            <p data-reveal="copy">
+              Wybierz to, czego potrzebujesz. Możesz zacząć od swojej sytuacji
+              lub od razu przejść do kalkulatora, dokumentów i planu urlopów.
             </p>
+            <div className="home-tools__photo" data-reveal="photo">
+              <Image
+                src="/images/oczekiwanie-na-dziecko.jpg"
+                alt="Przyszli rodzice układają dłonie w serce na ciążowym brzuchu."
+                fill
+                sizes="(max-width: 760px) 100vw, 40vw"
+              />
+            </div>
           </div>
-          <ol className="mt-8 grid gap-4 md:grid-cols-3">
-            {home.steps.map((step) => (
-              <li
-                key={step.number}
-                className="rounded-xl border border-border/70 bg-card p-5"
-              >
-                <span className="font-mono text-xs font-semibold text-primary">
-                  {step.number}
-                </span>
-                <h3 className="mt-2 text-lg font-semibold">{step.title}</h3>
-                <p className="mt-2 text-sm text-pretty text-muted-foreground">
-                  {step.text}
-                </p>
+          <ul className="home-tool-list">
+            {home.paths.map((path) => (
+              <li key={path.href} data-reveal="item">
+                <Link href={path.href}>
+                  <div>
+                    <h3>{path.title}</h3>
+                    <p>{path.description}</p>
+                  </div>
+                  <ArrowUpRight size={23} aria-hidden="true" />
+                </Link>
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <div className="space-y-4">
-            <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
-              Scenariusze demo
-            </p>
-            <h2 className="text-3xl font-semibold tracking-tight text-balance">
-              Przykładowe sytuacje rodziców
+      <section
+        className="home-plan"
+        id="jak-to-dziala"
+        aria-labelledby="plan-title"
+      >
+        <div className="home-shell home-plan__grid">
+          <div className="home-plan__copy">
+            <h2 id="plan-title" data-reveal="heading">
+              Wasz urlop.
+              <br />
+              Wasz podział.
             </h2>
-            <p className="text-sm text-pretty text-muted-foreground">
-              Dane są syntetyczne i wymyślone na potrzeby demonstracji. Każda
-              osoba odpowiada scenariuszowi z dokumentacji projektu, więc jury
-              może porównać wynik z oczekiwanym.
+            <p data-reveal="copy">
+              Pierwsze miesiące to wspólny czas. Zobacz przykładowy podział
+              urlopów między rodzicami, a potem ułóż plan dopasowany do swojej
+              sytuacji.
             </p>
-            <div className="rounded-xl border border-border/70 bg-card p-4">
-              <div className="flex items-center gap-2 text-sm font-medium">
-                <ShieldCheck
-                  aria-hidden="true"
-                  className="size-4 text-primary"
-                />
-                Uczciwie o brakach
-              </div>
-              <p className="mt-2 text-sm text-pretty text-muted-foreground">
-                Minimalna podstawa i kwota świadczenia rodzicielskiego (Q-29)
-                oraz polityka zaokrągleń (Q-15) czekają na zatwierdzenie.
-                Dlatego kalkulator pokazuje status „Wymaga danych”, a nie
-                wymyśloną kwotę.
-              </p>
+            <Link href="/os-czasu" className="home-text-link">
+              Otwórz planer urlopów <ArrowRight size={19} aria-hidden="true" />
+            </Link>
+            <div className="home-plan__photo" data-reveal="photo">
+              <Image
+                src="/images/bliskosc-z-dzieckiem.webp"
+                alt="Mała dłoń dziecka trzyma palec rodzica."
+                fill
+                sizes="(max-width: 760px) 100vw, 40vw"
+              />
             </div>
           </div>
+          <div data-reveal="copy">
+            <HomeLeavePreview />
+          </div>
+        </div>
+      </section>
 
-          <div className="grid gap-3">
-            {home.personas.map((persona) => (
-              <div
-                key={persona.name}
-                className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-semibold">{persona.name}</h3>
-                    <Badge variant="outline" className="font-mono text-[10px]">
-                      {persona.scenario}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {persona.role}
-                  </p>
-                  <p className="mt-1 text-xs text-pretty text-muted-foreground">
-                    {persona.note}
-                  </p>
-                </div>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0"
-                >
+      <section
+        className="home-section"
+        id="scenariusze"
+        aria-labelledby="stories-title"
+      >
+        <div className="home-shell home-stories">
+          <div className="home-stories__photo" data-reveal="photo">
+            <Image
+              src="/images/rodzina-z-dzieckiem.jpg"
+              alt="Rodzice przytulają niemowlę w domu."
+              fill
+              sizes="(max-width: 760px) 100vw, 50vw"
+            />
+          </div>
+          <div className="home-stories__copy">
+            <h2 id="stories-title" data-reveal="heading">
+              Różne rodziny.
+              <br />
+              Różne potrzeby.
+            </h2>
+            <p data-reveal="copy">
+              Etat czy własna działalność? Poznaj przykładowe sytuacje i zobacz,
+              jak korzystać z przewodnika.
+            </p>
+            <ul className="home-personas">
+              {home.personas.map((persona) => (
+                <li key={persona.name} data-reveal="item">
                   <Link href="/panel">
-                    Otwórz
-                    <ArrowRight data-icon="inline-end" aria-hidden="true" />
+                    <div>
+                      <h3>{persona.name}</h3>
+                      <span>{persona.role}</span>
+                      <p>{persona.note}</p>
+                    </div>
+                    <ArrowUpRight size={22} aria-hidden="true" />
                   </Link>
-                </Button>
-              </div>
+                </li>
+              ))}
+            </ul>
+            <p className="home-small">
+              Przykłady demonstracyjne. Dane osób są syntetyczne.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-questions" aria-labelledby="questions-title">
+        <div className="home-shell home-questions__grid">
+          <div>
+            <h2 id="questions-title" data-reveal="heading">
+              Pytania
+              <br />i odpowiedzi.
+            </h2>
+            <p data-reveal="copy">
+              Jasne zasady i źródła. Zanim podasz informacje o swojej sytuacji,
+              sprawdź, jak działa przewodnik.
+            </p>
+            <Link href="/o-projekcie" className="home-text-link">
+              O projekcie i jego ograniczeniach{" "}
+              <ArrowUpRight size={19} aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="home-faq">
+            {[
+              {
+                q: "Czy to oficjalny serwis ZUS?",
+                a: "Nie. To projekt demonstracyjny. Dane, dokumenty i integracje rządowe są symulowane. Informacje nie zastępują decyzji ZUS ani płatnika składek.",
+              },
+              {
+                q: "Czy muszę się logować?",
+                a: "Możesz rozpocząć demonstracyjną analizę bez logowania i bez numeru PESEL. Kreator pyta o informacje potrzebne do opisania sytuacji rodziny.",
+              },
+              {
+                q: "Skąd pochodzą wyniki?",
+                a: "Obliczenia opierają się na wersjonowanych regułach. Przy wynikach znajdziesz źródła i założenia. Brakujące dane oraz niezweryfikowane parametry są jawnie oznaczane.",
+              },
+            ].map(({ q, a }) => (
+              <details key={q} data-reveal="item">
+                <summary>
+                  {q}
+                  <span aria-hidden="true" />
+                </summary>
+                <p>{a}</p>
+              </details>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6">
-        <div className="flex flex-col gap-5 rounded-2xl border border-primary/20 bg-card p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-          <div className="max-w-2xl space-y-2">
-            <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-primary uppercase">
-              <BookOpen aria-hidden="true" className="size-4" />
-              Centrum wiedzy
-            </p>
-            <h2 className="text-2xl font-semibold tracking-tight text-balance">
-              Nie wiesz, od czego zacząć?
+      <section className="home-section" aria-labelledby="knowledge-title">
+        <div className="home-shell home-questions__grid">
+          <div>
+            <h2 id="knowledge-title" data-reveal="heading">
+              Centrum wiedzy.
             </h2>
-            <p className="text-sm text-pretty text-muted-foreground">
+            <p data-reveal="copy">
               Artykuły, najczęstsze pytania, karty dokumentów, przewodniki i
               słownik pojęć. Wszystko prostym językiem, z datą weryfikacji i
               odnośnikiem do oficjalnego źródła.
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Button asChild>
-              <Link href="/wiedza">
-                Przeglądaj wiedzę
-                <ArrowRight data-icon="inline-end" aria-hidden="true" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/wiedza/faq">Najczęstsze pytania</Link>
-            </Button>
+          <div className="flex flex-col items-start gap-4" data-reveal="copy">
+            <Link href="/wiedza" className="home-text-link">
+              Przeglądaj wiedzę <ArrowUpRight size={19} aria-hidden="true" />
+            </Link>
+            <Link href="/wiedza/faq" className="home-text-link">
+              Najczęstsze pytania <ArrowUpRight size={19} aria-hidden="true" />
+            </Link>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="overflow-hidden rounded-2xl border border-primary/20 bg-primary px-6 py-10 text-primary-foreground sm:px-10">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="max-w-xl space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] uppercase">
-                <FileCheck2 aria-hidden="true" className="size-4" />
-                Start w 3 minuty
-              </div>
-              <h2 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
-                Zobacz, jak wygląda twoja sprawa po wpisaniu kilku danych.
-              </h2>
-              <p className="text-sm text-pretty text-primary-foreground">
-                Bez konta, bez PESEL-u. W każdej chwili możesz wrócić do
-                kalkulatora i porównać warianty.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button asChild size="lg" variant="secondary" className="h-11">
-                <Link href="/start">
-                  Otwórz kreator
-                  <ArrowRight data-icon="inline-end" aria-hidden="true" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-11 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-              >
-                <Link href="/o-projekcie">O projekcie</Link>
-              </Button>
-            </div>
+      <section className="home-close" aria-labelledby="close-title">
+        <div className="home-shell">
+          <div>
+            <h2 id="close-title" data-reveal="heading">
+              Pierwszy krok?
+              <br />
+              Twoja sytuacja.
+            </h2>
+            <p data-reveal="copy">
+              Opowiedz nam o swoim planie na rodzicielstwo.
+            </p>
           </div>
+          <Link href="/start" className="home-button home-button--white">
+            Sprawdź swoje świadczenia{" "}
+            <ArrowRight size={20} aria-hidden="true" />
+          </Link>
         </div>
       </section>
     </div>
