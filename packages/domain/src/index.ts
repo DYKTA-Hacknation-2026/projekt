@@ -1,4 +1,5 @@
 export * from "./types"
+export * from "./rule-set"
 export * from "./money"
 export * from "./dates"
 export * from "./calculator"

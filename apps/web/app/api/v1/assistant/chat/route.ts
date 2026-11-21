@@ -7,6 +7,7 @@ import { principalFrom, respondAs } from "@/server/http/principal"
 import { enforceAssistantRateLimit } from "@/server/http/rate-limit"
 import { apiRoute, readJson } from "@/server/http/route"
 import { prepareTurn, startTurn } from "@/server/services/assistant"
+import { getActiveRuleSet } from "@/server/services/rule-set"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -29,6 +30,7 @@ export const POST = apiRoute(async (request) => {
     message,
     regenerate: body.trigger === "regenerate-message",
   })
+  const ruleSet = await getActiveRuleSet(body.options?.asOf)
 
   const { stream, persisted } = startTurn({
     env,
@@ -36,6 +38,7 @@ export const POST = apiRoute(async (request) => {
     prepared,
     message,
     options: body.options ?? { useProfile: false },
+    ruleSet,
     abortSignal: request.signal,
   })
   // Errors are logged inside; the stream already told the client.
@@ -44,7 +47,10 @@ export const POST = apiRoute(async (request) => {
   return respondAs(
     createUIMessageStreamResponse({
       stream,
-      headers: { "cache-control": "no-store", "x-conversation-id": prepared.conversationId },
+      headers: {
+        "cache-control": "no-store",
+        "x-conversation-id": prepared.conversationId,
+      },
     }),
     principal
   )

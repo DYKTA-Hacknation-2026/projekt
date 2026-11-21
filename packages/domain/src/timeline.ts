@@ -1,12 +1,9 @@
-import { MATERNITY_WEEKS_BY_CHILDREN, PARENTAL_POOL_WEEKS } from "./calculator"
-import { addDays } from "./dates"
+import { addDays, addMonths } from "./dates"
+import { formatRatePercent } from "./money"
+import type { RuleSet } from "./rule-set"
 
 export type TimelineOwner = "MAMA" | "TATA" | "OBOJE"
-export type TimelineCategory =
-  | "LEAVE"
-  | "BENEFIT"
-  | "DOCUMENT"
-  | "DEADLINE"
+export type TimelineCategory = "LEAVE" | "BENEFIT" | "DOCUMENT" | "DEADLINE"
 
 export interface TimelineMilestone {
   id: string
@@ -38,34 +35,47 @@ export interface TimelineInput {
   hasZaZyciem: boolean
 }
 
-
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
-export function buildTimeline(input: TimelineInput): TimelinePlan {
-  const children = clamp(Math.round(input.childrenCount), 1, 5)
+export function buildTimeline(
+  input: TimelineInput,
+  ruleSet: RuleSet
+): TimelinePlan {
+  const children = clamp(
+    Math.round(input.childrenCount),
+    1,
+    ruleSet.maternity.maxChildren
+  )
   const preBirthWeeks = clamp(
     Math.round(input.maternityWeeksBeforeBirth),
     0,
-    6
+    ruleSet.maternity.maxPreBirthWeeks
   )
   const secondParentWeeks = clamp(
     Math.round(input.secondParentParentalWeeks),
     0,
-    9
+    ruleSet.parental.nonTransferableWeeks
   )
-  const paternityDays = clamp(Math.round(input.paternityDays), 0, 14)
+  const paternityDays = clamp(
+    Math.round(input.paternityDays),
+    0,
+    ruleSet.paternity.days
+  )
 
-  const maternityWeeks = MATERNITY_WEEKS_BY_CHILDREN[children] ?? 37
+  const maternityWeeks =
+    ruleSet.maternity.weeksByChildren[children] ??
+    ruleSet.maternity.weeksByChildren[ruleSet.maternity.maxChildren] ??
+    0
   const postBirthWeeks = maternityWeeks - preBirthWeeks
   const parentalPoolWeeks = input.hasZaZyciem
     ? children > 1
-      ? PARENTAL_POOL_WEEKS.zaZyciemMultiple
-      : PARENTAL_POOL_WEEKS.zaZyciemSingle
+      ? ruleSet.parental.poolWeeks.zaZyciemMultiple
+      : ruleSet.parental.poolWeeks.zaZyciemSingle
     : children > 1
-      ? PARENTAL_POOL_WEEKS.multiple
-      : PARENTAL_POOL_WEEKS.single
+      ? ruleSet.parental.poolWeeks.multiple
+      : ruleSet.parental.poolWeeks.single
 
   const boundedSecondParentWeeks = Math.min(
     secondParentWeeks,
@@ -83,7 +93,9 @@ export function buildTimeline(input: TimelineInput): TimelinePlan {
     secondParentStart,
     boundedSecondParentWeeks * 7 - 1
   )
-  const paternityStart = addDays(birth, 14)
+  // Demo plan: paternity starts after the statutory paternity period, so the
+  // milestone stays inside the child's first year for typical inputs.
+  const paternityStart = addDays(birth, ruleSet.paternity.days)
   const paternityEnd = addDays(paternityStart, Math.max(paternityDays - 1, 0))
 
   const milestones: TimelineMilestone[] = [
@@ -122,7 +134,7 @@ export function buildTimeline(input: TimelineInput): TimelinePlan {
       id: "parental-start",
       date: parentalStart,
       title: "Start urlopu rodzicielskiego mamy",
-      description: `Pula dla mamy to ${motherParentalWeeks} tygodni. Wniosek złóż najpóźniej 21 dni przed rozpoczęciem.`,
+      description: `Pula dla mamy to ${motherParentalWeeks} tygodni. Wniosek złóż najpóźniej ${ruleSet.deadlines.parentalRequestNoticeDays} dni przed rozpoczęciem.`,
       owner: "MAMA",
       category: "LEAVE",
       legalReference: "KP art. 182¹a; LR-127",
@@ -131,28 +143,25 @@ export function buildTimeline(input: TimelineInput): TimelinePlan {
       id: "parental-end",
       date: parentalEnd,
       title: "Koniec urlopu rodzicielskiego mamy",
-      description:
-        "Urlop można dzielić na maksymalnie 5 części, nie później niż do końca roku, w którym dziecko kończy 6 lat.",
+      description: `Urlop można dzielić na maksymalnie ${ruleSet.parental.maxParts} części, nie później niż do końca roku, w którym dziecko kończy ${ruleSet.parental.deadlineChildAgeYears} lat.`,
       owner: "MAMA",
       category: "LEAVE",
       legalReference: "KP art. 182¹a § 1–4",
     },
     {
       id: "application-815",
-      date: addDays(birth, 21),
-      title: "Termin wniosku o 81,5%",
-      description:
-        "Aby otrzymać 81,5% za cały okres, mama składa pisemny wniosek w ciągu 21 dni od porodu.",
+      date: addDays(birth, ruleSet.deadlines.flatRateApplicationDays),
+      title: `Termin wniosku o ${formatRatePercent(ruleSet.parental.flatRate)}`,
+      description: `Aby otrzymać ${formatRatePercent(ruleSet.parental.flatRate)} za cały okres, mama składa pisemny wniosek w ciągu ${ruleSet.deadlines.flatRateApplicationDays} dni od porodu.`,
       owner: "MAMA",
       category: "DEADLINE",
       legalReference: "U art. 31 ust. 4; LR-130",
     },
     {
       id: "documents",
-      date: addDays(birth, 7),
+      date: addDays(birth, ruleSet.deadlines.employerForwardingDays),
       title: "Dokumenty do płatnika",
-      description:
-        "Pracodawca przekazuje dokumenty do ZUS w ciągu 7 dni, jeśli to ZUS wypłaca zasiłek.",
+      description: `Pracodawca przekazuje dokumenty do ZUS w ciągu ${ruleSet.deadlines.employerForwardingDays} dni, jeśli to ZUS wypłaca zasiłek.`,
       owner: "OBOJE",
       category: "DOCUMENT",
       legalReference: "R1316 § 2–3; LR-109",
@@ -164,9 +173,8 @@ export function buildTimeline(input: TimelineInput): TimelinePlan {
       id: "second-parent",
       date: secondParentStart,
       endDate: secondParentEnd,
-      title: `Urlop rodzicielski taty — ${boundedSecondParentWeeks} tyg.`,
-      description:
-        "To część zarezerwowana dla drugiego rodzica. Nie można jej przenieść na mamę; można ją wykorzystać później, do końca roku szkolnego.",
+      title: `Urlop rodzicielski taty – ${boundedSecondParentWeeks} tyg.`,
+      description: `To część zarezerwowana dla drugiego rodzica. Nie można jej przenieść na mamę; można ją wykorzystać później, do końca roku szkolnego.`,
       owner: "TATA",
       category: "LEAVE",
       legalReference: "KP art. 182¹a § 4; LR-127",
@@ -178,9 +186,8 @@ export function buildTimeline(input: TimelineInput): TimelinePlan {
       id: "paternity",
       date: paternityStart,
       endDate: paternityEnd,
-      title: `Urlop ojcowski — ${paternityDays} dni`,
-      description:
-        "Można go wykorzystać jednorazowo lub w dwóch częściach po co najmniej 7 dni, do 12. miesiąca życia dziecka.",
+      title: `Urlop ojcowski – ${paternityDays} dni`,
+      description: `Można go wykorzystać jednorazowo lub w ${ruleSet.paternity.maxParts} częściach po co najmniej ${ruleSet.paternity.minPartDays} dni, do ${ruleSet.paternity.deadlineMonths}. miesiąca życia dziecka.`,
       owner: "TATA",
       category: "LEAVE",
       legalReference: "KP art. 182³; LR-133",
@@ -188,10 +195,9 @@ export function buildTimeline(input: TimelineInput): TimelinePlan {
 
     milestones.push({
       id: "paternity-deadline",
-      date: addDays(birth, 365),
+      date: addDays(addMonths(birth, ruleSet.paternity.deadlineMonths), -1),
       title: "Koniec terminu urlopu ojcowskiego",
-      description:
-        "Urlop ojcowski trzeba wykorzystać do ukończenia przez dziecko 12. miesiąca życia.",
+      description: `Urlop ojcowski trzeba wykorzystać do ukończenia przez dziecko ${ruleSet.paternity.deadlineMonths}. miesiąca życia.`,
       owner: "TATA",
       category: "DEADLINE",
       legalReference: "KP art. 182³; LR-133",

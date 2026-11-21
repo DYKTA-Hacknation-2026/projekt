@@ -12,18 +12,18 @@ export type BenefitKind = "MATERNITY" | "PARENTAL" | "PATERNITY"
 export interface CalculatorInput {
   /** Gross monthly income declared by the user, in grosze. */
   grossMonthlyIncomeGrosze: number
-  /** Number of children born in one birth. Values above 5 use the 5+ rule. */
+  /** Number of children born in one birth. Values above the highest configured rule use the 5+ rule. */
   childrenCount: number
   /** The child holds a "Za życiem" certificate. */
   hasZaZyciem: boolean
   paymentOption: PaymentOption
-  /** Maternity leave taken before the due date, 0–6 weeks. */
+  /** Maternity leave taken before the due date; capped by the active rule set. */
   maternityWeeksBeforeBirth: number
-  /** Weeks of the shared parental pool used by the second parent (0–9). */
+  /** Weeks of the shared parental pool used by the second parent; capped by the rule set. */
   secondParentParentalWeeks: number
-  /** Fraction of full-time work during parental leave (0–0.5). */
+  /** Fraction of full-time work during parental leave; capped by the rule set. */
   parentalWorkFraction: number
-  /** Paternity leave in days (0–14). */
+  /** Paternity leave in days; capped by the active rule set. */
   paternityDays: number
 }
 
@@ -61,6 +61,12 @@ export interface CalculatorResult {
   totalGrosze: number
   verified: boolean
   status: "OK" | "INDETERMINATE"
+  /** Version label of the rule set that produced this result. */
+  ruleSetVersion: string
+  /** First day on which the rule set applies. */
+  ruleSetEffectiveFrom: string
+  /** True when every legal parameter was verified at calculation time. */
+  ruleSetVerified: boolean
   warnings: string[]
   trace: CalculationTraceStep[]
 }

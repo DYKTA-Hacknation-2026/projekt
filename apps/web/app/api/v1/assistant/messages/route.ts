@@ -6,6 +6,7 @@ import { enforceAssistantRateLimit } from "@/server/http/rate-limit"
 import { apiRoute, json, readJson } from "@/server/http/route"
 import { prepareTurn, startTurn, toReply } from "@/server/services/assistant"
 import { AppError } from "@/server/http/problem"
+import { getActiveRuleSet } from "@/server/services/rule-set"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -29,6 +30,7 @@ export const POST = apiRoute(async (request) => {
     message,
     regenerate: false,
   })
+  const ruleSet = await getActiveRuleSet(body.asOf)
 
   const { stream, persisted } = startTurn({
     env,
@@ -36,6 +38,7 @@ export const POST = apiRoute(async (request) => {
     prepared,
     message,
     options: { useProfile: body.useProfile, asOf: body.asOf },
+    ruleSet,
     abortSignal: request.signal,
   })
   const reader = stream.getReader()
@@ -44,9 +47,14 @@ export const POST = apiRoute(async (request) => {
   }
   const result = await persisted
   if (result.status === "failed") {
-    throw new AppError(503, "UPSTREAM_ERROR", "Asystent nie mógł teraz odpowiedzieć. Spróbuj ponownie.", {
-      conversationId: result.conversationId,
-    })
+    throw new AppError(
+      503,
+      "UPSTREAM_ERROR",
+      "Asystent nie mógł teraz odpowiedzieć. Spróbuj ponownie.",
+      {
+        conversationId: result.conversationId,
+      }
+    )
   }
   return respondAs(json(toReply(result)), principal)
 })

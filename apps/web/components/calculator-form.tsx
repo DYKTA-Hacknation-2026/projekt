@@ -13,8 +13,12 @@ import {
   Wallet,
 } from "lucide-react"
 
-import type { CalculatorResult, PaymentOption } from "@zpr/domain"
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import type { CalculatorResult, PaymentOption, RuleSet } from "@zpr/domain"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -46,20 +50,53 @@ type ResponseBody = {
   issues?: Array<{ path: string; message: string }>
 }
 
-export function CalculatorForm() {
+function workLabel(fraction: number): string {
+  if (fraction === 0) return "Bez pracy"
+  if (fraction === 0.25) return "¼ etatu"
+  if (fraction === 0.5) return "½ etatu"
+  return `${Math.round(fraction * 100)}% etatu`
+}
+
+export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
   const [income, setIncome] = useState("8000")
   const [children, setChildren] = useState("1")
   const [paymentOption, setPaymentOption] =
     useState<PaymentOption>("STANDARD_100_70")
   const [hasZaZyciem, setHasZaZyciem] = useState(false)
-  const [preBirthWeeks, setPreBirthWeeks] = useState("2")
-  const [secondParentWeeks, setSecondParentWeeks] = useState("9")
+  const [preBirthWeeks, setPreBirthWeeks] = useState(
+    String(Math.min(2, ruleSet.maternity.maxPreBirthWeeks))
+  )
+  const [secondParentWeeks, setSecondParentWeeks] = useState(
+    String(ruleSet.parental.nonTransferableWeeks)
+  )
   const [workFraction, setWorkFraction] = useState("0")
-  const [paternityDays, setPaternityDays] = useState("14")
+  const [paternityDays, setPaternityDays] = useState(
+    String(ruleSet.paternity.days)
+  )
   const [save, setSave] = useState(true)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<ResponseBody | null>(null)
+
+  const childCounts = Object.keys(ruleSet.maternity.weeksByChildren)
+    .map(Number)
+    .sort((a, b) => a - b)
+  const preBirthOptions = Array.from(
+    { length: ruleSet.maternity.maxPreBirthWeeks + 1 },
+    (_, index) => index
+  )
+  const secondParentOptions = Array.from(
+    { length: ruleSet.parental.nonTransferableWeeks + 1 },
+    (_, index) => index
+  )
+  const paternityOptions = Array.from(
+    new Set([0, ruleSet.paternity.minPartDays, ruleSet.paternity.days])
+  )
+    .filter((days) => days >= 0 && days <= ruleSet.paternity.days)
+    .sort((a, b) => a - b)
+  const workOptions = [0, 0.25, 0.5]
+    .filter((value) => value <= ruleSet.parental.maxWorkFraction)
+    .map((value) => ({ value, label: workLabel(value) }))
 
   useEffect(() => {
     const raw = window.sessionStorage.getItem("zpr:document-prefill")
@@ -110,7 +147,7 @@ export function CalculatorForm() {
         throw new Error(
           issue
             ? `${issue.path}: ${issue.message}`
-            : data.detail ?? "Nie udało się wykonać obliczenia."
+            : (data.detail ?? "Nie udało się wykonać obliczenia.")
         )
       }
       setResult(data)
@@ -134,8 +171,9 @@ export function CalculatorForm() {
             Dane do wyliczenia
           </CardTitle>
           <CardDescription>
-            Wynik zapisuje się z wersją silnika i pełnym wejściem. Kwoty są
-            szacunkiem do czasu zatwierdzenia Q-29 i Q-15.
+            Wynik zapisuje się z wersją silnika, zestawem reguł{" "}
+            {ruleSet.version} i pełnym wejściem. Kwoty są szacunkiem, dopóki
+            zestaw reguł nie jest w pełni zweryfikowany.
           </CardDescription>
         </CardHeader>
         <form onSubmit={onSubmit} aria-busy={pending}>
@@ -162,9 +200,11 @@ export function CalculatorForm() {
                   value={children}
                   onChange={(event) => setChildren(event.target.value)}
                 >
-                  {[1, 2, 3, 4, 5].map((count) => (
+                  {childCounts.map((count) => (
                     <option key={count} value={count}>
-                      {count === 5 ? "5 lub więcej" : count}
+                      {count === ruleSet.maternity.maxChildren
+                        ? `${count} lub więcej`
+                        : count}
                     </option>
                   ))}
                 </Select>
@@ -177,7 +217,7 @@ export function CalculatorForm() {
                   value={preBirthWeeks}
                   onChange={(event) => setPreBirthWeeks(event.target.value)}
                 >
-                  {[0, 1, 2, 3, 4, 5, 6].map((weeks) => (
+                  {preBirthOptions.map((weeks) => (
                     <option key={weeks} value={weeks}>
                       {weeks} tyg.
                     </option>
@@ -186,15 +226,18 @@ export function CalculatorForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="secondParent">Tydzień dla drugiego rodzica</Label>
+                <Label htmlFor="secondParent">
+                  Tydzień dla drugiego rodzica
+                </Label>
                 <Select
                   id="secondParent"
                   value={secondParentWeeks}
                   onChange={(event) => setSecondParentWeeks(event.target.value)}
                 >
-                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((weeks) => (
+                  {secondParentOptions.map((weeks) => (
                     <option key={weeks} value={weeks}>
-                      {weeks} tyg. (maks. 9)
+                      {weeks} tyg. (maks.{" "}
+                      {ruleSet.parental.nonTransferableWeeks})
                     </option>
                   ))}
                 </Select>
@@ -207,7 +250,7 @@ export function CalculatorForm() {
                   value={paternityDays}
                   onChange={(event) => setPaternityDays(event.target.value)}
                 >
-                  {[0, 7, 14].map((days) => (
+                  {paternityOptions.map((days) => (
                     <option key={days} value={days}>
                       {days} dni
                     </option>
@@ -216,15 +259,19 @@ export function CalculatorForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="work">Praca podczas urlopu rodzicielskiego</Label>
+                <Label htmlFor="work">
+                  Praca podczas urlopu rodzicielskiego
+                </Label>
                 <Select
                   id="work"
                   value={workFraction}
                   onChange={(event) => setWorkFraction(event.target.value)}
                 >
-                  <option value="0">Bez pracy</option>
-                  <option value="0.25">¼ etatu</option>
-                  <option value="0.5">½ etatu</option>
+                  {workOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </Select>
               </div>
             </div>
@@ -235,14 +282,14 @@ export function CalculatorForm() {
                 <PaymentOptionCard
                   checked={paymentOption === "STANDARD_100_70"}
                   onSelect={() => setPaymentOption("STANDARD_100_70")}
-                  title="100% + 70%"
-                  description="Macierzyński 100%, rodzicielski 70%."
+                  title={`${formatPercent(ruleSet.maternity.rate)} + ${formatPercent(ruleSet.parental.rate)}`}
+                  description={`Macierzyński ${formatPercent(ruleSet.maternity.rate)}, rodzicielski ${formatPercent(ruleSet.parental.rate)}.`}
                 />
                 <PaymentOptionCard
                   checked={paymentOption === "FLAT_81_5"}
                   onSelect={() => setPaymentOption("FLAT_81_5")}
-                  title="81,5%"
-                  description="Wniosek w ciągu 21 dni od porodu."
+                  title={formatPercent(ruleSet.parental.flatRate)}
+                  description={`Wniosek w ciągu ${ruleSet.deadlines.flatRateApplicationDays} dni od porodu.`}
                 />
               </div>
             </fieldset>
@@ -258,7 +305,9 @@ export function CalculatorForm() {
                 <span>
                   <span className="font-medium">Zaświadczenie „Za życiem”</span>
                   <span className="block text-xs text-muted-foreground">
-                    Wydłuża pulę urlopu rodzicielskiego do 65/67 tygodni.
+                    Wydłuża pulę urlopu rodzicielskiego do{" "}
+                    {ruleSet.parental.poolWeeks.zaZyciemSingle}/
+                    {ruleSet.parental.poolWeeks.zaZyciemMultiple} tygodni.
                   </span>
                 </span>
               </label>
@@ -306,7 +355,10 @@ export function CalculatorForm() {
           <Card className="border-dashed">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Info aria-hidden="true" className="size-4 text-muted-foreground" />
+                <Info
+                  aria-hidden="true"
+                  className="size-4 text-muted-foreground"
+                />
                 Tu pojawi się wynik
               </CardTitle>
               <CardDescription>
@@ -357,7 +409,9 @@ function PaymentOptionCard({
       />
       <span>
         <span className="font-medium">{title}</span>
-        <span className="block text-xs text-muted-foreground">{description}</span>
+        <span className="block text-xs text-muted-foreground">
+          {description}
+        </span>
       </span>
     </label>
   )
@@ -379,7 +433,9 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
               </CardTitle>
               <CardDescription>
                 Wersja silnika:{" "}
-                <span className="font-mono">{data.engineVersion}</span>
+                <span className="font-mono">{data.engineVersion}</span> · zestaw
+                reguł:{" "}
+                <span className="font-mono">{result.ruleSetVersion}</span>
               </CardDescription>
             </div>
             <Badge variant={isIndeterminate ? "warning" : "success"}>
@@ -396,23 +452,43 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
               Kwota brutto, przed zaliczką PIT.{" "}
               {result.verified
                 ? "Parametry zweryfikowane."
-                : "Wynik niezweryfikowany — Q-29 i Q-15."}
+                : "Wynik niezweryfikowany — sprawdź ostrzeżenia poniżej."}
             </p>
           </div>
 
           <dl className="grid grid-cols-2 gap-3 text-sm">
-            <Metric label="Macierzyński" value={`${result.maternityWeeks} tyg.`} />
-            <Metric label="Po porodzie" value={`${result.postBirthWeeks} tyg.`} />
-            <Metric label="Pula rodzicielska" value={`${result.parentalPoolWeeks} tyg.`} />
-            <Metric label="Dla drugiego rodzica" value={`${result.secondParentWeeks} tyg.`} />
-            <Metric label="Podstawa miesięczna" value={formatPln(result.basisGrosze)} />
-            <Metric label="Podstawa dzienna" value={formatPln(result.dailyBasisGrosze)} />
+            <Metric
+              label="Macierzyński"
+              value={`${result.maternityWeeks} tyg.`}
+            />
+            <Metric
+              label="Po porodzie"
+              value={`${result.postBirthWeeks} tyg.`}
+            />
+            <Metric
+              label="Pula rodzicielska"
+              value={`${result.parentalPoolWeeks} tyg.`}
+            />
+            <Metric
+              label="Dla drugiego rodzica"
+              value={`${result.secondParentWeeks} tyg.`}
+            />
+            <Metric
+              label="Podstawa miesięczna"
+              value={formatPln(result.basisGrosze)}
+            />
+            <Metric
+              label="Podstawa dzienna"
+              value={formatPln(result.dailyBasisGrosze)}
+            />
           </dl>
 
           {data.calculationId && (
             <p className="text-xs text-muted-foreground">
               Zapisano jako{" "}
-              <span className="font-mono">{data.calculationId.slice(0, 8)}…</span>
+              <span className="font-mono">
+                {data.calculationId.slice(0, 8)}…
+              </span>
             </p>
           )}
         </CardContent>
@@ -432,7 +508,7 @@ function CalculationResultView({ data }: { data: ResponseBody }) {
                 <TableHead className="pl-4">Świadczenie</TableHead>
                 <TableHead>Okres</TableHead>
                 <TableHead>Stawka</TableHead>
-                <TableHead className="text-right pr-4">Kwota</TableHead>
+                <TableHead className="pr-4 text-right">Kwota</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

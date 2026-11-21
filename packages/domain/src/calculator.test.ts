@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import { calculateBenefits } from "./calculator"
+import { buildRuleSet } from "./rule-set"
+import { testRuleParameters, testRuleSet } from "./testing"
 import type { CalculatorInput } from "./types"
+
+const ruleSet = testRuleSet()
 
 const baseInput: CalculatorInput = {
   grossMonthlyIncomeGrosze: 1_000_000,
@@ -20,17 +24,18 @@ function input(overrides: Partial<CalculatorInput> = {}): CalculatorInput {
 
 describe("calculateBenefits", () => {
   it("uses the statutory maternity and parental weeks for one child", () => {
-    const result = calculateBenefits(input())
+    const result = calculateBenefits(input(), ruleSet)
 
     expect(result.maternityWeeks).toBe(20)
     expect(result.parentalPoolWeeks).toBe(41)
     expect(result.motherParentalWeeks).toBe(41)
     expect(result.secondParentWeeks).toBe(0)
     expect(result.trace.map((step) => step.ruleId)).toContain("LR-123")
+    expect(result.ruleSetVersion).toBe("2026.11-Z1")
   })
 
-  it("never marks the preview as a verified entitlement", () => {
-    const result = calculateBenefits(input())
+  it("never marks the preview as a verified entitlement while Q-29/Q-15 are open", () => {
+    const result = calculateBenefits(input(), ruleSet)
 
     expect(result.verified).toBe(false)
     expect(result.status).toBe("INDETERMINATE")
@@ -39,7 +44,10 @@ describe("calculateBenefits", () => {
   })
 
   it("derives the benefit basis from gross pay minus the 13.71% contribution", () => {
-    const result = calculateBenefits(input({ grossMonthlyIncomeGrosze: 1_000_000 }))
+    const result = calculateBenefits(
+      input({ grossMonthlyIncomeGrosze: 1_000_000 }),
+      ruleSet
+    )
 
     expect(result.basisGrosze).toBe(862_900)
     expect(result.dailyBasisGrosze).toBe(28_763)
@@ -53,7 +61,8 @@ describe("calculateBenefits", () => {
         secondParentParentalWeeks: 30,
         parentalWorkFraction: 4,
         paternityDays: 99,
-      })
+      }),
+      ruleSet
     )
 
     expect(result.normalizedChildrenCount).toBe(5)
@@ -66,10 +75,13 @@ describe("calculateBenefits", () => {
   })
 
   it("applies the Za życiem parental pool", () => {
-    expect(calculateBenefits(input({ hasZaZyciem: true })).parentalPoolWeeks).toBe(65)
+    expect(
+      calculateBenefits(input({ hasZaZyciem: true }), ruleSet).parentalPoolWeeks
+    ).toBe(65)
 
     const multiple = calculateBenefits(
-      input({ hasZaZyciem: true, childrenCount: 2 })
+      input({ hasZaZyciem: true, childrenCount: 2 }),
+      ruleSet
     )
     expect(multiple.parentalPoolWeeks).toBe(67)
     expect(multiple.maternityWeeks).toBe(31)
@@ -77,7 +89,8 @@ describe("calculateBenefits", () => {
 
   it("reserves the non-transferable nine weeks for the second parent", () => {
     const result = calculateBenefits(
-      input({ secondParentParentalWeeks: 9, paternityDays: 14 })
+      input({ secondParentParentalWeeks: 9, paternityDays: 14 }),
+      ruleSet
     )
 
     expect(result.secondParentWeeks).toBe(9)
@@ -93,7 +106,8 @@ describe("calculateBenefits", () => {
 
   it("uses the 81.5% rate for the flat option but keeps 70% for the second parent", () => {
     const result = calculateBenefits(
-      input({ paymentOption: "FLAT_81_5", secondParentParentalWeeks: 9 })
+      input({ paymentOption: "FLAT_81_5", secondParentParentalWeeks: 9 }),
+      ruleSet
     )
 
     const [maternity, motherParental, secondParent] = result.lines
@@ -104,12 +118,44 @@ describe("calculateBenefits", () => {
   })
 
   it("extends the parental leave proportionally when working part-time", () => {
-    const result = calculateBenefits(input({ parentalWorkFraction: 0.5 }))
+    const result = calculateBenefits(
+      input({ parentalWorkFraction: 0.5 }),
+      ruleSet
+    )
 
     expect(result.extensionWeeks).toBe(21)
     expect(result.lines.map((line) => line.kind)).toContain(
       "WORK_COMBINATION_EXTENSION"
     )
     expect(result.warnings.join(" ")).toContain("21 dni")
+  })
+
+  it("changes the amounts when only the rule set changes (no code change)", () => {
+    const rows = testRuleParameters()
+    const rates = rows.find((row) => row.code === "LR-130")
+    expect(rates).toBeDefined()
+    rates!.parameters = { ...rates!.parameters, parental: 0.75 }
+
+    const changed = buildRuleSet(rows)
+    const before = calculateBenefits(
+      input({ secondParentParentalWeeks: 9 }),
+      ruleSet
+    )
+    const after = calculateBenefits(
+      input({ secondParentParentalWeeks: 9 }),
+      changed
+    )
+
+    expect(after.lines.some((line) => line.rate === 0.75)).toBe(true)
+    expect(after.totalGrosze).toBeGreaterThan(before.totalGrosze)
+  })
+
+  it("becomes verified when the rule set has no blocking gaps", () => {
+    const result = calculateBenefits(input(), testRuleSet({ verified: true }))
+
+    expect(result.verified).toBe(true)
+    expect(result.status).toBe("OK")
+    expect(result.warnings.join(" ")).not.toContain("Q-29")
+    expect(result.warnings.join(" ")).not.toContain("Q-15")
   })
 })

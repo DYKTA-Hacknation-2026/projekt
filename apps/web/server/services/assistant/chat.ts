@@ -9,6 +9,7 @@ import {
 import type { AssistantOptions } from "@zpr/contracts/assistant"
 import type { Env } from "@zpr/contracts/env"
 import type { ConversationMessageRecord } from "@zpr/db/repositories"
+import type { RuleSet } from "@zpr/domain"
 
 import type { Principal } from "@/server/auth/session"
 import { getContainer } from "@/server/container"
@@ -42,21 +43,29 @@ const LOG_LEVELS = ["trace", "debug", "info", "warn", "error", "fatal"] as const
 
 /** Structured, content-free logging: ids, counts and statuses only. */
 export function assistantLogger(env: Env) {
-  const enabled = LOG_LEVELS.indexOf(env.LOG_LEVEL) <= LOG_LEVELS.indexOf("info")
+  const enabled =
+    LOG_LEVELS.indexOf(env.LOG_LEVEL) <= LOG_LEVELS.indexOf("info")
   return (event: string, data: Record<string, unknown>) => {
     if (!enabled && !event.endsWith("error")) return
-    const line = JSON.stringify({ level: event.endsWith("error") ? "warn" : "info", event, ...data })
+    const line = JSON.stringify({
+      level: event.endsWith("error") ? "warn" : "info",
+      event,
+      ...data,
+    })
     if (event.endsWith("error")) console.warn(line)
     else console.info(line)
   }
 }
 
 /** Rebuilds UI messages from storage. Only our own server writes `uiMessage`. */
-export function toUIMessages(rows: ConversationMessageRecord[]): AssistantUIMessage[] {
+export function toUIMessages(
+  rows: ConversationMessageRecord[]
+): AssistantUIMessage[] {
   return rows
     .filter((row) => row.role === "USER" || row.role === "ASSISTANT")
     .map((row) => {
-      const stored = (row.metadata as { uiMessage?: AssistantUIMessage }).uiMessage
+      const stored = (row.metadata as { uiMessage?: AssistantUIMessage })
+        .uiMessage
       if (stored && Array.isArray(stored.parts)) return stored
       return {
         id: row.id,
@@ -67,7 +76,10 @@ export function toUIMessages(rows: ConversationMessageRecord[]): AssistantUIMess
 }
 
 function clientIdOf(row: ConversationMessageRecord | undefined): string | null {
-  return (row?.metadata as { uiMessage?: { id?: string } } | undefined)?.uiMessage?.id ?? null
+  return (
+    (row?.metadata as { uiMessage?: { id?: string } } | undefined)?.uiMessage
+      ?.id ?? null
+  )
 }
 
 export interface PreparedTurn {
@@ -94,7 +106,9 @@ export async function prepareTurn(input: {
   )
 
   if (!owned) {
-    const existing = await repositories.conversations.getConversation(input.conversationId)
+    const existing = await repositories.conversations.getConversation(
+      input.conversationId
+    )
     if (existing) {
       throw new AppError(404, "NOT_FOUND", "Nie znaleziono rozmowy.")
     }
@@ -103,9 +117,15 @@ export async function prepareTurn(input: {
       ownerKey: input.principal.sid,
       userId: input.principal.userId,
       // Titles are listed in history: never store identifiers in them.
-      title: scrubPii(input.message.text).text.replace(/\s+/g, " ").slice(0, 90),
+      title: scrubPii(input.message.text)
+        .text.replace(/\s+/g, " ")
+        .slice(0, 90),
     })
-    return { conversationId: input.conversationId, history: [], userAlreadyStored: false }
+    return {
+      conversationId: input.conversationId,
+      history: [],
+      userAlreadyStored: false,
+    }
   }
 
   if (input.regenerate) {
@@ -188,7 +208,9 @@ export async function persistTurn(
       chunkId: source.chunkId,
       rank: index + 1,
       score: source.relevance,
-      quote: source.quote ?? `${source.documentTitle} — ${source.legalReference ?? source.sectionIdentifier ?? ""}`,
+      quote:
+        source.quote ??
+        `${source.documentTitle} — ${source.legalReference ?? source.sectionIdentifier ?? ""}`,
     })),
   })
 }
@@ -199,6 +221,7 @@ export function startTurn(input: {
   prepared: PreparedTurn
   message: { id: string; text: string }
   options: AssistantOptions
+  ruleSet: RuleSet
   abortSignal?: AbortSignal
 }) {
   const log = assistantLogger(input.env)
@@ -207,6 +230,7 @@ export function startTurn(input: {
     services: createAssistantServices({
       principal: input.principal,
       profileEnabled: input.options.useProfile,
+      ruleSet: input.ruleSet,
     }),
     chatModel: getChatModel(input.env),
     history: input.prepared.history,

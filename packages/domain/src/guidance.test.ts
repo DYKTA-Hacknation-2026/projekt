@@ -5,17 +5,22 @@ import { relevantDeadlines } from "./deadlines"
 import { requiredDocuments } from "./documents"
 import { assessEligibility } from "./eligibility"
 import { compareLeaveScenarios } from "./scenarios"
+import { testRuleSet } from "./testing"
 
 const asOf = "2026-11-21"
+const ruleSet = testRuleSet()
 
 function maternity(facts: Parameters<typeof assessEligibility>[0]) {
-  return assessEligibility(facts, { asOf, benefits: ["MATERNITY_ALLOWANCE"] })
-    .determinations[0]!
+  return assessEligibility(facts, {
+    asOf,
+    ruleSet,
+    benefits: ["MATERNITY_ALLOWANCE"],
+  }).determinations[0]!
 }
 
 describe("assessEligibility", () => {
   it("asks for the insurance title instead of guessing", () => {
-    const result = assessEligibility({}, { asOf })
+    const result = assessEligibility({}, { asOf, ruleSet })
     expect(result.determinations.every((d) => d.status === "NEEDS_INPUT")).toBe(
       true
     )
@@ -23,7 +28,10 @@ describe("assessEligibility", () => {
   })
 
   it("treats an employee as covered by compulsory sickness insurance", () => {
-    const result = maternity({ employmentType: "EMPLOYMENT", parentRole: "MOTHER" })
+    const result = maternity({
+      employmentType: "EMPLOYMENT",
+      parentRole: "MOTHER",
+    })
     expect(result.status).toBe("ELIGIBLE")
     expect(result.legalBasis.join(" ")).toContain("U art. 29")
   })
@@ -56,8 +64,10 @@ describe("assessEligibility", () => {
       maternity({ employmentType: "MANDATE", sicknessInsurance: "NONE" }).status
     ).toBe("NOT_ELIGIBLE")
     expect(
-      maternity({ employmentType: "EMPLOYMENT", professionalFosterFamily: true })
-        .status
+      maternity({
+        employmentType: "EMPLOYMENT",
+        professionalFosterFamily: true,
+      }).status
     ).toBe("NOT_ELIGIBLE")
   })
 
@@ -68,13 +78,13 @@ describe("assessEligibility", () => {
         sicknessInsurance: "VOLUNTARY",
         insuranceStartDate: "2026-10-01",
       },
-      { asOf, benefits: ["SICKNESS_IN_PREGNANCY"] }
+      { asOf, ruleSet, benefits: ["SICKNESS_IN_PREGNANCY"] }
     ).determinations[0]!
     expect(fresh.status).toBe("NOT_ELIGIBLE")
 
     const long = assessEligibility(
       { employmentType: "EMPLOYMENT", insuranceStartDate: "2026-01-01" },
-      { asOf, benefits: ["SICKNESS_IN_PREGNANCY"] }
+      { asOf, ruleSet, benefits: ["SICKNESS_IN_PREGNANCY"] }
     ).determinations[0]!
     expect(long.status).toBe("ELIGIBLE")
   })
@@ -82,7 +92,7 @@ describe("assessEligibility", () => {
   it("does not grant paternity to the mother", () => {
     const result = assessEligibility(
       { employmentType: "EMPLOYMENT", parentRole: "MOTHER" },
-      { asOf, benefits: ["PATERNITY_BENEFIT"] }
+      { asOf, ruleSet, benefits: ["PATERNITY_BENEFIT"] }
     )
     expect(result.determinations[0]?.status).toBe("NOT_ELIGIBLE")
   })
@@ -90,9 +100,13 @@ describe("assessEligibility", () => {
 
 describe("requiredDocuments", () => {
   it("routes the self-employed to ZUS with ZAM", () => {
-    const list = requiredDocuments("MATERNITY_ALLOWANCE", {
-      employmentType: "SELF_EMPLOYMENT",
-    })
+    const list = requiredDocuments(
+      "MATERNITY_ALLOWANCE",
+      {
+        employmentType: "SELF_EMPLOYMENT",
+      },
+      ruleSet
+    )
     expect(list.routing.payer).toBe("ZUS")
     expect(list.documents.map((d) => d.code)).toContain("ZAM")
     expect(list.documents.find((d) => d.code === "Z-3b")?.caveat).toContain(
@@ -101,9 +115,13 @@ describe("requiredDocuments", () => {
   })
 
   it("asks about the payer size for employees", () => {
-    const list = requiredDocuments("MATERNITY_ALLOWANCE", {
-      employmentType: "EMPLOYMENT",
-    })
+    const list = requiredDocuments(
+      "MATERNITY_ALLOWANCE",
+      {
+        employmentType: "EMPLOYMENT",
+      },
+      ruleSet
+    )
     expect(list.routing.payer).toBe("UNKNOWN")
     expect(list.missingFacts.map((m) => m.key)).toContain("payerSize")
   })
@@ -111,7 +129,7 @@ describe("requiredDocuments", () => {
 
 describe("relevantDeadlines", () => {
   it("computes dates from the birth", () => {
-    const report = relevantDeadlines({ eventDate: "2027-03-10" })
+    const report = relevantDeadlines({ eventDate: "2027-03-10" }, { ruleSet })
     expect(report.deadlines.find((d) => d.id === "flat-81-5")?.date).toBe(
       "2027-03-31"
     )
@@ -121,13 +139,16 @@ describe("relevantDeadlines", () => {
   })
 
   it("keeps rules relative when no date is known", () => {
-    const report = relevantDeadlines({ familyEvent: "PREGNANCY" })
+    const report = relevantDeadlines({ familyEvent: "PREGNANCY" }, { ruleSet })
     expect(report.deadlines.every((d) => d.date === null)).toBe(true)
     expect(report.missingFacts[0]?.key).toBe("expectedDueDate")
   })
 
   it("labels due-date based dates as estimates", () => {
-    const report = relevantDeadlines({ expectedDueDate: "2027-03-10" })
+    const report = relevantDeadlines(
+      { expectedDueDate: "2027-03-10" },
+      { ruleSet }
+    )
     expect(report.caveats.join(" ")).toContain("przewidywanego")
     expect(
       report.deadlines.find((d) => d.id === "maternity-pre-birth")?.date
@@ -153,7 +174,8 @@ describe("compareLeaveScenarios", () => {
       [
         { ...plan, name: "Mama całość", secondParentParentalWeeks: 0 },
         { ...plan, name: "Tata 9 tygodni", secondParentParentalWeeks: 9 },
-      ]
+      ],
+      ruleSet
     )
     expect(comparison.outcomes[0]?.totalDifferenceGrosze).toBe(0)
     expect(comparison.outcomes[1]?.secondParentWeeks).toBe(9)
