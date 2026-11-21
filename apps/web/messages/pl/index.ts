@@ -19,12 +19,14 @@ export const LEGAL_DISCLOSURE =
 export const navItems = [
   { href: "/panel", label: "Panel" },
   { href: "/kalkulator", label: "Kalkulator" },
+  { href: "/wiedza", label: "Wiedza" },
   { href: "/asystent", label: "Asystent" },
   { href: "/dokumenty", label: "Dokumenty" },
   { href: "/os-czasu", label: "Oś czasu" },
 ] as const
 
 export const footerLinks = [
+  { href: "/wiedza", label: "Centrum wiedzy" },
   { href: "/start", label: "Kreator startowy" },
   { href: "/dane", label: "Pobierz dane (symulacja)" },
   { href: "/mobywatel", label: "Logowanie mObywatel (symulacja)" },
@@ -49,6 +51,8 @@ export const statusLabels = {
   QUEUED: "W kolejce",
   RUNNING: "W toku",
   SUCCEEDED: "Zakończone",
+  PUBLISHED: "Opublikowany",
+  ARCHIVED: "Zarchiwizowany",
   ELIGIBLE: "Wstępnie spełnia",
   NOT_ELIGIBLE: "Nie spełnia",
   NEEDS_INPUT: "Brakuje danych",
@@ -231,4 +235,9 @@ export const mobywatel = {
   sessionText:
     "Dane osobowe zostały wstępnie uzupełnione. Sprawdź je i możesz poprawić przed zapisaniem sprawy.",
   sessionChange: "Zmień profil",
+} as const
+
+export const knowledge = {
+  title: "Centrum wiedzy",
+  lead: "Świadczenia, prawa rodziców, ubezpieczenia i formalności — po ludzku, z datą weryfikacji i odnośnikiem do oficjalnego źródła.",
 } as const

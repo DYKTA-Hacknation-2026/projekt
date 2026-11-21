@@ -19,6 +19,7 @@ import {
   userProfiles,
   users,
 } from "../schema"
+import { seedKnowledgeCenter } from "./seed-knowledge-center"
 
 function id(sequence: number): string {
   return `01900000-0000-7000-8000-${sequence.toString().padStart(12, "0")}`
@@ -625,6 +626,9 @@ async function seed(): Promise<void> {
   console.info(
     "[db:seed] Dane demonstracyjne zostały zapisane (idempotentnie)."
   )
+
+  await seedKnowledgeCenter()
+
   console.info(
     "[db:seed] Baza wiedzy: uruchom `pnpm --filter @zpr/rag kb:seed`, aby zaindeksować źródła."
   )

@@ -25,7 +25,8 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "zod": "^4.6.7",
-    "@zpr/ai": "workspace:*"
+    "@zpr/ai": "workspace:*",
+    "@zpr/db": "workspace:*"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

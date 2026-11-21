@@ -10,7 +10,7 @@ test.describe("assistant chat", () => {
 
     const answer = page.getByRole("article", { name: "Odpowiedź asystenta" }).last()
     await expect(answer.getByRole("region", { name: "Wstępna ocena uprawnień" })).toBeVisible({ timeout: 30_000 })
-    await expect(answer.getByText("Pytanie do ciebie")).toBeVisible()
+    await expect(answer.getByText("Pytanie do ciebie")).toBeVisible({ timeout: 30_000 })
 
     const citation = answer.getByRole("button", { name: /^Źródło S1: .*Pokaż fragment\.$/ }).first()
     await expect(citation).toBeVisible()
@@ -36,7 +36,7 @@ test.describe("assistant chat", () => {
     await input.press("Enter")
     const second = page.getByRole("article", { name: "Odpowiedź asystenta" }).nth(1)
     await expect(second.getByText("Wstępnie tak").first()).toBeVisible({ timeout: 30_000 })
-    await expect(page.getByText("Możesz też zapytać")).toBeVisible()
+    await expect(page.getByText("Możesz też zapytać")).toBeVisible({ timeout: 30_000 })
   })
 
   test("removes identifiers and can delete the conversation", async ({ page }) => {

@@ -204,6 +204,36 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6">
+        <div className="flex flex-col gap-5 rounded-2xl border border-primary/20 bg-card p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div className="max-w-2xl space-y-2">
+            <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.18em] text-primary uppercase">
+              <BookOpen aria-hidden="true" className="size-4" />
+              Centrum wiedzy
+            </p>
+            <h2 className="text-2xl font-semibold tracking-tight text-balance">
+              Nie wiesz, od czego zacząć?
+            </h2>
+            <p className="text-sm text-pretty text-muted-foreground">
+              Artykuły, najczęstsze pytania, karty dokumentów, przewodniki i
+              słownik pojęć. Wszystko prostym językiem, z datą weryfikacji i
+              odnośnikiem do oficjalnego źródła.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild>
+              <Link href="/wiedza">
+                Przeglądaj wiedzę
+                <ArrowRight data-icon="inline-end" aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/wiedza/faq">Najczęstsze pytania</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
         <div className="overflow-hidden rounded-2xl border border-primary/20 bg-primary px-6 py-10 text-primary-foreground sm:px-10">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">

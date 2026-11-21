@@ -102,6 +102,9 @@ importers:
       '@zpr/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@zpr/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@zpr/domain':
         specifier: workspace:*
         version: link:../../packages/domain
