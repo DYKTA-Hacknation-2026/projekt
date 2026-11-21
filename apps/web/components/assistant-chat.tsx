@@ -112,6 +112,13 @@ export function AssistantChat() {
   const [useProfile, setUseProfile] = useState(false)
   const useProfileRef = useRef(useProfile)
   useProfileRef.current = useProfile
+
+  // Allow knowledge articles and FAQ to open the assistant with a prefilled
+  // question, without adding a server-side dependency to the chat component.
+  useEffect(() => {
+    const question = new URLSearchParams(window.location.search).get("q")
+    if (question) setInput(question)
+  }, [])
   const [session, setSession] = useState<SessionInfo | null>(null)
   const [conversations, setConversations] = useState<ConversationItem[]>([])
   const [historyOpen, setHistoryOpen] = useState(false)

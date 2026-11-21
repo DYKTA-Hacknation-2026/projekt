@@ -6,9 +6,13 @@ import {
 } from "@zpr/rag/retrieval"
 import { createRepositories, type Repositories } from "@zpr/db/repositories"
 
+import { createDocumentSuggester } from "@/server/services/document-llm"
+import { createDocumentService, createLocalStorage, type DocumentService } from "@/server/services/documents"
+
 type GlobalWithContainer = typeof globalThis & {
   __zprRepositories?: Repositories
   __zprRetrieval?: RetrievalService
+  __zprDocuments?: DocumentService
 }
 
 const globalForContainer = globalThis as GlobalWithContainer
@@ -49,4 +53,18 @@ export function getContainer(): Container {
     repositories: getRepositories(),
     retrieval: getRetrieval(),
   }
+}
+
+/** Document pipeline over PostgreSQL and private local storage (see `.env.example`). */
+export function getDocumentService(): DocumentService {
+  if (!globalForContainer.__zprDocuments) {
+    const env = getEnv()
+    globalForContainer.__zprDocuments = createDocumentService({
+      repo: getRepositories().documents,
+      storage: createLocalStorage(env),
+      env,
+      suggester: () => createDocumentSuggester(env),
+    })
+  }
+  return globalForContainer.__zprDocuments
 }

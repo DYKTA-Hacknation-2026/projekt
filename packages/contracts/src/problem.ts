@@ -10,6 +10,9 @@ export type ProblemCode =
   | "PAYLOAD_TOO_LARGE"
   | "UNSUPPORTED_MEDIA_TYPE"
   | "CONFLICT"
+  | "CONSENT_REQUIRED"
+  | "DOCUMENT_UNREADABLE"
+  | "TIMEOUT"
   | "UPSTREAM_ERROR"
   | "INTERNAL_ERROR"
 
@@ -23,6 +26,9 @@ const defaultTitles: Record<ProblemCode, string> = {
   PAYLOAD_TOO_LARGE: "Plik jest zbyt duży",
   UNSUPPORTED_MEDIA_TYPE: "Nieobsługiwany format",
   CONFLICT: "Konflikt danych",
+  CONSENT_REQUIRED: "Wymagana zgoda",
+  DOCUMENT_UNREADABLE: "Nie można odczytać dokumentu",
+  TIMEOUT: "Przekroczono czas operacji",
   UPSTREAM_ERROR: "Błąd usługi zewnętrznej",
   INTERNAL_ERROR: "Błąd wewnętrzny",
 }

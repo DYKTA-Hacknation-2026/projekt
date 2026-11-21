@@ -55,6 +55,8 @@ describe("rules after the API split", () => {
       save: true,
       input: {
         grossMonthlyIncomeGrosze: 800_000,
+        motherEnabled: true,
+        fatherEnabled: true,
         mode: "BIRTH",
         specialCase: "STANDARD",
         incomeMode: "SIMPLE",

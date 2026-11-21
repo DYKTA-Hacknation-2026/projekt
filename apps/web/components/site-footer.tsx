@@ -1,46 +1,62 @@
 import Link from "next/link"
-
 import { Brand } from "@/components/brand"
-import { Separator } from "@workspace/ui/components/separator"
-import {
-  AI_DISCLOSURE,
-  APP_NAME,
-  LEGAL_DISCLOSURE,
-  SIMULATION_DISCLOSURE,
-  footerLinks,
-} from "@/messages/pl"
+import { LEGAL_DISCLOSURE, footerLinks } from "@/messages/pl"
 
-const officialLinks = [
-  { href: "https://www.zus.pl/", label: "zus.pl" },
-  { href: "https://www.gov.pl/web/rodzina/urlop-rodzicielski", label: "gov.pl — urlop rodzicielski" },
-  { href: "https://www.pip.gov.pl/", label: "pip.gov.pl" },
+const photos = [
+  {
+    title: "Couple Standing by Window Holding Newborn",
+    author: "Dasha Halepova",
+    source:
+      "https://www.pexels.com/photo/couple-standing-by-window-holding-newborn-16852493/",
+    license: "Pexels",
+    licenseUrl: "https://www.pexels.com/license/",
+  },
+  {
+    title: "Father and Mother Holding Baby Son",
+    author: "Gisele Seidel",
+    source:
+      "https://www.pexels.com/photo/father-and-mother-holding-baby-son-20729677/",
+    license: "Pexels",
+    licenseUrl: "https://www.pexels.com/license/",
+  },
+  {
+    title: "Heart shape on a pregnant belly",
+    author: "freestocks.org",
+    source: "https://www.flickr.com/photos/135396164@N05/32152969191",
+    license: "CC0",
+    licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+  },
+  {
+    title: "Father Baby Child",
+    author: "rawpixel",
+    source:
+      "https://www.rawpixel.com/image/5917055/image-public-domain-hand-people",
+    license: "CC0",
+    licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+  },
 ]
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-border bg-secondary/40">
-      <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+    <footer className="bg-secondary/50 text-sm">
+      <div className="mx-auto w-full max-w-[1320px] px-5 py-12 sm:px-6">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
-          <div className="space-y-4">
-            <Brand />
-            <p className="max-w-sm text-sm text-pretty text-muted-foreground">
-              {LEGAL_DISCLOSURE}
-            </p>
-            <p className="max-w-sm text-xs text-pretty text-muted-foreground">
-              {SIMULATION_DISCLOSURE}
+          <div>
+            <Brand compact />
+            <p className="mt-5 max-w-sm leading-relaxed">{LEGAL_DISCLOSURE}</p>
+            <p className="mt-3 max-w-sm leading-relaxed">
+              Projekt demonstracyjny. Dane i integracje są symulowane. Serwis
+              nie jest oficjalnym serwisem ZUS.
             </p>
           </div>
-
           <nav aria-label="Nawigacja w stopce">
-            <h2 className="text-xs font-semibold tracking-wide text-foreground uppercase">
-              Serwis
-            </h2>
-            <ul className="mt-3 space-y-2 text-sm">
+            <h2 className="font-sans text-lg font-semibold">Przewodnik</h2>
+            <ul className="mt-4 grid gap-3">
               {footerLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                    className="underline-offset-4 hover:underline"
                   >
                     {link.label}
                   </Link>
@@ -48,19 +64,31 @@ export function SiteFooter() {
               ))}
             </ul>
           </nav>
-
           <div>
-            <h2 className="text-xs font-semibold tracking-wide text-foreground uppercase">
+            <h2 className="font-sans text-lg font-semibold">
               Źródła oficjalne
             </h2>
-            <ul className="mt-3 space-y-2 text-sm">
-              {officialLinks.map((link) => (
+            <ul className="mt-4 grid gap-3">
+              {[
+                {
+                  href: "https://www.zus.pl/",
+                  label: "Zakład Ubezpieczeń Społecznych",
+                },
+                {
+                  href: "https://www.gov.pl/web/rodzina/urlop-rodzicielski",
+                  label: "gov.pl: urlop rodzicielski",
+                },
+                {
+                  href: "https://www.pip.gov.pl/",
+                  label: "Państwowa Inspekcja Pracy",
+                },
+              ].map((link) => (
                 <li key={link.href}>
                   <a
                     href={link.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                    className="underline-offset-4 hover:underline"
                   >
                     {link.label}
                   </a>
@@ -69,15 +97,36 @@ export function SiteFooter() {
             </ul>
           </div>
         </div>
-
-        <Separator className="my-8" />
-
-        <div className="flex flex-col gap-3 text-xs text-muted-foreground sm:flex-row sm:items-start sm:justify-between">
-          <p>
-            © {new Date().getFullYear()} {APP_NAME}. Projekt hackathonowy.
-          </p>
-          <p className="max-w-2xl text-pretty">{AI_DISCLOSURE}</p>
-        </div>
+        <details className="mt-10 max-w-3xl">
+          <summary className="cursor-pointer py-2 font-semibold">
+            Zdjęcia i licencje
+          </summary>
+          <ul className="mt-3 grid gap-3">
+            {photos.map((photo) => (
+              <li key={photo.title}>
+                <a
+                  href={photo.source}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-4"
+                >
+                  {photo.title}
+                </a>
+                {" — "}
+                {photo.author}
+                {", "}
+                <a
+                  href={photo.licenseUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-4"
+                >
+                  {photo.license}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
       </div>
     </footer>
   )

@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter, JetBrains_Mono, Newsreader } from "next/font/google"
+import { Source_Sans_3 } from "next/font/google"
 
 import "@workspace/ui/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -7,23 +7,10 @@ import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"
 import { SimulationBanner } from "@/components/simulation-banner"
 import { APP_NAME } from "@/messages/pl"
-import { cn } from "@workspace/ui/lib/utils"
 
-const inter = Inter({
+const sourceSans = Source_Sans_3({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-inter",
-  display: "swap",
-})
-
-const newsreader = Newsreader({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-newsreader",
-  display: "swap",
-})
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-jetbrains",
+  variable: "--font-nunito",
   display: "swap",
 })
 
@@ -54,11 +41,8 @@ export default function RootLayout({
     <html
       lang="pl"
       suppressHydrationWarning
-      className={cn(
-        inter.variable,
-        newsreader.variable,
-        jetbrainsMono.variable
-      )}
+      data-scroll-behavior="smooth"
+      className={sourceSans.variable}
     >
       <body>
         <ThemeProvider>

@@ -18,7 +18,8 @@
     "./views": "./src/views.ts",
     "./problem": "./src/problem.ts",
     "./assistant-tools": "./src/assistant-tools.ts",
-    "./engine": "./src/engine.ts"
+    "./engine": "./src/engine.ts",
+    "./content": "./src/content.ts"
   },
   "scripts": {
     "lint": "eslint",

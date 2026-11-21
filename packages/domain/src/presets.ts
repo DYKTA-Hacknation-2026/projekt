@@ -114,6 +114,37 @@ export const PRESET_CASES: readonly PresetCase[] = [
       paternityDays: 14,
     },
   },
+  {
+    id: "oliwia-rodzina-zastepcza",
+    label: "Oliwia – rodzina zastępcza niezawodowa",
+    description:
+      "Przyjęcie 4-letniego dziecka do rodziny zastępczej niezawodowej: 20 tygodni na warunkach macierzyńskiego + rodzicielski.",
+    tab: "ADOPTION",
+    input: {
+      ...base,
+      mode: "FOSTER_CARE",
+      grossMonthlyIncomeGrosze: 700_000,
+      childAgeYears: 4,
+      placementDate: "2026-09-01",
+      childBirthDate: "2022-09-01",
+    },
+  },
+  {
+    id: "ewa-praca-z-urlopem",
+    label: "Ewa – praca łączona z urlopem",
+    description:
+      "Mama pracuje na ½ etatu przez cały urlop rodzicielski; przedłużenie także łączone z pracą, tata bierze 9 tygodni.",
+    tab: "BIRTH",
+    input: {
+      ...base,
+      grossMonthlyIncomeGrosze: 850_000,
+      secondParentMonthlyIncomeGrosze: 650_000,
+      secondParentParentalWeeks: 9,
+      parentalWorkFraction: 0.5,
+      combineWorkInExtension: true,
+      paternityDays: 14,
+    },
+  },
 ]
 
 export function findPresetCase(id: string): PresetCase | undefined {

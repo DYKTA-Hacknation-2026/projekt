@@ -36,9 +36,7 @@ describe("parental plan data", () => {
   it("exposes leave periods as real date ranges with owners", () => {
     const result = plan()
     expect(result.periods.length).toBeGreaterThan(0)
-    const maternity = result.periods.find(
-      (period) => period.id === "maternity"
-    )
+    const maternity = result.periods.find((period) => period.id === "maternity")
     expect(maternity?.owner).toBe("MAMA")
     expect(maternity?.start).toBe("2027-03-10")
     expect(maternity?.end).toBe("2027-07-13")
@@ -46,7 +44,9 @@ describe("parental plan data", () => {
     expect(maternity?.documents.length).toBeGreaterThan(0)
     expect(maternity?.legalReference).toContain("LR-123")
 
-    const preBirth = result.periods.find((period) => period.id === "maternity-pre")
+    const preBirth = result.periods.find(
+      (period) => period.id === "maternity-pre"
+    )
     expect(preBirth?.start).toBe("2027-02-24")
     expect(preBirth?.end).toBe("2027-03-09")
 
@@ -56,6 +56,35 @@ describe("parental plan data", () => {
     expect(paternity?.owner).toBe("TATA")
     expect(paternity?.start).toBe("2027-03-10")
     expect(paternity?.days).toBe(14)
+  })
+
+  it("uses the engine checklist for each parent's benefit and milestones", () => {
+    const result = plan()
+    const father = result.periods.find(
+      (period) => period.benefit === "PATERNITY"
+    )!
+    expect(father.documents.map((document) => document.code)).toContain(
+      "WNIOSEK-URLOP-OJCOWSKI"
+    )
+    expect(father.documents.map((document) => document.code)).toContain(
+      "OSW-OJCOWSKI-INNY-TYTUL"
+    )
+    const mother = result.periods.find(
+      (period) => period.benefit === "MATERNITY"
+    )!
+    expect(mother.documents.map((document) => document.code)).not.toContain(
+      "WNIOSEK-URLOP-OJCOWSKI"
+    )
+    expect(
+      result.milestones.find(
+        (milestone) => milestone.id === "paternity-request"
+      )?.documents
+    ).toEqual(father.documents)
+    expect(
+      result.milestones.find(
+        (milestone) => milestone.id === "parental-request-father"
+      )?.documents?.length
+    ).toBeGreaterThan(0)
   })
 
   it("keeps the other parent's reserved weeks on the father's track", () => {
@@ -160,9 +189,9 @@ describe("plan timeline presentation", () => {
     const result = plan()
     const mother = filterTimeline(result, "MAMA", "ALL")
     expect(mother.periods.every((period) => period.owner === "MAMA")).toBe(true)
-    expect(mother.milestones.every((milestone) => milestone.owner === "MAMA")).toBe(
-      true
-    )
+    expect(
+      mother.milestones.every((milestone) => milestone.owner === "MAMA")
+    ).toBe(true)
 
     const shared = filterTimeline(result, "OBOJE", "ALL")
     expect(shared.periods).toHaveLength(0)
@@ -171,12 +200,18 @@ describe("plan timeline presentation", () => {
     const documents = filterTimeline(result, "ALL", "DOCUMENT")
     expect(documents.periods).toHaveLength(0)
     expect(
-      documents.milestones.every((milestone) => milestone.category === "DOCUMENT")
+      documents.milestones.every(
+        (milestone) => milestone.category === "DOCUMENT"
+      )
     ).toBe(true)
 
     const motherView = buildTimelineView(result, "MAMA", "ALL", today)
     expect(motherView.sharedTitle).toBe("Mama — terminy")
-    expect(motherView.shared.points.every((point) => point.milestone.owner === "MAMA")).toBe(true)
+    expect(
+      motherView.shared.points.every(
+        (point) => point.milestone.owner === "MAMA"
+      )
+    ).toBe(true)
 
     expect(result.periods.length).toBeGreaterThan(0)
   })

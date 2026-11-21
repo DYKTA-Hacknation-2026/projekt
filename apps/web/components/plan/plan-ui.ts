@@ -74,6 +74,10 @@ export const categoryDot: Record<TimelineCategory, string> = {
 
 export const documentPreparedBy: Record<string, string> = {
   YOU: "Ty",
+  OTHER_PARENT: "Drugi rodzic",
+  HOSPITAL: "Szpital",
+  COURT: "Sąd",
+  ZUS: "ZUS",
   EMPLOYER: "Pracodawca",
   PAYER: "Płatnik",
   DOCTOR: "Lekarz",
@@ -84,6 +88,9 @@ export const documentSubmitTo: Record<string, string> = {
   EMPLOYER: "Pracodawca",
   ZUS: "ZUS",
   EMPLOYER_OR_ZUS: "Pracodawca lub ZUS",
+  PAYER: "Płatnik",
+  PAYER_OR_ZUS: "Płatnik lub ZUS",
+  NONE: "Nie wymaga złożenia",
 }
 
 export const borderTone: Record<TimelineOwner, string> = {

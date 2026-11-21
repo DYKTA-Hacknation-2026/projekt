@@ -34,6 +34,26 @@ export const calculatorInputSchema = z.object({
   paymentOption: z
     .enum(["STANDARD_100_70", "FLAT_81_5"])
     .default("STANDARD_100_70"),
+  birthDate: z.iso.date().optional(),
+  flatRateApplicationDate: z.iso.date().optional(),
+  fatherMaternityTakeoverReason: z
+    .enum([
+      "MOTHER_RESIGNS_AFTER_14_WEEKS",
+      "MOTHER_INCAPACITY",
+      "MOTHER_HOSPITALIZED",
+      "MOTHER_DIED",
+      "MOTHER_ABANDONED_CHILD",
+      "UNINSURED_MOTHER_DIED",
+      "UNINSURED_MOTHER_ABANDONED_CHILD",
+      "UNINSURED_MOTHER_INCAPACITY",
+      "UNINSURED_MOTHER_EMPLOYED",
+    ])
+    .optional(),
+  courtApplicationDate: z.iso.date().optional(),
+  adoptionFinalDate: z.iso.date().optional(),
+  previouslyUsedMaternityTermsWeeks: weeks(37).optional(),
+  previouslyUsedParentalWeeks: weeks(67).optional(),
+  asOf: z.iso.date().optional(),
   maternityWeeksBeforeBirth: z.coerce.number().int().min(0).max(52).default(0),
   secondParentParentalWeeks: z.coerce.number().int().min(0).max(104).default(0),
   parentalWorkFraction: z.coerce.number().min(0).max(1).default(0),
@@ -72,10 +92,40 @@ export const calculatorInputSchema = z.object({
   workCombinedWeeks: weeks(67).optional(),
   combineWorkInExtension: z.boolean().optional(),
 
-  incomeMode: z.enum(["SIMPLE", "DETAILED"]).default("SIMPLE"),
+  incomeMode: z.enum(["SIMPLE", "DETAILED", "KNOWN_BASIS"]).default("SIMPLE"),
   monthlyIncomes: z.array(monthlyIncomeSchema).max(12).optional(),
   employmentType: z.enum(["EMPLOYEE", "CONTRACTOR", "BUSINESS"]).optional(),
+  knownBasisGrosze: z.coerce.number().int().min(0).max(100_000_000).optional(),
+  secondParentKnownBasisGrosze: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(100_000_000)
+    .optional(),
   employmentFraction: z.coerce.number().min(0.1).max(1).optional(),
+
+  motherEnabled: z.boolean().default(true),
+  fatherEnabled: z.boolean().default(true),
+  motherEmploymentType: z
+    .enum(["EMPLOYEE", "CONTRACTOR", "BUSINESS"])
+    .optional(),
+  fatherEmploymentType: z
+    .enum(["EMPLOYEE", "CONTRACTOR", "BUSINESS"])
+    .optional(),
+  motherSicknessInsurance: z
+    .enum(["COMPULSORY", "VOLUNTARY", "NONE"])
+    .optional(),
+  fatherSicknessInsurance: z
+    .enum(["COMPULSORY", "VOLUNTARY", "NONE"])
+    .optional(),
+  motherInsuranceStartDate: z.iso.date().optional(),
+  fatherInsuranceStartDate: z.iso.date().optional(),
+  motherInsuranceEndDate: z.iso.date().optional(),
+  fatherInsuranceEndDate: z.iso.date().optional(),
+  motherPayerSize: z.enum(["OVER_20", "UP_TO_20"]).optional(),
+  fatherPayerSize: z.enum(["OVER_20", "UP_TO_20"]).optional(),
+  motherContributionDebt: z.boolean().optional(),
+  fatherContributionDebt: z.boolean().optional(),
 }) satisfies z.ZodType<CalculatorInput>
 
 export const calculationRequestSchema = z.object({

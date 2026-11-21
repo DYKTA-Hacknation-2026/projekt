@@ -1,0 +1,1 @@
+ALTER TABLE "kb"."content_faq_items" ADD COLUMN "guide_href" text;

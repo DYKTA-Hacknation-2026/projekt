@@ -4,13 +4,8 @@ import { addDays } from "./dates"
 import { evaluate } from "./engine/evaluate"
 import { latestRuleSet, ruleSetFor } from "./engine/rulesets"
 import { RULES, formatSourceRef, type RuleId } from "./engine/sources"
-import type {
-  AssessmentInput,
-  BenefitType,
-  ParentInput,
-} from "./engine/types"
-import type { CaseFacts } from "./case-facts"
-import { requiredDocuments, type RequiredDocument } from "./documents"
+import type { AssessmentInput, BenefitType, ParentInput } from "./engine/types"
+import type { EngineDocument } from "./engine/documents"
 
 export type TimelineOwner = "MAMA" | "TATA" | "OBOJE"
 export type TimelineCategory = "LEAVE" | "BENEFIT" | "DOCUMENT" | "DEADLINE"
@@ -26,8 +21,8 @@ export type TimelineBasis = "STATUTORY" | "RECOMMENDED" | "PLAN"
 export interface TimelineDocument {
   code: string
   name: string
-  preparedBy: RequiredDocument["preparedBy"]
-  submitTo: RequiredDocument["submitTo"]
+  preparedBy: EngineDocument["preparedBy"]
+  submitTo: EngineDocument["submitTo"]
   when: string
   legalBasis: string
   caveat?: string
@@ -133,24 +128,24 @@ function citation(ids: readonly RuleId[]): string {
 
 function documentsFor(
   benefit: BenefitType,
-  facts: CaseFacts,
-  ruleSet: RuleSet
+  documents: EngineDocument[],
+  parent: ParentInput["role"] = "MOTHER"
 ): TimelineDocument[] {
-  const code =
-    benefit === "PARENTAL"
-      ? "PARENTAL_LEAVE_BENEFIT"
-      : benefit === "PATERNITY"
-        ? "PATERNITY_BENEFIT"
-        : "MATERNITY_ALLOWANCE"
-  return requiredDocuments(code, facts, ruleSet).documents.map((document) => ({
-    code: document.code,
-    name: document.name,
-    preparedBy: document.preparedBy,
-    submitTo: document.submitTo,
-    when: document.when,
-    legalBasis: document.legalBasis,
-    caveat: document.caveat,
-  }))
+  return documents
+    .filter(
+      (document) =>
+        document.benefits.includes(benefit) &&
+        (document.parent === parent || document.parent === "BOTH")
+    )
+    .map((document) => ({
+      code: document.code,
+      name: document.name,
+      preparedBy: document.preparedBy,
+      submitTo: document.submitTo,
+      when: document.when,
+      legalBasis: document.legalBasis,
+      caveat: document.note,
+    }))
 }
 
 interface PeriodMeta {
@@ -342,7 +337,7 @@ export function buildTimeline(
       paternity: paternityDays > 0 ? [{ days: paternityDays }] : [],
     },
   }
-  const { schedule } = evaluate(request, engineRules)
+  const { schedule, documents: documentReport } = evaluate(request, engineRules)
   const periods = schedule?.periods ?? []
   const find = (predicate: (period: (typeof periods)[number]) => boolean) =>
     periods.find(predicate)
@@ -363,15 +358,6 @@ export function buildTimeline(
   const motherParentalWeeks =
     motherParental.reduce((sum, period) => sum + period.days, 0) / 7
   const estimated = !actualBirth
-  const facts: CaseFacts = {
-    parentRole: "MOTHER",
-    employmentType: "EMPLOYMENT",
-    familyEvent: actualBirth ? "BIRTH" : "PREGNANCY",
-    eventDate: actualBirth ? birth : undefined,
-    expectedDueDate: actualBirth ? undefined : input.dueDate,
-    childrenCount: children,
-    hasZaZyciem: input.hasZaZyciem,
-  }
   const missing: string[] = []
   if (!actualBirth) {
     missing.push(
@@ -396,14 +382,17 @@ export function buildTimeline(
       days: period.days,
       weeks: period.weeks,
       benefit: period.benefit,
-      category:
-        period.benefit === "MATERNITY_EQUIVALENT" ? "BENEFIT" : "LEAVE",
+      category: period.benefit === "MATERNITY_EQUIVALENT" ? "BENEFIT" : "LEAVE",
       estimated: period.estimated,
       ratePercent: formatRatePercent(meta.rate),
       description: meta.description,
       legalReference: citation(meta.ruleIds),
       ruleIds: meta.ruleIds,
-      documents: documentsFor(period.benefit, facts, ruleSet),
+      documents: documentsFor(
+        period.benefit,
+        documentReport.documents,
+        period.parent
+      ),
     }
   })
 
@@ -422,7 +411,7 @@ export function buildTimeline(
       basis: "PLAN",
       estimated,
       actionOwner: "Mama",
-      documents: documentsFor("MATERNITY", facts, ruleSet),
+      documents: documentsFor("MATERNITY", documentReport.documents),
       ruleIds: ["LR-123", "LR-134"],
     },
     {
@@ -469,7 +458,7 @@ export function buildTimeline(
       basis: "RECOMMENDED",
       estimated,
       actionOwner: "Mama",
-      documents: documentsFor("MATERNITY", facts, ruleSet),
+      documents: documentsFor("MATERNITY", documentReport.documents),
       ruleIds: ["LR-134", "LR-135"],
     })
   }
@@ -486,7 +475,7 @@ export function buildTimeline(
         basis: "PLAN",
         estimated,
         actionOwner: "Mama",
-        documents: documentsFor("PARENTAL", facts, ruleSet),
+        documents: documentsFor("PARENTAL", documentReport.documents),
         ruleIds: ["LR-127", "LR-134"],
       },
       {
@@ -516,7 +505,7 @@ export function buildTimeline(
         basis: "RECOMMENDED",
         estimated,
         actionOwner: "Mama",
-        documents: documentsFor("PARENTAL", facts, ruleSet),
+        documents: documentsFor("PARENTAL", documentReport.documents),
         ruleIds: ["LR-134", "LR-135"],
       }
     )
@@ -533,7 +522,7 @@ export function buildTimeline(
       basis: "STATUTORY",
       estimated,
       actionOwner: "Mama",
-      documents: documentsFor("PARENTAL", facts, ruleSet),
+      documents: documentsFor("PARENTAL", documentReport.documents),
       ruleIds: ["LR-130A", "LR-130"],
     },
     {
@@ -548,7 +537,7 @@ export function buildTimeline(
       estimated,
       needsVerification: true,
       actionOwner: "Oboje rodzice",
-      documents: documentsFor("MATERNITY", facts, ruleSet),
+      documents: documentsFor("MATERNITY", documentReport.documents),
       ruleIds: ["LR-135", "LR-111"],
     }
   )
@@ -566,7 +555,7 @@ export function buildTimeline(
         basis: "PLAN",
         estimated,
         actionOwner: "Tata",
-        documents: documentsFor("PARENTAL", facts, ruleSet),
+        documents: documentsFor("PARENTAL", documentReport.documents, "FATHER"),
         ruleIds: ["LR-127", "LR-130B"],
       },
       {
@@ -583,7 +572,7 @@ export function buildTimeline(
         basis: "RECOMMENDED",
         estimated,
         actionOwner: "Tata",
-        documents: documentsFor("PARENTAL", facts, ruleSet),
+        documents: documentsFor("PARENTAL", documentReport.documents, "FATHER"),
         ruleIds: ["LR-134", "LR-135"],
       }
     )
@@ -602,7 +591,11 @@ export function buildTimeline(
         basis: "PLAN",
         estimated,
         actionOwner: "Tata",
-        documents: documentsFor("PATERNITY", facts, ruleSet),
+        documents: documentsFor(
+          "PATERNITY",
+          documentReport.documents,
+          "FATHER"
+        ),
         ruleIds: ["LR-133", "LR-134"],
       },
       {
@@ -619,7 +612,11 @@ export function buildTimeline(
         basis: "RECOMMENDED",
         estimated,
         actionOwner: "Tata",
-        documents: documentsFor("PATERNITY", facts, ruleSet),
+        documents: documentsFor(
+          "PATERNITY",
+          documentReport.documents,
+          "FATHER"
+        ),
         ruleIds: ["LR-134", "LR-135"],
       }
     )
@@ -649,9 +646,13 @@ export function buildTimeline(
     ...motherParental.map((period) => period.end),
     ...fatherParental.map((period) => period.end),
   ])
-  const lastMilestoneDate = maxDate(milestones.map((milestone) => milestone.date))
-  const stageMilestone = (id: string) => (milestones.some((item) => item.id === id) ? id : null)
-  const pick = (...ids: Array<string | null>) => ids.filter((id): id is string => Boolean(id))
+  const lastMilestoneDate = maxDate(
+    milestones.map((milestone) => milestone.date)
+  )
+  const stageMilestone = (id: string) =>
+    milestones.some((item) => item.id === id) ? id : null
+  const pick = (...ids: Array<string | null>) =>
+    ids.filter((id): id is string => Boolean(id))
 
   const stages: TimelineStage[] = [
     {
@@ -683,7 +684,11 @@ export function buildTimeline(
       start: birth,
       end: birth,
       periodIds: [],
-      milestoneIds: pick("birth", stageMilestone("maternity-start"), stageMilestone("documents")),
+      milestoneIds: pick(
+        "birth",
+        stageMilestone("maternity-start"),
+        stageMilestone("documents")
+      ),
       tasks: [
         "Zgłoś urodzenie dziecka w urzędzie stanu cywilnego.",
         "Złóż wniosek o zasiłek macierzyński i dokumenty u płatnika.",
