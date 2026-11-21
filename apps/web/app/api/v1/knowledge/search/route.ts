@@ -12,6 +12,10 @@ export const GET = apiRoute(async (request) => {
     query: input.q,
     limit: input.limit,
     asOf: input.asOf,
+    sources: input.source,
+    sourceTypes: input.sourceType,
+    benefitTags: input.tag,
+    minRelevance: input.minRelevance,
   })
 
   return json({

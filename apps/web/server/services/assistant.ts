@@ -30,11 +30,32 @@ export interface GroundedAnswer {
  * assistant never invents an amount, a date or a legal conclusion. The
  * numeric guard is intentionally blunt — amounts belong to the calculator.
  */
+/** Citation-only sources (e.g. competition copies) are cited, never quoted. */
+function quotable(chunk: KnowledgeChunkResult): boolean {
+  return (
+    chunk.redistribution === "ALLOWED" || chunk.redistribution === "ATTRIBUTION"
+  )
+}
+
+function reference(chunk: KnowledgeChunkResult): string {
+  const location =
+    chunk.legalReference ?? chunk.sectionIdentifier ?? chunk.documentTitle
+  const page = chunk.pageNumber ? `, s. ${chunk.pageNumber}` : ""
+  return `${chunk.documentTitle} — ${location}${page}`
+}
+
 export function buildGroundedAnswer(
   query: string,
-  chunks: KnowledgeChunkResult[]
+  chunks: KnowledgeChunkResult[],
+  noEvidenceMessage?: string
 ): GroundedAnswer {
   if (chunks.length === 0) {
+    if (noEvidenceMessage) {
+      return {
+        content: `${noEvidenceMessage} Nie chcę zgadywać.`,
+        citations: [],
+      }
+    }
     return {
       content:
         "Nie znalazłem w bazie wiedzy wystarczająco pewnego fragmentu, który odpowiada na to pytanie. Nie chcę zgadywać. Spróbuj doprecyzować pytanie (np. „wymiar urlopu macierzyńskiego przy jednym dziecku”) albo skorzystaj z kalkulatora i listy dokumentów.",
@@ -43,22 +64,23 @@ export function buildGroundedAnswer(
   }
 
   const selected = chunks.slice(0, 3)
-  const citations: AssistantCitation[] = selected.map((chunk, index) => ({
+  const citations: AssistantCitation[] = selected.map((chunk) => ({
     chunkId: chunk.id,
     sourceTitle: chunk.sourceTitle,
     sourceUrl: chunk.sourceUrl,
     legalReference: chunk.legalReference,
     sectionIdentifier: chunk.sectionIdentifier,
-    quote: excerpt(chunk.content, 240),
+    quote: quotable(chunk) ? excerpt(chunk.content, 240) : reference(chunk),
     score: chunk.score,
   }))
 
   const passages = selected
-    .map(
-      (chunk, index) =>
-        `„${excerpt(chunk.content, 380)}” [S${index + 1}]${
-          chunk.legalReference ? ` — ${chunk.legalReference}` : ""
-        }`
+    .map((chunk, index) =>
+      quotable(chunk)
+        ? `„${excerpt(chunk.content, 380)}” [S${index + 1}]${
+            chunk.legalReference ? ` — ${chunk.legalReference}` : ""
+          }`
+        : `Zob. ${reference(chunk)} [S${index + 1}] (materiał wewnętrzny — tylko odesłanie, bez cytatu).`
     )
     .join("\n\n")
 
@@ -103,7 +125,11 @@ export async function chatWithAssistant(
     asOf: input.asOf,
   })
   const latencyMs = Date.now() - startedAt
-  const answer = buildGroundedAnswer(input.message, search.results)
+  const answer = buildGroundedAnswer(
+    input.message,
+    search.results,
+    search.noEvidence?.message
+  )
 
   const assistantMessage = await repositories.conversations.appendMessage({
     conversationId: conversation.id,
@@ -112,8 +138,11 @@ export async function chatWithAssistant(
     model: "demo-retrieval",
     metadata: {
       retrieval: {
+        status: search.status,
         chunks: search.results.length,
         embeddingModel: search.embeddingModel?.name ?? null,
+        asOf: search.asOf,
+        redactions: search.redactions,
       },
     },
   })
@@ -135,8 +164,10 @@ export async function chatWithAssistant(
     toolName: "searchKnowledge",
     arguments: { query: input.message, limit: 5, asOf: input.asOf ?? null },
     result: {
+      status: search.status,
       chunks: search.results.length,
       embeddingModel: search.embeddingModel?.name ?? null,
+      noEvidence: search.noEvidence?.reason ?? null,
     },
     latencyMs,
   })

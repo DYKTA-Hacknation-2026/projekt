@@ -6,7 +6,6 @@ import type {
   users,
 } from "../schema"
 import type { OnboardingInput } from "@zpr/contracts/onboarding"
-import type { KnowledgeChunkResult } from "@zpr/contracts/knowledge"
 
 export type UserRecord = typeof users.$inferSelect
 export type ConversationRecord = typeof conversations.$inferSelect
@@ -96,6 +95,7 @@ export interface KnowledgeSourceSummary {
   publisher: string
   sourceType: string
   isConfidential: boolean
+  accessLevel: "PUBLIC" | "INTERNAL" | "RESTRICTED"
   documentCount: number
 }
 
@@ -103,7 +103,9 @@ export interface KnowledgeDocumentSummary {
   id: string
   title: string
   version: string
-  status: "PENDING" | "INDEXED" | "FAILED"
+  status: "PENDING" | "INDEXED" | "FAILED" | "SUPERSEDED" | "ARCHIVED"
+  effectiveFrom: string | null
+  effectiveTo: string | null
   sourceTitle: string
   chunkCount: number
 }
@@ -124,23 +126,15 @@ export interface EmbeddingModelSummary {
   isActive: boolean
 }
 
-export interface SearchChunksOptions {
-  query: string
-  limit: number
-  asOf?: string
-}
-
 export interface KnowledgeRepository {
   getActiveEmbeddingModel(): Promise<EmbeddingModelSummary | null>
   countChunks(): Promise<number>
   listSources(limit?: number): Promise<KnowledgeSourceSummary[]>
   listDocuments(limit?: number): Promise<KnowledgeDocumentSummary[]>
   listIngestionJobs(limit?: number): Promise<IngestionJobSummary[]>
-  searchChunks(
-    embedding: number[],
-    options: SearchChunksOptions
-  ): Promise<KnowledgeChunkResult[]>
-  listRecentChunks(limit?: number): Promise<
+  listRecentChunks(
+    limit?: number
+  ): Promise<
     Array<
       Pick<
         KnowledgeChunkRecord,

@@ -1,0 +1,43 @@
+{
+  "name": "@zpr/rag",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./embeddings": "./src/embeddings/index.ts",
+    "./retrieval": "./src/retrieval/index.ts",
+    "./ingest": "./src/ingest/index.ts",
+    "./sources": "./src/sources/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:integration": "vitest run --project integration",
+    "kb:seed": "tsx src/scripts/seed.ts",
+    "kb:ingest": "tsx src/scripts/ingest.ts",
+    "kb:verify": "tsx src/scripts/verify.ts",
+    "kb:reembed": "tsx src/scripts/reembed.ts",
+    "kb:inspect": "tsx src/scripts/inspect.ts",
+    "kb:search": "tsx src/scripts/search.ts"
+  },
+  "dependencies": {
+    "@zpr/contracts": "workspace:*",
+    "@zpr/db": "workspace:*",
+    "drizzle-orm": "^0.45.4",
+    "unpdf": "1.4.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@workspace/eslint-config": "workspace:*",
+    "@workspace/typescript-config": "workspace:*",
+    "dotenv": "^18.0.10",
+    "eslint": "^10",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.1.1"
+  }
+}

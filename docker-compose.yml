@@ -35,6 +35,9 @@ services:
       EMBEDDING_PROVIDER: local-demo
       EMBEDDING_MODEL: zpr-hash-1024
       EMBEDDING_DIMENSIONS: "1024"
+      # Public deployments: PUBLIC only. Competition copies (INTERNAL) are
+      # never in the image anyway — they are read from KB_LOCAL_SOURCES_DIR.
+      KB_RETRIEVAL_ACCESS_LEVELS: "PUBLIC,INTERNAL"
       SESSION_SECRET: docker-local-only-session-secret-32-chars
       ADMIN_GATE_ENABLED: "false"
       NEXT_TELEMETRY_DISABLED: "1"
@@ -47,6 +50,7 @@ services:
       sh -c "corepack enable &&
       pnpm --filter @zpr/db db:migrate &&
       pnpm --filter @zpr/db db:seed &&
+      pnpm --filter @zpr/rag kb:seed &&
       pnpm --filter web start"
 
 volumes:
