@@ -33,8 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table"
-import { SAMPLE_DOCUMENTS } from "@/lib/sample-documents"
-import type { DocumentAnalysis } from "@/server/services/documents"
+import { SAMPLE_DOCUMENTS, type DocumentAnalysis } from "@zpr/contracts/documents"
 import { cn } from "@workspace/ui/lib/utils"
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024

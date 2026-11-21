@@ -1,6 +1,6 @@
 # Zasiłkowy Przewodnik (ZPR)
 
-A working scaffold for a Polish parental-benefits guide: one Next.js application
+A working scaffold for a Polish parental-benefits guide: separate web and REST API projects
 with a deterministic calculator, grounded knowledge assistant, document-analysis
 demo, personalised timeline, and an admin skeleton. Everything runs locally
 without AI API keys or government integrations.
@@ -20,7 +20,7 @@ without AI API keys or government integrations.
 - **Drizzle ORM** with generated SQL migrations
 - **Vitest** unit tests and **Playwright** e2e/a11y tests
 - **pnpm workspaces + Turborepo**
-- **Docker Compose** for PostgreSQL and the web image
+- **Docker Compose** for PostgreSQL and both applications
 
 ## Quick start
 
@@ -38,7 +38,7 @@ pnpm --filter @zpr/db db:migrate
 pnpm --filter @zpr/db db:seed
 pnpm --filter @zpr/db db:smoke
 
-# Start the web app
+# Start the web and API apps
 pnpm dev
 ```
 
@@ -48,11 +48,13 @@ Open <http://localhost:3000>. The API health check is at
 The defaults in `.env.example` match the Compose database, so no `.env` file is
 required for the standard local setup. To override values, create:
 
-- `apps/web/.env.local` for the Next.js app, and
+- `apps/web/.env.local` for `API_URL` and web session settings,
+- `apps/api/.env.local` for database, embedding, rate limit, and admin settings, and
 - `packages/db/.env` for migration/seed/smoke scripts.
 
 `.env.example` lists every supported variable. Never commit a real `.env` or
-production secret.
+production secret. The two apps must share the same `SESSION_SECRET` and
+`ADMIN_GATE_ENABLED` values. The API defaults to `http://127.0.0.1:3001` locally.
 
 ### Full Docker Compose
 
@@ -60,8 +62,9 @@ production secret.
 docker compose up --build -d
 ```
 
-This builds the web image, waits for a healthy database, runs migrations and the
-seed, then starts Next.js on <http://localhost:3000>. The database is exposed on
+The API waits for PostgreSQL, applies migrations, seeds the demo data, and serves
+requests on the Compose network. The web service waits for the API health check
+and serves <http://localhost:3000>. The database is exposed on
 `${POSTGRES_PORT:-5435}`.
 
 ### Host port already in use?
@@ -91,6 +94,7 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 
 ## REST API
 
+The web server forwards the existing `/api/*` paths to the API service.
 All JSON endpoints use `application/json`; errors use RFC 9457 problem+json with
 a stable `code` and an `x-request-id` header. See `/api/v1/openapi.json` for the
 machine-readable contract.
@@ -131,19 +135,17 @@ curl -s -X POST http://localhost:3000/api/v1/assistant/chat \
 ## Architecture
 
 ```
-apps/web
-├── app/                 # Polish routes, RSC pages, route handlers, error/not-found
+apps/web                 # Next.js UI, admin page gate, and same-origin API forwarding
+├── app/                 # Polish pages and the /api/* forwarding route
 ├── components/          # calculator, assistant, timeline, onboarding, shell
-├── lib/                 # formatting and the pure timeline builder
-├── messages/pl/         # all Polish copy and labels
-├── server/
-│   ├── container.ts     # composition root (env + repositories)
-│   ├── services/        # dashboard, admin, assistant, calculations, documents…
-│   ├── http/            # zod parsing, problem+json, rate limiting, route wrapper
-│   └── auth/            # admin cookie/session helpers
-├── proxy.ts             # optional admin gate (Next 16 proxy, not middleware)
-├── e2e/                 # Playwright route, calculator, assistant, axe specs
-└── tests/               # Vitest unit tests
+├── server/              # REST client for page data and session reader
+└── e2e/                 # Playwright UI, accessibility, and REST tests
+
+apps/api                 # Next.js REST service
+├── app/api/             # public API handlers
+├── app/internal/        # authenticated dashboard and admin read endpoints
+├── server/              # repositories, business services, parsing, and rate limits
+└── tests/               # backend unit tests
 
 packages/
 ├── domain/              # @zpr/domain — pure calculator and money helpers
@@ -152,8 +154,10 @@ packages/
 └── ui/                  # @workspace/ui — shadcn/ui primitives and theme
 ```
 
-Dependency direction: `apps/web → @zpr/contracts → @zpr/domain` and
-`apps/web → @zpr/db`. `@zpr/domain` is pure and performs no I/O.
+The web app calls the API over HTTP. The API owns the database connection and
+business services. Both apps share request and response types through
+`@zpr/contracts`. Dashboard and admin reads use authenticated server-to-server
+requests. With the admin gate enabled, the API also checks the admin session.
 
 ### Database layout
 
@@ -231,7 +235,10 @@ credential flow before any real deployment.
 | `pnpm --filter @zpr/db db:smoke`     | Insert + similarity-search a test vector |
 | `pnpm --filter @zpr/db db:generate`  | Generate a migration after schema edits  |
 | `pnpm --filter @zpr/db db:studio`    | Open Drizzle Studio                      |
-| `pnpm --filter web e2e`              | Run Playwright against a running server  |
+| `pnpm --filter web e2e`              | Run Playwright against both apps  |
+
+The Playwright suite uses seeded PostgreSQL and starts both apps by default.
+Set `PLAYWRIGHT_BASE_URL` to test an already running web and API pair.
 
 Playwright needs browsers once:
 

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
 
-import { ADMIN_COOKIE, verifyAdminToken } from "@/server/auth/admin-token"
+import { ADMIN_COOKIE, verifyAdminToken } from "@zpr/contracts/admin-token"
 
 function isGateEnabled(): boolean {
   return ["1", "true", "yes", "on"].includes(

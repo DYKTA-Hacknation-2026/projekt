@@ -10,7 +10,11 @@
     "./calculator": "./src/calculator.ts",
     "./assistant": "./src/assistant.ts",
     "./knowledge": "./src/knowledge.ts",
-    "./common": "./src/common.ts"
+    "./common": "./src/common.ts",
+    "./documents": "./src/documents.ts",
+    "./admin-token": "./src/admin-token.ts",
+    "./views": "./src/views.ts",
+    "./problem": "./src/problem.ts"
   },
   "scripts": {
     "lint": "eslint",

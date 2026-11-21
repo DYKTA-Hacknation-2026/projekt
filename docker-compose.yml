@@ -21,11 +21,12 @@ services:
       timeout: 5s
       retries: 20
 
-  web:
+  api:
     build:
       context: .
-      dockerfile: infra/docker/web/Dockerfile
-    container_name: zpr-web
+      dockerfile: infra/docker/Dockerfile
+      target: api
+    container_name: zpr-api
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -38,8 +39,6 @@ services:
       SESSION_SECRET: docker-local-only-session-secret-32-chars
       ADMIN_GATE_ENABLED: "false"
       NEXT_TELEMETRY_DISABLED: "1"
-    ports:
-      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -47,7 +46,32 @@ services:
       sh -c "corepack enable &&
       pnpm --filter @zpr/db db:migrate &&
       pnpm --filter @zpr/db db:seed &&
-      pnpm --filter web start"
+      pnpm --filter api start --hostname 0.0.0.0"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile
+      target: web
+    container_name: zpr-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      APP_URL: http://localhost:3000
+      API_URL: http://api:3001
+      SESSION_SECRET: docker-local-only-session-secret-32-chars
+      ADMIN_GATE_ENABLED: "false"
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   zpr_pgdata:
