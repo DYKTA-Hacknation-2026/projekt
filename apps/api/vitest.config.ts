@@ -18,6 +18,10 @@ export default defineConfig({
       "@zpr/db/embeddings": `${workspace}/packages/db/src/embeddings.ts`,
       "@zpr/db/schema": `${workspace}/packages/db/src/schema/index.ts`,
       "@zpr/db": `${workspace}/packages/db/src/index.ts`,
+      "@zpr/documents/samples": `${workspace}/packages/documents/src/samples/index.ts`,
+      "@zpr/documents/storage": `${workspace}/packages/documents/src/storage/index.ts`,
+      "@zpr/documents/pdf": `${workspace}/packages/documents/src/pdf/index.ts`,
+      "@zpr/documents": `${workspace}/packages/documents/src/index.ts`,
     },
   },
   test: {

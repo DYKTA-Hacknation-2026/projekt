@@ -23,7 +23,8 @@
     "@zpr/ai": "workspace:*",
     "@zpr/rag": "workspace:*",
     "ai": "7.0.163",
-    "@zpr/data-sources": "workspace:*"
+    "@zpr/data-sources": "workspace:*",
+    "@zpr/documents": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20",
