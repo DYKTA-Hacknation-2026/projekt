@@ -26,6 +26,7 @@ export interface UserRepository {
   countUsers(): Promise<number>
   listDemoUsers(limit?: number): Promise<UserSummary[]>
   findUserByEmail(email: string): Promise<UserRecord | null>
+  getAssistantProfile(userId: string): Promise<AssistantProfileRecord | null>
 }
 
 export interface HouseholdRepository {
@@ -149,14 +150,53 @@ export interface KnowledgeRepository {
   >
 }
 
+export interface ConversationSummary {
+  id: string
+  title: string
+  createdAt: Date
+  updatedAt: Date
+  isSimulated: boolean
+  messageCount: number
+}
+
+export interface SaveTurnInput {
+  conversationId: string
+  /** Null when the user message is already stored (regenerate). */
+  user: {
+    content: string
+    metadata: Record<string, unknown>
+    createdAt: Date
+  } | null
+  assistant: {
+    content: string
+    model: string
+    tokensIn: number | null
+    tokensOut: number | null
+    metadata: Record<string, unknown>
+  }
+  toolCalls: {
+    toolName: string
+    arguments: Record<string, unknown>
+    result: Record<string, unknown>
+    status: "SUCCEEDED" | "FAILED"
+    latencyMs: number
+  }[]
+  evidence: { chunkId: string; rank: number; score: number; quote: string }[]
+}
+
 export interface ConversationRepository {
   countConversations(): Promise<number>
   createConversation(input: {
-    userId?: string
+    id?: string
+    ownerKey: string
+    userId?: string | null
     title: string
     isSimulated?: boolean
   }): Promise<ConversationRecord>
   getConversation(id: string): Promise<ConversationRecord | null>
+  getOwnedConversation(id: string, ownerKey: string): Promise<ConversationRecord | null>
+  listOwnedConversations(ownerKey: string, limit?: number): Promise<ConversationSummary[]>
+  listMessages(conversationId: string): Promise<ConversationMessageRecord[]>
   appendMessage(input: {
     conversationId: string
     role: "USER" | "ASSISTANT" | "SYSTEM" | "TOOL"
@@ -164,19 +204,25 @@ export interface ConversationRepository {
     model?: string
     metadata?: Record<string, unknown>
   }): Promise<ConversationMessageRecord>
-  addEvidence(input: {
-    messageId: string
-    chunkId: string
-    rank: number
-    score: number
-    quote: string
-  }): Promise<void>
-  addToolCall(input: {
-    messageId: string
-    toolName: string
-    arguments: Record<string, unknown>
-    result: Record<string, unknown>
-    latencyMs: number
-  }): Promise<void>
-  listMessages(conversationId: string): Promise<ConversationMessageRecord[]>
+  saveTurn(input: SaveTurnInput): Promise<{ assistantMessageId: string }>
+  deleteLastAssistantMessage(conversationId: string): Promise<boolean>
+  deleteOwnedConversation(id: string, ownerKey: string): Promise<boolean>
+  deleteAllOwned(ownerKey: string): Promise<number>
+}
+
+/** Confirmed facts for the assistant. Contains no names or contact data. */
+export interface AssistantProfileRecord {
+  userId: string
+  aiAssistantConsent: boolean
+  employmentType: "EMPLOYMENT" | "MANDATE" | "SELF_EMPLOYMENT" | "OTHER" | null
+  coverageMode: "COMPULSORY" | "VOLUNTARY" | null
+  insuranceStartDate: string | null
+  grossMonthlyAmountGrosze: number | null
+  familyEvent: "PREGNANCY" | "BIRTH" | "ADOPTION" | "FOSTER_CARE" | null
+  eventDate: string | null
+  expectedDueDate: string | null
+  childCount: number | null
+  hasZaZyciem: boolean | null
+  caseNumber: string | null
+  updatedAt: Date | null
 }
