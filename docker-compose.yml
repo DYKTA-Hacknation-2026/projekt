@@ -1,0 +1,53 @@
+name: zpr
+
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: zpr-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: zpr
+      POSTGRES_USER: zpr
+      POSTGRES_PASSWORD: zpr_local_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+    ports:
+      - "${POSTGRES_PORT:-5435}:5432"
+    volumes:
+      - zpr_pgdata:/var/lib/postgresql/data
+      - ./infra/docker/postgres/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zpr -d zpr"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web/Dockerfile
+    container_name: zpr-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      APP_URL: http://localhost:3000
+      DATABASE_URL: postgresql://zpr:zpr_local_password@db:5432/zpr
+      DATABASE_SSL: "false"
+      EMBEDDING_PROVIDER: local-demo
+      EMBEDDING_MODEL: zpr-hash-1024
+      EMBEDDING_DIMENSIONS: "1024"
+      SESSION_SECRET: docker-local-only-session-secret-32-chars
+      ADMIN_GATE_ENABLED: "false"
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "corepack enable &&
+      pnpm --filter @zpr/db db:migrate &&
+      pnpm --filter @zpr/db db:seed &&
+      pnpm --filter web start"
+
+volumes:
+  zpr_pgdata:
