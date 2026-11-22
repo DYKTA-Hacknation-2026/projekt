@@ -28,7 +28,7 @@ planer urlopów, analizę dokumentów, centrum wiedzy i asystenta rozmownego.
 - [Skrypty](#skrypty)
 - [Dane demonstracyjne](#dane-demonstracyjne)
 - [Testy i akceptacja](#testy-i-akceptacja)
-- [Znane ograniczenia](#znane-ograniczenia)
+- [Rozwój aplikacji](#rozwój-aplikacji)
 - [Dokumentacja w repozytorium](#dokumentacja-w-repozytorium)
 
 ## Czym jest ten projekt
@@ -876,37 +876,32 @@ brakującymi dowodami, ostrzeżeniami i kolejnymi krokami. Endpointy REST powyż
 narzędzia asystenta są adapterami nad tym samym `evaluate`. Szczegóły w
 [docs/calculation-engine.md](docs/calculation-engine.md).
 
-## Znane ograniczenia
+## Rozwój aplikacji
 
-- Kwoty są szacunkami, nigdy decyzjami ZUS. Deterministyczny silnik
-  (`docs/calculation-engine.md`) używa dokładnej arytmetyki i wersjonowanych
-  reguł, ale Q-29 (minimalne wynagrodzenie, świadczenie rodzicielskie,
-  przeciętne wynagrodzenie) nie występuje w dostarczonych źródłach, więc
-  dotknięte wyniki są oznaczane jako dolne/górne granice, a zaokrąglanie (Q-15)
-  jest udokumentowanym założeniem. 20 nieobsługiwanych scenariuszy prawnych jest
-  wymienionych w tym dokumencie. Oficjalne przykładowe sprawy ZUS nie były
-  dostępne, więc nie twierdzimy, że wyniki się z nimi zgadzają.
-- Bez `AI_PROVIDER` asystent działa w trybie offline na regułach: odpowiedzi są
-  oparte na źródłach i ustrukturyzowane, ale sformułowania są szablonowe.
-  Skonfiguruj LLM, aby uzyskać naturalne odpowiedzi.
-- Kuratorowana baza wiedzy jest mała (np. brak tekstu KP art. 182¹e o łączeniu
-  urlopu z pracą), więc część pytań uczciwie kończy się „brak dowodów”.
-- Sesje są na poziomie demo: onboarding z e-mailem wiąże syntetycznego
-  użytkownika z przeglądarką; nie ma prawdziwego uwierzytelniania.
-- Szablony dokumentów podążają za zakresem danych załączników 2, 3 i 6 R1316,
-  ale dokładne układy wydruków ZUS (Q-20) i prawdziwe przykładowe sprawy (Q-19)
-  nie były dostępne: ekstrakcja jest weryfikowana tylko na syntetycznych PDF-ach.
-  OCR wymaga `pdftoppm` + `tesseract -l pol` i jest domyślnie wyłączony;
-  parsowanie działa w procesie z limitem czasu (brak osobnego workera).
-- Panel admina ma demo logowania, edytor parametrów prawnych i inwentarz wiedzy;
-  zmiany są audytowane przez historię wersji, a nie przez konta użytkowników.
-- Integracje rządowe, wnioski i przepływy PZ/eZUS nie są zaimplementowane.
-  `/dane` symuluje je lokalnie; żadne żądanie nie opuszcza aplikacji.
-- Sesja pobierania danych jest na poziomie demo: zgody i proweniencja są
-  zapisywane, ale nie ma produkcyjnego potwierdzenia tożsamości ani śladu
-  audytowego.
-- Offline'owy model embeddingów nie nadaje się do produkcyjnej jakości
-  wyszukiwania.
+- Kwoty i reguły: silnik jest deterministyczny i wersjonowany, ale Q-29
+  (minimalne wynagrodzenie, świadczenie rodzicielskie, przeciętne wynagrodzenie)
+  i Q-15 (zaokrąglenia) pozostają otwarte; wyniki są oznaczone jako dolne/górne
+  granice. Dalej: wartości do aktywnego zestawu reguł i golden tests na
+  oficjalnych sprawach ZUS; lista 20 scenariuszy jest w
+  `docs/calculation-engine.md`.
+- Asystent: bez `AI_PROVIDER` działa offline na regułach, więc odpowiedzi są
+  źródłowe, ale szablonowe. Dalej: konfiguracja LLM i eval jakości odpowiedzi.
+- Baza wiedzy: jest kuratorowana i mała (np. brak KP art. 182¹e o łączeniu
+  urlopu z pracą). Dalej: uzupełnić przepisy i przewodniki oraz rozszerzyć
+  pytania ewaluacyjne.
+- Sesje: są demo — e-mail wiąże syntetycznego użytkownika z przeglądarką.
+  Dalej: prawdziwe uwierzytelnianie, potwierdzenie tożsamości i ślad audytowy.
+- Dokumenty: szablony pokrywają zakres R1316 (załączniki 2, 3 i 6), ale nie
+  były testowane na oficjalnych układach ZUS (Q-20); OCR jest domyślnie
+  wyłączony, a parsowanie działa w procesie. Dalej: dostroić szablony, włączyć
+  OCR i przenieść parsowanie do workera.
+- Panel admina: ma demo logowania, edytor parametrów prawnych i inwentarz
+  wiedzy; zmiany są audytowane przez historię wersji, a nie przez konta
+  użytkowników. Dalej: role, konta administratorów i zatwierdzanie publikacji.
+- Integracje i wnioski: ZUS, PUE/eZUS, e-ZLA i USC oraz wnioski i przepływy
+  PZ/eZUS są symulowane lokalnie; żadne żądanie nie opuszcza aplikacji. Dalej:
+  adaptery instytucji i generator wniosków urlopowych oraz USC.
+
 
 ## Dokumentacja w repozytorium
 
