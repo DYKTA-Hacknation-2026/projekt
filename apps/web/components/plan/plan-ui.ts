@@ -43,14 +43,14 @@ export const ownerText: Record<TimelineOwner, string> = {
 }
 
 export const ownerSurface: Record<TimelineOwner, string> = {
-  MAMA: "border-success/35 bg-success/12 text-success-foreground",
-  TATA: "border-info/35 bg-info/12 text-info-foreground",
-  OBOJE: "border-accent-foreground/25 bg-accent/70 text-accent-foreground",
+  MAMA: "border-success/35 bg-success/12 text-foreground",
+  TATA: "border-info/35 bg-info/12 text-foreground",
+  OBOJE: "border-accent-foreground/25 bg-accent/70 text-foreground",
 }
 
 export const ownerBar: Record<"MAMA" | "TATA", string> = {
-  MAMA: "border-success/45 bg-success/18 text-success-foreground hover:bg-success/26",
-  TATA: "border-info/45 bg-info/18 text-info-foreground hover:bg-info/26",
+  MAMA: "border-success/45 bg-success/18 text-foreground hover:bg-success/26",
+  TATA: "border-info/45 bg-info/18 text-foreground hover:bg-info/26",
 }
 
 export const periodSurface: Record<"MAMA" | "TATA", string> = {
@@ -60,8 +60,8 @@ export const periodSurface: Record<"MAMA" | "TATA", string> = {
 
 export const categorySurface: Record<TimelineCategory, string> = {
   LEAVE: "border-primary/35 bg-primary/10 text-foreground",
-  BENEFIT: "border-success/35 bg-success/10 text-success-foreground",
-  DOCUMENT: "border-info/35 bg-info/10 text-info-foreground",
+  BENEFIT: "border-success/35 bg-success/10 text-foreground",
+  DOCUMENT: "border-info/35 bg-info/10 text-foreground",
   DEADLINE: "border-warning/40 bg-warning/12 text-warning-foreground",
 }
 

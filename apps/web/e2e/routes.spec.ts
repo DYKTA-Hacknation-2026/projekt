@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 
 const routes = [
-  ["/", /Spokojnie zaplanuj czas po narodzinach dziecka/i],
+  ["/", /Więcej czasu dla rodziny/i],
   ["/panel", /Panel sprawy/i],
   ["/start", /Opisz swoją sytuację/i],
   ["/kalkulator", /Kalkulator zasiłków/i],
@@ -13,11 +13,17 @@ const routes = [
   ["/wiedza/faq", /Najczęściej zadawane pytania/i],
   ["/wiedza/artykuly", /Artykuły i opracowania/i],
   ["/wiedza/kategoria/ciaza-i-porod", /Ciąża i poród/i],
-  ["/wiedza/artykul/zasilek-macierzynski", /Zasiłek macierzyński: komu przysługuje/i],
+  [
+    "/wiedza/artykul/zasilek-macierzynski",
+    /Zasiłek macierzyński: komu przysługuje/i,
+  ],
   ["/wiedza/dokumenty", /Dokumenty i formularze/i],
   ["/wiedza/dokumenty/wniosek-zam", /Wniosek o zasiłek macierzyński/i],
   ["/wiedza/przewodniki", /Przewodniki krok po kroku/i],
-  ["/wiedza/przewodniki/jak-ubiegac-sie-o-zasilek-macierzynski", /Jak ubiegać się o zasiłek macierzyński/i],
+  [
+    "/wiedza/przewodniki/jak-ubiegac-sie-o-zasilek-macierzynski",
+    /Jak ubiegać się o zasiłek macierzyński/i,
+  ],
   ["/wiedza/slownik", /Słownik pojęć/i],
   ["/wiedza/slownik/tytul-ubezpieczenia", /Tytuł ubezpieczenia/i],
   ["/wiedza/zrodla", /Źródła i podstawy prawne/i],

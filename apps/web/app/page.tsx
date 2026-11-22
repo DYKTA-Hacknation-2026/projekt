@@ -1,13 +1,66 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, ArrowUpRight, Check } from "lucide-react"
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  ListChecks,
+  MessagesSquare,
+  type LucideIcon,
+} from "lucide-react"
 import { home } from "@/messages/pl"
 import { HomeLeavePreview } from "@/components/home-leave-preview"
 import { HomeMotion } from "@/components/home-motion"
 import "./home.css"
 
-export const metadata: Metadata = { title: "Świadczenia i urlopy dla rodziców" }
+export const metadata: Metadata = {
+  title: "Świadczenia i urlopy dla rodziców",
+}
+
+type HomeMethod = (typeof home.methods)["form"] | (typeof home.methods)["chat"]
+
+function MethodCard({
+  method,
+  icon: Icon,
+  tone,
+}: {
+  method: HomeMethod
+  icon: LucideIcon
+  tone: "form" | "chat"
+}) {
+  return (
+    <Link
+      href={method.href}
+      className={`home-method home-method--${tone}`}
+      data-reveal="item"
+    >
+      <span className="home-method__label">
+        <Icon size={19} aria-hidden="true" />
+        {method.label}
+      </span>
+      <h3>{method.title}</h3>
+      <p>{method.description}</p>
+
+      <ul className="home-method__list">
+        {method.bullets.map((bullet) => (
+          <li key={bullet}>
+            <Check size={17} aria-hidden="true" />
+            {bullet}
+          </li>
+        ))}
+      </ul>
+
+      <span className="home-method__footer">
+        <span className="home-method__cta">
+          {method.cta}
+          <ArrowRight size={18} aria-hidden="true" />
+        </span>
+        <span className="home-method__meta">{method.meta}</span>
+      </span>
+    </Link>
+  )
+}
 
 export default function HomePage() {
   return (
@@ -21,19 +74,31 @@ export default function HomePage() {
             dla rodziny.
           </h1>
           <p className="home-hero__lead" data-reveal="copy">
-            Sprawdź świadczenia, zaplanuj urlopy i przygotuj dokumenty na
-            narodziny dziecka. Przejdziemy przez to razem.
+            {home.lead}
           </p>
-          <Link
-            href="/start"
-            className="home-button home-button--white"
-            data-reveal="copy"
-          >
-            Sprawdź swoje świadczenia{" "}
-            <ArrowRight size={20} aria-hidden="true" />
-          </Link>
-          <Link href="#mozliwosci" className="home-hero__secondary">
-            Poznaj przewodnik
+
+          <div className="home-hero__actions" data-reveal="copy">
+            <Link
+              href={home.methods.form.href}
+              className="home-button home-button--white"
+            >
+              {home.methods.form.cta}
+              <ListChecks size={20} aria-hidden="true" />
+            </Link>
+            <Link
+              href={home.methods.chat.href}
+              className="home-button home-button--white"
+            >
+              {home.methods.chat.cta}
+              <MessagesSquare size={20} aria-hidden="true" />
+            </Link>
+          </div>
+          <p className="home-hero__choice-note" data-reveal="copy">
+            {home.methods.equalityNote}
+          </p>
+
+          <Link href="#sposob" className="home-hero__secondary">
+            Poznaj oba sposoby
           </Link>
         </div>
         <div className="home-hero__photo" data-reveal="photo">
@@ -58,6 +123,38 @@ export default function HomePage() {
       </div>
 
       <section
+        className="home-section home-methods-section"
+        id="sposob"
+        aria-labelledby="methods-title"
+      >
+        <div className="home-shell">
+          <div className="home-methods__intro">
+            <h2 id="methods-title" data-reveal="heading">
+              {home.methods.title}
+            </h2>
+            <p data-reveal="copy">{home.methods.lead}</p>
+          </div>
+
+          <div className="home-methods">
+            <MethodCard
+              method={home.methods.form}
+              icon={ListChecks}
+              tone="form"
+            />
+            <MethodCard
+              method={home.methods.chat}
+              icon={MessagesSquare}
+              tone="chat"
+            />
+          </div>
+
+          <p className="home-small" data-reveal="copy">
+            {home.methods.note}
+          </p>
+        </div>
+      </section>
+
+      <section
         className="home-section"
         id="mozliwosci"
         aria-labelledby="tools-title"
@@ -65,13 +162,9 @@ export default function HomePage() {
         <div className="home-shell home-tools">
           <div className="home-tools__intro">
             <h2 id="tools-title" data-reveal="heading">
-              Świadczenia
-              <br />i dokumenty.
+              {home.tools.title}
             </h2>
-            <p data-reveal="copy">
-              Wybierz to, czego potrzebujesz. Możesz zacząć od swojej sytuacji
-              lub od razu przejść do kalkulatora, dokumentów i planu urlopów.
-            </p>
+            <p data-reveal="copy">{home.tools.lead}</p>
             <div className="home-tools__photo" data-reveal="photo">
               <Image
                 src="/images/oczekiwanie-na-dziecko.jpg"
@@ -162,6 +255,7 @@ export default function HomePage() {
                   <Link href="/panel">
                     <div>
                       <h3>{persona.name}</h3>
+                      <p className="home-persona-story">„{persona.story}”</p>
                       <span>{persona.role}</span>
                       <p>{persona.note}</p>
                     </div>
@@ -198,6 +292,10 @@ export default function HomePage() {
               {
                 q: "Czy to oficjalny serwis ZUS?",
                 a: "Nie. To projekt demonstracyjny. Dane, dokumenty i integracje rządowe są symulowane. Informacje nie zastępują decyzji ZUS ani płatnika składek.",
+              },
+              {
+                q: "Czym różni się formularz od rozmowy z asystentem?",
+                a: "To dwa sposoby rozpoczęcia tej samej analizy. Formularz prowadzi krok po kroku i porządkuje dane. Rozmowa pozwala opisać sytuację własnymi słowami i od razu dopytać o przepisy. Obie ścieżki prowadzą do tego samego kalkulatora i tych samych zastrzeżeń.",
               },
               {
                 q: "Czy muszę się logować?",
@@ -247,18 +345,27 @@ export default function HomePage() {
         <div className="home-shell">
           <div>
             <h2 id="close-title" data-reveal="heading">
-              Pierwszy krok?
-              <br />
-              Twoja sytuacja.
+              {home.finalCta.title}
             </h2>
-            <p data-reveal="copy">
-              Opowiedz nam o swoim planie na rodzicielstwo.
-            </p>
+            <p data-reveal="copy">{home.finalCta.text}</p>
           </div>
-          <Link href="/start" className="home-button home-button--white">
-            Sprawdź swoje świadczenia{" "}
-            <ArrowRight size={20} aria-hidden="true" />
-          </Link>
+          <div className="home-close__actions" data-reveal="copy">
+            <Link
+              href={home.methods.form.href}
+              className="home-button home-button--white"
+            >
+              {home.finalCta.form}
+              <ListChecks size={20} aria-hidden="true" />
+            </Link>
+            <Link
+              href={home.methods.chat.href}
+              className="home-button home-button--white"
+            >
+              {home.finalCta.chat}
+              <MessagesSquare size={20} aria-hidden="true" />
+            </Link>
+            <p className="home-close__note">{home.finalCta.note}</p>
+          </div>
         </div>
       </section>
     </div>
