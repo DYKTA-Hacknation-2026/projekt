@@ -3,6 +3,7 @@
 import {
   useEffect,
   useState,
+  useRef,
   type ChangeEvent,
   type FormEvent,
   type ReactNode,
@@ -191,10 +192,18 @@ export function AdvancedCalculator({
   const [save, setSave] = useState(true)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const resultRef = useRef<HTMLDivElement>(null)
   const [result, setResult] = useState<CalculationResponseBody | null>(null)
   const [monthlyBasis, setMonthlyBasis] = useState<number | undefined>()
   const [useImportedBasis, setUseImportedBasis] = useState(true)
   const basisSource = initialBasisSource
+
+  useEffect(() => {
+    if (result) {
+      resultRef.current?.focus({ preventScroll: true })
+      resultRef.current?.scrollIntoView({ behavior: "instant", block: "start" })
+    }
+  }, [result])
 
   const childCounts = Object.keys(ruleSet.maternity.weeksByChildren)
     .map(Number)
@@ -610,16 +619,15 @@ export function AdvancedCalculator({
   const isBirth = mode === "BIRTH"
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border/70 bg-secondary/40 p-4">
+    <div className="advanced-calculator space-y-6">
+      <div className="advanced-intro">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">
             Tryb zaawansowany
           </h2>
           <p className="text-sm text-pretty text-muted-foreground">
-            Wszystkie parametry silnika: historia 12 miesięcy, Z-3/Z-3a,
-            ubezpieczenie, płatnik, zaległości, podział urlopów i sytuacje
-            szczególne. Wynik nadal jest szacunkiem, nie decyzją ZUS.
+            Dopasuj dochody, ubezpieczenie i urlopy do Waszej sytuacji.
+            Wynik jest szacunkiem, nie decyzją ZUS.
           </p>
         </div>
         {onBackToQuick && (
@@ -629,7 +637,7 @@ export function AdvancedCalculator({
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+      <div className="advanced-layout">
         <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -643,11 +651,11 @@ export function AdvancedCalculator({
           </CardDescription>
         </CardHeader>
         <form onSubmit={onSubmit} aria-busy={pending}>
-          <CardContent className="space-y-5">
+          <CardContent className="advanced-fields space-y-7">
             <div
               role="group"
               aria-label="Rodzaj sprawy"
-              className="inline-flex h-auto w-full flex-wrap items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground"
+              className="calculator-case-tabs"
             >
               {(
                 [
@@ -662,8 +670,8 @@ export function AdvancedCalculator({
                   aria-pressed={tab === value}
                   onClick={() => onTabChange(value)}
                   className={cn(
-                    "inline-flex h-7 flex-1 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-                    tab === value && "bg-background text-foreground shadow-sm"
+                    "min-h-11 rounded-full px-4 py-2 text-sm font-semibold transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    tab === value && "bg-card text-heading"
                   )}
                 >
                   {label}
@@ -1890,9 +1898,15 @@ export function AdvancedCalculator({
         </form>
       </Card>
 
-      <div aria-live="polite" className="space-y-4">
+      <div
+        ref={resultRef}
+        tabIndex={-1}
+        aria-label="Wynik kalkulatora"
+        aria-live="polite"
+        className="calculator-results space-y-6"
+      >
         {!result ? (
-          <Card className="border-dashed">
+          <Card className="calculator-empty">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Info

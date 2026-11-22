@@ -81,10 +81,10 @@ export function HomeLeavePreview({ items }: { items: HomePlanItem[] }) {
                       }}
                       aria-pressed={selectedId === item.id}
                       aria-controls="home-plan-detail"
-                      aria-label={`${ownerLabel[owner]}: ${item.title}, ${item.days! / 7} tygodni. Pokaż szczegóły`}
+                      aria-label={`${item.title} ${item.days! / 7} tyg. ${ownerLabel[owner]}. Pokaż szczegóły`}
                       onClick={() => setSelectedId(item.id)}
                     >
-                      <span>{item.title}</span>
+                      <span>{item.title}</span>{" "}
                       <span>{item.days! / 7} tyg.</span>
                     </button>
                   ))}

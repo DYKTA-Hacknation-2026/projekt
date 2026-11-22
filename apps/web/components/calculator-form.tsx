@@ -74,30 +74,27 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="calculator-workspace space-y-6">
       <div
         role="group"
         aria-label="Tryb kalkulatora"
-        className="grid gap-2 sm:grid-cols-2"
+        className="calculator-modes"
       >
         <button
           type="button"
           aria-pressed={mode === "QUICK"}
           onClick={() => setMode("QUICK")}
           className={cn(
-            "rounded-xl border p-4 text-left transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-            mode === "QUICK"
-              ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
-              : "border-border/70 hover:bg-muted/40"
+            "calculator-mode focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+            mode === "QUICK" ? "calculator-mode--active" : "hover:bg-muted/40"
           )}
         >
           <span className="flex items-center gap-2 font-medium">
             <Sparkles aria-hidden="true" className="size-4 text-primary" />
             Szybkie wyliczenie
           </span>
-          <span className="mt-1 block text-xs text-pretty text-muted-foreground">
-            Cztery proste kroki. Nie musisz znać pojęć ani numerów dokumentów.
-            Domyślny tryb dla większości rodziców.
+          <span className="mt-2 block text-sm text-pretty text-muted-foreground">
+            Cztery proste kroki, bez znajomości przepisów.
           </span>
         </button>
         <button
@@ -105,19 +102,18 @@ export function CalculatorForm({ ruleSet }: { ruleSet: RuleSet }) {
           aria-pressed={mode === "ADVANCED"}
           onClick={() => setMode("ADVANCED")}
           className={cn(
-            "rounded-xl border p-4 text-left transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+            "calculator-mode focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
             mode === "ADVANCED"
-              ? "border-primary/40 bg-primary/5 ring-1 ring-primary/20"
-              : "border-border/70 hover:bg-muted/40"
+              ? "calculator-mode--active"
+              : "hover:bg-muted/40"
           )}
         >
           <span className="flex items-center gap-2 font-medium">
             <Calculator aria-hidden="true" className="size-4 text-primary" />
             Zaawansowane wyliczenie
           </span>
-          <span className="mt-1 block text-xs text-pretty text-muted-foreground">
-            Pełny zestaw parametrów: historia 12 miesięcy, Z-3/Z-3a,
-            ubezpieczenie, płatnik, zaległości i szczegółowy podział urlopów.
+          <span className="mt-2 block text-sm text-pretty text-muted-foreground">
+            Historia dochodów, Z-3/Z-3a i szczegółowy podział urlopów.
           </span>
         </button>
       </div>
