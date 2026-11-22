@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ZPR — koncepcje nazwy i logo</title>
+    <style>
+      :root {
+        --mark: #007834;
+        --mark-ink: #ffffff;
+        --mark-soft: #ddebe2;
+        --coin: #d99a2b;
+        --font-brand: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --mark: #4fbe86;
+          --mark-ink: #06251a;
+          --mark-soft: #1d3a2c;
+          --coin: #fab856;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        font-family: var(--font-brand);
+        margin: 0;
+        padding: 0 0 4px;
+      }
+      .wrap { display: flex; flex-direction: column; gap: 18px; }
+      .eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: var(--muted-foreground);
+        margin: 0 0 6px;
+      }
+      h1 { font-size: 24px; line-height: 1.15; letter-spacing: -0.015em; margin: 0 0 6px; }
+      .lead { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--muted-foreground); max-width: 62ch; }
+      .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .card-head { display: flex; align-items: center; gap: 12px; }
+      .card-head svg { flex: none; }
+      .name { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
+      .tagline { font-size: 12.5px; color: var(--muted-foreground); margin-top: 2px; }
+      .why { font-size: 12.5px; line-height: 1.5; margin: 0; color: var(--foreground); opacity: 0.9; }
+      .risk { font-size: 12px; line-height: 1.45; margin: 0; color: var(--muted-foreground); }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+      .chip {
+        font-size: 10.5px;
+        line-height: 1;
+        padding: 5px 8px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--muted-foreground);
+        white-space: nowrap;
+      }
+      .chip.rec { border-color: var(--mark); color: var(--mark); font-weight: 600; }
+      .domain { font-family: var(--font-mono); font-size: 11.5px; color: var(--muted-foreground); }
+      .strip {
+        background: #007834;
+        border-radius: calc(var(--radius) + 4px);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      @media (prefers-color-scheme: dark) {
+        .strip { background: #0b3a24; }
+      }
+      .strip-title {
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+      .icons { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+      .icon-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .icon-cell span { font-size: 9.5px; color: rgba(255, 255, 255, 0.7); }
+      .favicons { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+      .names { display: flex; flex-direction: column; gap: 8px; }
+      .name-row {
+        display: grid;
+        grid-template-columns: minmax(110px, 0.9fr) 2fr;
+        gap: 6px 14px;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 12.5px;
+        line-height: 1.4;
+      }
+      .name-row:last-child { border-bottom: 0; }
+      .name-row b { font-weight: 600; }
+      .name-row span { color: var(--muted-foreground); }
+      .note {
+        background: var(--muted);
+        border-radius: calc(var(--radius) + 2px);
+        padding: 14px 16px;
+        font-size: 12.5px;
+        line-height: 1.55;
+      }
+      .note b { font-weight: 600; }
+      .note ol { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+      .foot { font-size: 10.5px; color: var(--muted-foreground); line-height: 1.5; }
+      .lockups { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+      .lockup {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 2px);
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .lockup-text { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+      .lockup-text b { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+      .lockup-text span { font-size: 10.5px; color: var(--muted-foreground); margin-top: 2px; }
+      h2 { font-size: 14px; letter-spacing: -0.005em; margin: 0; }
+      .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+      .section-head .hint { font-size: 11px; color: var(--muted-foreground); }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="m-zasilkownik" viewBox="0 0 48 48">
+          <rect x="2" y="2" width="44" height="44" rx="13" fill="var(--mark)" />
+          <path
+            d="M14.5 16h19L14.5 32h19"
+            fill="none"
+            stroke="var(--mark-ink)"
+            stroke-width="4.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <circle cx="33.5" cy="32" r="3.4" fill="var(--coin)" />
+        </symbol>
+        <symbol id="m-sciezka" viewBox="0 0 48 48">
+          <path
+            d="M12 38C12 29 24 30 24 24C24 18 36 19 36 12"
+            fill="none"
+            stroke="var(--mark)"
+            stroke-width="5"
+            stroke-linecap="round"
+          />
+          <circle cx="12" cy="38" r="3.8" fill="var(--mark)" />
+          <circle cx="36" cy="12" r="4.8" fill="var(--coin)" />
+        </symbol>
+        <symbol id="m-wyprawka" viewBox="0 0 48 48">
+          <path
+            d="M9 19c0 11 6.7 18 15 18s15-7 15-18"
+            fill="none"
+            stroke="var(--mark)"
+            stroke-width="3.8"
+            stroke-linecap="round"
+          />
+          <path d="M24 31V15" stroke="var(--mark)" stroke-width="3.4" stroke-linecap="round" />
+          <path d="M24.5 20c-6.5 0-9-4.5-9-9 5.5 0 9 3.5 9 9Z" fill="var(--mark)" />
+          <path d="M24.5 16c0-5 3-9 9-9 0 5-3 9-9 9Z" fill="var(--coin)" />
+        </symbol>
+        <symbol id="m-kompas" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="17.5" fill="none" stroke="var(--mark)" stroke-width="3.4" />
+          <path d="M24 8.5 30.5 24 24 39.5 17.5 24Z" fill="var(--mark)" />
+          <path d="M24 8.5 30.5 24H17.5Z" fill="var(--coin)" />
+        </symbol>
+        <symbol id="m-pewny" viewBox="0 0 48 48">
+          <path
+            d="M24 4.5 40 10.5v13c0 9.2-7.4 16.4-16 20-8.6-3.6-16-10.8-16-20v-13Z"
+            fill="var(--mark)"
+          />
+          <path
+            d="m16.5 23.5 5.3 5.6 10-11"
+            fill="none"
+            stroke="var(--mark-ink)"
+            stroke-width="4.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </symbol>
+        <symbol id="m-licz" viewBox="0 0 48 48">
+          <rect x="7" y="3.5" width="34" height="41" rx="9" fill="none" stroke="var(--mark)" stroke-width="3.6" />
+          <path d="M14 14h20" stroke="var(--mark)" stroke-width="4" stroke-linecap="round" />
+          <circle cx="16" cy="23" r="2.2" fill="var(--mark)" />
+          <circle cx="24" cy="23" r="2.2" fill="var(--mark)" />
+          <circle cx="32" cy="23" r="2.2" fill="var(--mark)" />
+          <circle cx="16" cy="31" r="2.2" fill="var(--mark)" />
+          <circle cx="24" cy="31" r="2.2" fill="var(--mark)" />
+          <circle cx="32" cy="31" r="2.9" fill="var(--coin)" />
+          <circle cx="16" cy="38" r="2.2" fill="var(--mark)" />
+          <circle cx="24" cy="38" r="2.2" fill="var(--mark)" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="wrap">
+      <header>
+        <p class="eyebrow">Zasiłkowy Przewodnik · identyfikacja</p>
+        <h1>Sześć koncepcji nazwy i znaku</h1>
+        <p class="lead">
+          Kierunki od osobowego do instytucjonalnego. Paleta bez zmian: zieleń #007834, amber
+          #fab856 jako akcent „złotówki”, Source Sans 3. Każdy znak narysowany na siatce 48 px,
+          więc działa też jako favicon.
+        </p>
+      </header>
+
+      <div class="grid">
+        <article class="card">
+          <div class="card-head">
+            <svg width="52" height="52" aria-hidden="true"><use href="#m-zasilkownik" /></svg>
+            <div>
+              <div class="name">Zasiłkownik</div>
+              <div class="tagline">Twój przewodnik po zasiłkach</div>
+            </div>
+          </div>
+          <p class="why">
+            Osobowy, zapamiętywalny, naturalnie łączy się z asystentem: „zapytaj Zasiłkownika”.
+            Monogram „Z” z kropką-k monetą czyta się jak podpis doradcy.
+          </p>
+          <p class="risk">Ryzyko: brzmi nieformalnie; trzeba pilnować, by nie sugerował doradztwa prawnego.</p>
+          <div class="chips">
+            <span class="chip rec">Główna rekomendacja</span>
+            <span class="chip">osobowa</span>
+            <span class="chip">łatwa werbalnie</span>
+          </div>
+          <div class="domain">zasilkownik.pl · do sprawdzenia</div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <svg width="52" height="52" aria-hidden="true"><use href="#m-sciezka" /></svg>
+            <div>
+              <div class="name">Ścieżka</div>
+              <div class="tagline">Od wniosku do wypłaty</div>
+            </div>
+          </div>
+          <p class="why">
+            Metafora pokrywa się z osią czasu i etapami sprawy: ciąża → poród → wniosek → wypłata.
+            Spokojna, „publiczna”, dobrze dzieli się na podstrony.
+          </p>
+          <p class="risk">Ryzyko: nazwa ogólna, słaba ochrona marki — warto „Ścieżka Zasiłkowa”.</p>
+          <div class="chips">
+            <span class="chip rec">Alternatywa nr 1</span>
+            <span class="chip">metafora</span>
+            <span class="chip">timeline</span>
+          </div>
+          <div class="domain">sciezkazasilkowa.pl · do sprawdzenia</div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <svg width="52" height="52" aria-hidden="true"><use href="#m-wyprawka" /></svg>
+            <div>
+              <div class="name">Wyprawka</div>
+              <div class="tagline">Wszystko, co dostajesz od państwa</div>
+            </div>
+          </div>
+          <p class="why">
+            Ciepłe, bardzo polskie słowo: kołyska i kiełek zamiast tabelki. Najlepiej działa na
+            rodziców tuż przed narodzinami i po nich.
+          </p>
+          <p class="risk">Ryzyko: zawęża serwis do narodzin, gubi zasiłek opiekuńczy i sprawy starszych dzieci.</p>
+          <div class="chips">
+            <span class="chip">metafora</span>
+            <span class="chip">emocjonalna</span>
+          </div>
+          <div class="domain">wyprawka.pl · prawdopodobnie zajęta</div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <svg width="52" height="52" aria-hidden="true"><use href="#m-kompas" /></svg>
+            <div>
+              <div class="name">Kompas Zasiłków</div>
+              <div class="tagline">Właściwy kierunek</div>
+            </div>
+          </div>
+          <p class="why">
+            Najbliżej obecnej nazwy: „przewodnik” zamieniony w mocniejszy, wizualny obraz.
+            Igła kompasu w dwóch kolorach daje prosty, czytelny znak.
+          </p>
+          <p class="risk">Ryzyko: w Polsce jest dużo „kompasów”; potrzebny wyróżnik w typografii.</p>
+          <div class="chips">
+            <span class="chip">metafora</span>
+            <span class="chip">przewodnik</span>
+          </div>
+          <div class="domain">kompaszasilkow.pl · do sprawdzenia</div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <svg width="52" height="52" aria-hidden="true"><use href="#m-pewny" /></svg>
+            <div>
+              <div class="name">Pewny Zasiłek</div>
+              <div class="tagline">Policz, zanim złożysz wniosek</div>
+            </div>
+          </div>
+          <p class="why">
+            Stawia na zaufanie: deterministyczny kalkulator, źródła przy każdym wyniku, brak
+            zmyślonych kwot. Tarcza z haczykiem jest czytelna nawet w 16 px.
+          </p>
+          <p class="risk">Ryzyko: „pewny” obiecuje więcej, niż demo może zagwarantować — potrzebny disclaimer.</p>
+          <div class="chips">
+            <span class="chip">zaufanie</span>
+            <span class="chip">instytucjonalna</span>
+          </div>
+          <div class="domain">pewnyzasilek.pl · do sprawdzenia</div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <svg width="52" height="52" aria-hidden="true"><use href="#m-licz" /></svg>
+            <div>
+              <div class="name">Licz na Zasiłek</div>
+              <div class="tagline">Policz w minutę</div>
+            </div>
+          </div>
+          <p class="why">
+            Nazwa z grą słów i mocnym czasownikiem, znak to kalkulator z monetą. Najbardziej
+            „produktowa” z zestawu, dobra pod kampanie i social media.
+          </p>
+          <p class="risk">Ryzyko: brzmi jak bankomat; może umniejszać powagę spraw urzędowych.</p>
+          <div class="chips">
+            <span class="chip">funkcjonalna</span>
+            <span class="chip">marketingowa</span>
+          </div>
+          <div class="domain">licznazasilek.pl · do sprawdzenia</div>
+        </article>
+      </div>
+
+      <section>
+        <div class="section-head" style="margin-bottom: 10px">
+          <h2>Wariant poziomy w nagłówku</h2>
+          <span class="hint">znak 32 px + wordmark</span>
+        </div>
+        <div class="lockups">
+          <div class="lockup">
+            <svg width="32" height="32" aria-hidden="true"><use href="#m-zasilkownik" /></svg>
+            <div class="lockup-text">
+              <b>Zasiłkownik</b>
+              <span>Przewodnik dla rodziców</span>
+            </div>
+          </div>
+          <div class="lockup">
+            <svg width="32" height="32" aria-hidden="true"><use href="#m-sciezka" /></svg>
+            <div class="lockup-text">
+              <b>Ścieżka</b>
+              <span>Zasiłki krok po kroku</span>
+            </div>
+          </div>
+          <div class="lockup">
+            <svg width="32" height="32" aria-hidden="true"><use href="#m-pewny" /></svg>
+            <div class="lockup-text">
+              <b>Pewny Zasiłek</b>
+              <span>Policz, zanim złożysz wniosek</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="strip">
+        <div class="strip-title">Test rozpoznawalności — 56 px i 22 px na zieleni</div>
+        <div class="icons" style="--mark: #ffffff; --mark-ink: #007834; --coin: #fab856">
+          <div class="icon-cell">
+            <svg width="56" height="56" aria-hidden="true"><use href="#m-zasilkownik" /></svg>
+            <span>Zasiłkownik</span>
+          </div>
+          <div class="icon-cell">
+            <svg width="56" height="56" aria-hidden="true"><use href="#m-sciezka" /></svg>
+            <span>Ścieżka</span>
+          </div>
+          <div class="icon-cell">
+            <svg width="56" height="56" aria-hidden="true"><use href="#m-wyprawka" /></svg>
+            <span>Wyprawka</span>
+          </div>
+          <div class="icon-cell">
+            <svg width="56" height="56" aria-hidden="true"><use href="#m-kompas" /></svg>
+            <span>Kompas</span>
+          </div>
+          <div class="icon-cell">
+            <svg width="56" height="56" aria-hidden="true"><use href="#m-pewny" /></svg>
+            <span>Pewny</span>
+          </div>
+          <div class="icon-cell">
+            <svg width="56" height="56" aria-hidden="true"><use href="#m-licz" /></svg>
+            <span>Licz</span>
+          </div>
+        </div>
+        <div class="favicons" style="--mark: #ffffff; --mark-ink: #007834; --coin: #fab856">
+          <svg width="22" height="22" aria-hidden="true"><use href="#m-zasilkownik" /></svg>
+          <svg width="22" height="22" aria-hidden="true"><use href="#m-sciezka" /></svg>
+          <svg width="22" height="22" aria-hidden="true"><use href="#m-wyprawka" /></svg>
+          <svg width="22" height="22" aria-hidden="true"><use href="#m-kompas" /></svg>
+          <svg width="22" height="22" aria-hidden="true"><use href="#m-pewny" /></svg>
+          <svg width="22" height="22" aria-hidden="true"><use href="#m-licz" /></svg>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-head">
+          <h2>Dodatkowe nazwy bez znaku</h2>
+          <span class="hint">do szybkiego testu z rodzicami</span>
+        </div>
+        <div class="names">
+          <div class="name-row"><b>Zasiłkowo</b><span>krótkie, oczywiste, dobre SEO; słabo chroni markę</span></div>
+          <div class="name-row"><b>Rodzinnik</b><span>ciepłe i polskie, ale nie mówi nic o zasiłkach</span></div>
+          <div class="name-row"><b>Pierwsze Świadczenie</b><span>mocne na start rodzicielstwa, mylące przy kolejnych dzieciach</span></div>
+          <div class="name-row"><b>Teczka Rodzica</b><span>porządek i dokumenty; mniej „policz i zdecyduj”</span></div>
+          <div class="name-row"><b>Bez Formularza</b><span>obietnica doświadczenia, świetna pod asystenta</span></div>
+        </div>
+      </section>
+
+      <section class="note">
+        <b>Jak bym wybrał:</b> „Zasiłkownik” jako nazwa główna — wyróżnia się, jest osobowa i daje
+        imię asystentowi, który jest sercem produktu. Jeśli priorytetem jest ton instytucjonalny i
+        zaufanie, bierzemy „Ścieżkę” i zostawiamy „Zasiłkownik” jako nazwę asystenta.
+        <ol>
+          <li>Zostaw „Zasiłkowy Przewodnik” jako podtytuł/SEO pod nowym logo.</li>
+          <li>Wybierz jedną parę nazwa + znak i dorysuj wariant poziomy do nagłówka (znak 32 px + tekst).</li>
+          <li>Sprawdź UPRP i domeny przed wdrożeniem — powyższe propozycje nie są weryfikacją prawną.</li>
+        </ol>
+      </section>
+
+      <p class="foot">
+        Plik: docs/design/brand-concepts.html · kolory i typografia zgodne z
+        packages/ui/src/styles/globals.css · znaki w SVG, gotowe do eksportu.
+      </p>
+    </div>
+  </body>
+</html>

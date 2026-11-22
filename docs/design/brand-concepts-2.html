@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ZPR — kompas i wyprawka, runda 2</title>
+    <style>
+      :root {
+        --mark: #007834;
+        --mark-ink: #ffffff;
+        --mark-soft: #ddebe2;
+        --coin: #d99a2b;
+        --font-brand: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --mark: #4fbe86;
+          --mark-ink: #06251a;
+          --mark-soft: #1d3a2c;
+          --coin: #fab856;
+        }
+      }
+      * { box-sizing: border-box; }
+      body { font-family: var(--font-brand); margin: 0; padding: 0 0 4px; }
+      .wrap { display: flex; flex-direction: column; gap: 20px; }
+      .eyebrow {
+        font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+        font-weight: 600; color: var(--muted-foreground); margin: 0 0 6px;
+      }
+      h1 { font-size: 24px; line-height: 1.15; letter-spacing: -0.015em; margin: 0 0 6px; }
+      .lead { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--muted-foreground); max-width: 64ch; }
+      .band { display: flex; flex-direction: column; gap: 12px; }
+      .band-head { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+      .band-head h2 { font-size: 15px; margin: 0; letter-spacing: -0.005em; }
+      .band-head .hint { font-size: 11.5px; color: var(--muted-foreground); }
+      .band-head .kicker {
+        font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+        font-weight: 600; color: var(--mark); border: 1px solid currentColor;
+        border-radius: 999px; padding: 3px 7px; line-height: 1;
+      }
+      .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+      .card {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 4px); padding: 16px;
+        display: flex; flex-direction: column; gap: 9px;
+      }
+      .card-head { display: flex; align-items: center; gap: 12px; }
+      .card-head svg { flex: none; }
+      .name { font-size: 17.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
+      .tagline { font-size: 12.5px; color: var(--muted-foreground); margin-top: 2px; }
+      .why { font-size: 12.5px; line-height: 1.5; margin: 0; }
+      .risk { font-size: 12px; line-height: 1.45; margin: 0; color: var(--muted-foreground); }
+      .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+      .chip {
+        font-size: 10.5px; line-height: 1; padding: 5px 8px;
+        border: 1px solid var(--border); border-radius: 999px;
+        color: var(--muted-foreground); white-space: nowrap;
+      }
+      .chip.pick { border-color: var(--mark); color: var(--mark); font-weight: 600; }
+      .domain { font-family: var(--font-mono); font-size: 11px; color: var(--muted-foreground); }
+      .strip {
+        background: #007834; border-radius: calc(var(--radius) + 4px);
+        padding: 16px; display: flex; flex-direction: column; gap: 14px;
+      }
+      @media (prefers-color-scheme: dark) { .strip { background: #0b3a24; } }
+      .strip-title {
+        color: rgba(255, 255, 255, 0.82); font-size: 10.5px;
+        letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+      }
+      .icons { display: flex; flex-wrap: wrap; gap: 14px 16px; align-items: center; }
+      .icon-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .icon-cell span { font-size: 9.5px; color: rgba(255, 255, 255, 0.7); }
+      .favicons { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+      .note {
+        background: var(--muted); border-radius: calc(var(--radius) + 2px);
+        padding: 14px 16px; font-size: 12.5px; line-height: 1.55;
+      }
+      .note b { font-weight: 600; }
+      .foot { font-size: 10.5px; color: var(--muted-foreground); line-height: 1.5; }
+      .lockups { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+      .lockup {
+        background: var(--card); border: 1px solid var(--border);
+        border-radius: calc(var(--radius) + 2px); padding: 12px 14px;
+        display: flex; align-items: center; gap: 10px;
+      }
+      .lockup-text { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+      .lockup-text b { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+      .lockup-text span { font-size: 10.5px; color: var(--muted-foreground); margin-top: 2px; }
+      .picks { display: grid; gap: 8px; margin-top: 10px; }
+      .picks div { display: grid; grid-template-columns: 132px 1fr; gap: 10px; font-size: 12.5px; line-height: 1.45; }
+      .picks b { font-weight: 600; }
+      .picks span { color: var(--muted-foreground); }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <symbol id="m-kompas-rodzica" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="17.5" fill="none" stroke="var(--mark)" stroke-width="3.2" />
+          <path d="M24 8.5 28 19.8 39.5 24 28 28.2 24 39.5 20 28.2 8.5 24 20 19.8Z" fill="var(--mark)" />
+          <path d="M24 8.5 28 19.8 24 24 20 19.8Z" fill="var(--coin)" />
+        </symbol>
+        <symbol id="m-busola" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="20.5" fill="var(--mark)" />
+          <path d="M24 7 27.4 20.6 41 24 27.4 27.4 24 41 20.6 27.4 7 24 20.6 20.6Z" fill="var(--mark-ink)" />
+          <path d="M24 7 27.4 20.6 24 24 20.6 20.6Z" fill="var(--coin)" />
+        </symbol>
+        <symbol id="m-azymut" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r="16.5" fill="none" stroke="var(--mark)" stroke-width="2.4" stroke-dasharray="2.5 5" stroke-linecap="round" />
+          <circle cx="13.5" cy="34.5" r="3.6" fill="var(--coin)" />
+          <path d="M14.5 33.5 33.5 14.5" stroke="var(--mark)" stroke-width="5" stroke-linecap="round" />
+          <path d="M33.5 14.5 24.6 16.1M33.5 14.5 31.9 23.4" stroke="var(--mark)" stroke-width="4.6" stroke-linecap="round" />
+        </symbol>
+        <symbol id="m-latarnia" viewBox="0 0 48 48">
+          <path d="M17 13 4.5 7v12Z" fill="var(--coin)" />
+          <path d="M31 13 43.5 7v12Z" fill="var(--coin)" />
+          <path d="M19 17h10l2.6 23.5H16.4Z" fill="var(--mark)" />
+          <rect x="19" y="7.5" width="10" height="6" rx="1.5" fill="var(--mark)" />
+          <rect x="16.5" y="13.4" width="15" height="3.6" rx="1.2" fill="var(--mark)" />
+          <path d="M15 40.5h18" stroke="var(--mark)" stroke-width="3" stroke-linecap="round" />
+        </symbol>
+        <symbol id="m-wyprawka2" viewBox="0 0 48 48">
+          <path d="M15 21c0-7 3.6-11 9-11s9 4 9 11" fill="none" stroke="var(--mark)" stroke-width="3.4" stroke-linecap="round" />
+          <path d="M9.5 21h29l-3.2 16.4a4.2 4.2 0 0 1-4.1 3.4H16.8a4.2 4.2 0 0 1-4.1-3.4Z" fill="none" stroke="var(--mark)" stroke-width="3.4" stroke-linejoin="round" />
+          <path d="M8.5 21h31" stroke="var(--coin)" stroke-width="4" stroke-linecap="round" />
+        </symbol>
+        <symbol id="m-kolyska" viewBox="0 0 48 48">
+          <path d="M9 24a15 15 0 0 0 30 0" fill="none" stroke="var(--mark)" stroke-width="4" stroke-linecap="round" />
+          <path d="M24 5.5 26.6 12.2 33.5 14.8 26.6 17.4 24 24 21.4 17.4 14.5 14.8 21.4 12.2Z" fill="var(--coin)" />
+        </symbol>
+        <symbol id="m-gniazdo" viewBox="0 0 48 48">
+          <circle cx="24" cy="20" r="6" fill="var(--coin)" />
+          <path d="M9 23a15 6 0 0 0 30 0" fill="none" stroke="var(--mark)" stroke-width="4.4" stroke-linecap="round" />
+          <path d="M9.5 24.5c0 8 6.5 13.5 14.5 13.5s14.5-5.5 14.5-13.5" fill="none" stroke="var(--mark)" stroke-width="4.4" stroke-linecap="round" />
+        </symbol>
+        <symbol id="m-zawinatko" viewBox="0 0 48 48">
+          <path d="M11.5 27c0-9.5 5.5-15 12.5-15s12.5 5.5 12.5 15c0 8-5.5 12.5-12.5 12.5S11.5 35 11.5 27Z" fill="var(--mark)" />
+          <path d="M18.5 15.5c4 4.5 4 19 0 23M29.5 15.5c-4 4.5-4 19 0 23" fill="none" stroke="var(--mark-ink)" stroke-width="2.2" stroke-linecap="round" />
+          <circle cx="24" cy="9.8" r="3.6" fill="var(--coin)" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="wrap">
+      <header>
+        <p class="eyebrow">Zasiłkowy Przewodnik · runda 2</p>
+        <h1>Kompas i wyprawka — osiem nowych par</h1>
+        <p class="lead">
+          Dwa kierunki, które wybrałeś, rozpisane szerzej. Cztery warianty „prowadzenia”
+          i cztery warianty „opieki na start”. Wszystkie znaki nowe, w tej samej palecie i siatce
+          48 px.
+        </p>
+      </header>
+
+      <section class="band">
+        <div class="band-head">
+          <span class="kicker">Kierunek A</span>
+          <h2>Prowadzenie</h2>
+          <span class="hint">wiem, gdzie iść</span>
+        </div>
+        <div class="grid">
+          <article class="card">
+            <div class="card-head">
+              <svg width="52" height="52" aria-hidden="true"><use href="#m-kompas-rodzica" /></svg>
+              <div>
+                <div class="name">Kompas Rodzica</div>
+                <div class="tagline">Wskaże drogę do zasiłku</div>
+              </div>
+            </div>
+            <p class="why">
+              Łączy oba Twoje kierunki: kierunek i rodzinę. Zachowuje ciągłość z „Przewodnikiem”,
+              ale brzmi cieplej i konkretniej niż sama nazwa opisowa.
+            </p>
+            <p class="risk">Ryzyko: „kompas” pojawia się w wielu aplikacjach; wyróżnikiem jest „Rodzica”.</p>
+            <div class="chips"><span class="chip pick">Najbliżej obecnej marki</span><span class="chip">kompas</span></div>
+            <div class="domain">kompasrodzica.pl · do sprawdzenia</div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <svg width="52" height="52" aria-hidden="true"><use href="#m-busola" /></svg>
+              <div>
+                <div class="name">Busola</div>
+                <div class="tagline">Twój kierunek w zasiłkach</div>
+              </div>
+            </div>
+            <p class="why">
+              Krótsza i mniej zużyta niż „kompas”. Pełna tarcza daje mocną plamę koloru — to
+              najlepszy znak z zestawu w rozmiarze faviconu i na ikonie aplikacji.
+            </p>
+            <p class="risk">Ryzyko: słowo mniej oczywiste, wymaga dopisku „zasiłki” w podtytule.</p>
+            <div class="chips"><span class="chip pick">Najbardziej markowa</span><span class="chip">kompas</span></div>
+            <div class="domain">busolazasilkowa.pl · do sprawdzenia</div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <svg width="52" height="52" aria-hidden="true"><use href="#m-azymut" /></svg>
+              <div>
+                <div class="name">Azymut</div>
+                <div class="tagline">Konkretny kierunek, konkretna kwota</div>
+              </div>
+            </div>
+            <p class="why">
+              Najbardziej „produktowy” wariant: ostry, geometryczny znak, który świetnie łączy się
+              z kalkulatorem i monochromatycznym użyciem w dokumentach.
+            </p>
+            <p class="risk">Ryzyko: brzmi technicznie lub militarnie, słabiej kojarzy się z rodziną.</p>
+            <div class="chips"><span class="chip">kalkulator</span><span class="chip">kompas</span></div>
+            <div class="domain">azymutzasilkow.pl · do sprawdzenia</div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <svg width="52" height="52" aria-hidden="true"><use href="#m-latarnia" /></svg>
+              <div>
+                <div class="name">Latarnia</div>
+                <div class="tagline">Światło w gąszczu przepisów</div>
+              </div>
+            </div>
+            <p class="why">
+              Prowadzenie poza kompasem: latarnia to punkt orientacyjny, do którego się dąży.
+              Bardzo wdzięczny znak do animacji i kampanii (snop światła).
+            </p>
+            <p class="risk">Ryzyko: wychodzi poza rodzinę „kompasową” i dodaje morski charakter.</p>
+            <div class="chips"><span class="chip">metafora</span><span class="chip">kampania</span></div>
+            <div class="domain">latarniazasilkow.pl · do sprawdzenia</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="band">
+        <div class="band-head">
+          <span class="kicker">Kierunek B</span>
+          <h2>Opieka i start</h2>
+          <span class="hint">co dostajesz od państwa</span>
+        </div>
+        <div class="grid">
+          <article class="card">
+            <div class="card-head">
+              <svg width="52" height="52" aria-hidden="true"><use href="#m-wyprawka2" /></svg>
+              <div>
+                <div class="name">Wyprawka</div>
+                <div class="tagline">Wszystko, co dostajesz od państwa</div>
+              </div>
+            </div>
+            <p class="why">
+              Zostaje przy Twoim typie, ale znak zmienia się z kołyski w kosz z bursztynową
+              krawędzią. Czyta się jak „wyprawka”, nie jak „dziecko” — mniej sentymentalnie.
+            </p>
+            <p class="risk">Ryzyko: nadal sugeruje start z dzieckiem; przy zasiłku opiekuńczym trzeba podpisu.</p>
+            <div class="chips"><span class="chip pick">Najlepszy z rodziny</span><span class="chip">ciepło</span></div>
+            <div class="domain">wyprawka.pl · zajęta</div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <svg width="52" height="52" aria-hidden="true"><use href="#m-kolyska" /></svg>
+              <div>
+                <div class="name">Kołyska</div>
+                <div class="tagline">Zasiłki od pierwszej chwili</div>
+              </div>
+            </div>
+            <p class="why">
+              Najczulsza nazwa w zestawie. Kołyska z gwiazdą to gotowy, bardzo ludzki znak, który
+              równie dobrze działa na plakacie, jak i w nagłówku.
+            </p>
+            <p class="risk">Ryzyko: zawęża serwis do niemowlęcia i brzmi nieco literacko.</p>
+            <div class="chips"><span class="chip">ciepło</span><span class="chip">emocjonalna</span></div>
+            <div class="domain">kolyska.pl · do sprawdzenia</div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <svg width="52" height="52" aria-hidden="true"><use href="#m-gniazdo" /></svg>
+              <div>
+                <div class="name">Gniazdo</div>
+                <div class="tagline">Bezpieczne miejsce na start</div>
+              </div>
+            </div>
+            <p class="why">
+              Dom, ciepło i opieka. Złote jajko w gnieździe to czytelna metafora świadczenia —
+              znak opowiada historię bez ani jednego słowa.
+            </p>
+            <p class="risk">Ryzyko: „Gniazdo” bywa kojarzone z pismem o profilu narodowym — sprawdzić przed decyzją.</p>
+            <div class="chips"><span class="chip">ciepło</span><span class="chip">opowieść</span></div>
+            <div class="domain">gniazdozasilkowe.pl · do sprawdzenia</div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <svg width="52" height="52" aria-hidden="true"><use href="#m-zawinatko" /></svg>
+              <div>
+                <div class="name">Zawiniątko</div>
+                <div class="tagline">Wszystko, co potrzebne na start</div>
+              </div>
+            </div>
+            <p class="why">
+              Czułe, bardzo polskie i prawie nieużywane w nazwach serwisów. Zawinięty pakunek
+              z węzełkiem mówi „dostajesz komplet”, a nie „wypełnij formularz”.
+            </p>
+            <p class="risk">Ryzyko: brzmi zdrobniale i może być nieoczywiste dla młodszych rodziców.</p>
+            <div class="chips"><span class="chip pick">Najbardziej unikatowa</span><span class="chip">ciepło</span></div>
+            <div class="domain">zawiniatko.pl · do sprawdzenia</div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="band-head" style="margin-bottom: 10px">
+          <h2>Wariant poziomy w nagłówku</h2>
+          <span class="hint">znak 32 px + wordmark</span>
+        </div>
+        <div class="lockups">
+          <div class="lockup">
+            <svg width="32" height="32" aria-hidden="true"><use href="#m-kompas-rodzica" /></svg>
+            <div class="lockup-text"><b>Kompas Rodzica</b><span>Przewodnik po zasiłkach</span></div>
+          </div>
+          <div class="lockup">
+            <svg width="32" height="32" aria-hidden="true"><use href="#m-busola" /></svg>
+            <div class="lockup-text"><b>Busola</b><span>Zasiłki dla rodziców</span></div>
+          </div>
+          <div class="lockup">
+            <svg width="32" height="32" aria-hidden="true"><use href="#m-wyprawka2" /></svg>
+            <div class="lockup-text"><b>Wyprawka</b><span>Wszystko, co daje państwo</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="strip">
+        <div class="strip-title">Test rozpoznawalności — 52 px i 20 px na zieleni</div>
+        <div class="icons" style="--mark: #ffffff; --mark-ink: #007834; --coin: #fab856">
+          <div class="icon-cell"><svg width="52" height="52" aria-hidden="true"><use href="#m-kompas-rodzica" /></svg><span>Kompas Rodzica</span></div>
+          <div class="icon-cell"><svg width="52" height="52" aria-hidden="true"><use href="#m-busola" /></svg><span>Busola</span></div>
+          <div class="icon-cell"><svg width="52" height="52" aria-hidden="true"><use href="#m-azymut" /></svg><span>Azymut</span></div>
+          <div class="icon-cell"><svg width="52" height="52" aria-hidden="true"><use href="#m-latarnia" /></svg><span>Latarnia</span></div>
+          <div class="icon-cell"><svg width="52" height="52" aria-hidden="true"><use href="#m-wyprawka2" /></svg><span>Wyprawka</span></div>
+          <div class="icon-cell"><svg width="52" height="52" aria-hidden="true"><use href="#m-kolyska" /></svg><span>Kołyska</span></div>
+          <div class="icon-cell"><svg width="52" height="52" aria-hidden="true"><use href="#m-gniazdo" /></svg><span>Gniazdo</span></div>
+          <div class="icon-cell"><svg width="52" height="52" aria-hidden="true"><use href="#m-zawinatko" /></svg><span>Zawiniątko</span></div>
+        </div>
+        <div class="favicons" style="--mark: #ffffff; --mark-ink: #007834; --coin: #fab856">
+          <svg width="20" height="20" aria-hidden="true"><use href="#m-kompas-rodzica" /></svg>
+          <svg width="20" height="20" aria-hidden="true"><use href="#m-busola" /></svg>
+          <svg width="20" height="20" aria-hidden="true"><use href="#m-azymut" /></svg>
+          <svg width="20" height="20" aria-hidden="true"><use href="#m-latarnia" /></svg>
+          <svg width="20" height="20" aria-hidden="true"><use href="#m-wyprawka2" /></svg>
+          <svg width="20" height="20" aria-hidden="true"><use href="#m-kolyska" /></svg>
+          <svg width="20" height="20" aria-hidden="true"><use href="#m-gniazdo" /></svg>
+          <svg width="20" height="20" aria-hidden="true"><use href="#m-zawinatko" /></svg>
+        </div>
+      </section>
+
+      <section class="note">
+        <b>Gdybym zawężał do trzech:</b> Kompas Rodzica, Wyprawka (nowy znak) i Busola. Pierwszy
+        jest najbardziej „serwisowy”, drugi najcieplejszy, trzeci najlepiej wygląda jako ikona.
+        Gniazdo i Zawiniątko to najlepsze kandydatury na nazwę asystenta, jeśli nazwę główną
+        weźmie kompas.
+        <div class="picks">
+          <div><b>Nazwa główna</b><span>Kompas Rodzica — prowadzenie + rodzina, blisko obecnego „Przewodnika”.</span></div>
+          <div><b>Alternatywa</b><span>Busola — krótka, markowa, mocna plama koloru; podtytuł „zasiłki dla rodziców”.</span></div>
+          <div><b>Asystent</b><span>Zawiniątko albo Gniazdo jako imię wbudowanego doradcy, nie jako marka serwisu.</span></div>
+        </div>
+      </section>
+
+      <p class="foot">
+        Plik: docs/design/brand-concepts-2.html · paleta i typografia zgodne z
+        packages/ui/src/styles/globals.css · znaki w SVG na siatce 48 px.
+      </p>
+    </div>
+  </body>
+</html>
