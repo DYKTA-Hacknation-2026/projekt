@@ -24,7 +24,7 @@ type CalculatorMode = "QUICK" | "ADVANCED"
 
 function withDefaults(partial: Partial<CalculatorInput>): CalculatorInput {
   return {
-    grossMonthlyIncomeGrosze: 800_000,
+    grossMonthlyIncomeGrosze: 0,
     childrenCount: 1,
     hasZaZyciem: false,
     paymentOption: "STANDARD_100_70",

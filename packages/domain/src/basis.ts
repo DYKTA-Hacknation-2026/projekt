@@ -1,4 +1,4 @@
-import { CONTRIBUTION_DEDUCTION, MINIMUM_WAGE_GROSZE } from "./constants"
+import { CONTRIBUTION_DEDUCTION } from "./constants"
 import { multiplyGrosze } from "./money"
 import type { MonthlyIncomeEntry } from "./types"
 
@@ -52,15 +52,4 @@ export function basisFromGross(
   contributionDeduction = CONTRIBUTION_DEDUCTION
 ): number {
   return multiplyGrosze(grossGrosze, 1 - contributionDeduction)
-}
-
-/** Minimum monthly basis for full-time employment: minimum wage − 13.71%. */
-export function minimumBasis(
-  employmentFraction: number,
-  contributionDeduction = CONTRIBUTION_DEDUCTION
-): number {
-  return multiplyGrosze(
-    basisFromGross(MINIMUM_WAGE_GROSZE, contributionDeduction),
-    Math.min(1, Math.max(0.1, employmentFraction))
-  )
 }

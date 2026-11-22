@@ -25,6 +25,31 @@ import {
  *   100% × 140 days = 3 221 493 gr      70% × 224 days = 3 608 073 gr
  */
 
+describe("explicit no-coverage and cooperating-person debt", () => {
+  it("does not assume compulsory coverage when the decision says the employee was not subject", () => {
+    const a = assess({
+      parents: [employee({ insurance: { title: "EMPLOYMENT", sicknessInsurance: "NONE", startDate: "2024-01-01" } })],
+    })
+    expect(determination(a, "MATERNITY").status).toBe("NOT_ELIGIBLE")
+    expect(a.manualReviewReasons.join(" ")).not.toContain("obowiązkowe ubezpieczenie chorobowe")
+  })
+
+  it("applies the contribution-debt gate to a cooperating person (OTHER title)", () => {
+    const cooperating = employee({
+      insurance: {
+        title: "OTHER",
+        sicknessInsurance: "VOLUNTARY",
+        startDate: "2024-01-01",
+        contributionDebt: { exists: true, exceedsThreshold: true },
+      },
+    })
+    const beforeDeadline = assess({ parents: [cooperating] })
+    expect(determination(beforeDeadline, "MATERNITY").status).toBe("CONDITIONAL")
+    const afterDeadline = assess({ asOf: "2028-01-01", parents: [cooperating] })
+    expect(determination(afterDeadline, "MATERNITY").status).toBe("NOT_ELIGIBLE")
+  })
+})
+
 describe("insured employee (mother, umowa o pracę)", () => {
   const a = assess()
 

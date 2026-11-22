@@ -108,7 +108,7 @@ export function QuickCalculator({
 }) {
   const [step, setStep] = useState(1)
   const [childStatus, setChildStatus] = useState<ChildStatus>("PREGNANCY")
-  const [eventDate, setEventDate] = useState("2027-03-10")
+  const [eventDate, setEventDate] = useState("")
   const [children, setChildren] = useState("1")
   const [hasZaZyciem, setHasZaZyciem] = useState(false)
   const [familyStructure, setFamilyStructure] =
@@ -122,8 +122,8 @@ export function QuickCalculator({
     useState<SicknessCoverage>("COMPULSORY")
   const [fatherCoverage, setFatherCoverage] =
     useState<SicknessCoverage>("COMPULSORY")
-  const [motherIncome, setMotherIncome] = useState("8000")
-  const [fatherIncome, setFatherIncome] = useState("8000")
+  const [motherIncome, setMotherIncome] = useState("")
+  const [fatherIncome, setFatherIncome] = useState("")
   const [motherIncomeUnknown, setMotherIncomeUnknown] = useState(false)
   const [fatherIncomeUnknown, setFatherIncomeUnknown] = useState(false)
   const [basisOverride, setBasisOverride] = useState<number | undefined>()

@@ -164,7 +164,13 @@ function factSummary(facts: Record<string, unknown>): string {
     .join(", ")
 }
 
-function eligibilitySection(assessment: EligibilityAssessment, factsUsed: Record<string, unknown>): string[] {
+function eligibilitySection(assessment: EligibilityAssessment & { periodUnsupported?: { code: string; text: string } | null }, factsUsed: Record<string, unknown>): string[] {
+  if (assessment.periodUnsupported) {
+    return [
+      "**Nie mogę ocenić tej sprawy**",
+      "Nie mamy przepisów obowiązujących w dniu tego zdarzenia. Aplikacja ma dane prawne dopiero od 1.07.2026, więc nie oceniam tej sprawy według ówczesnego prawa. To nie jest decyzja ZUS, przyznanie ani odmowa świadczenia. Sprawdź uprawnienia bezpośrednio w ZUS.",
+    ]
+  }
   const lines = ["**Wstępna ocena (nie jest to decyzja ZUS)**"]
   const summary = factSummary(factsUsed)
   if (summary) lines.push(`Na podstawie tego, co wiem: ${summary}.`)

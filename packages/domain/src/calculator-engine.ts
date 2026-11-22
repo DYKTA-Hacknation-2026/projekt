@@ -2,13 +2,14 @@ import { calculatorRules } from "./calculator-rules"
 import type { RuleSet } from "./rule-set"
 import type { RuleSet as EngineRuleSet } from "./engine/rulesets"
 import {
-  MINIMUM_WAGE_GROSZE,
-  PARENTAL_BENEFIT_FLOOR_GROSZE,
+  GUARANTEED_MATERNITY_WEEKS,
+  GUARANTEED_PARENTAL_WEEKS,
+  GUARANTEED_PARENTAL_WEEKS_ZA_ZYCIEM,
   PARENTAL_TOTAL_CAP_WEEKS,
 } from "./constants"
 import { dailyBasis } from "./money"
 import { evaluate } from "./engine/evaluate"
-import { latestRuleSet } from "./engine/rulesets"
+import { latestRuleSet, EARLIEST_SUPPORTED_DATE } from "./engine/rulesets"
 import { precedingMonths } from "./engine/calendar"
 import type {
   Assessment,
@@ -33,14 +34,10 @@ import type {
  * Calculator adapter over the authoritative deterministic engine.
  *
  * The UI/API calculator is a what-if tool: it pins the latest rule set and
- * supplies the configured Q-29 values (minimum wage and parental-benefit floor)
- * so that its amounts and durations come from the same rules as the full API.
- * Missing facts are passed through; the engine reports them as missing evidence
- * instead of inventing a value.
+ * reads external values (Q-29) only from that rule set or from an explicit
+ * admin override. Missing values are never replaced by hardcoded constants;
+ * the engine reports a bound or an unknown instead.
  */
-
-const EXTERNAL_NOTE =
-  "Parametry aplikacji: minimalne wynagrodzenie 2026; kwota świadczenia rodzicielskiego pozostaje niezatwierdzona (Q-29 — do potwierdzenia oficjalnym źródłem)."
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
@@ -225,6 +222,13 @@ function mapParents(input: CalculatorInput, rightDate: string): ParentInput[] {
         ...(input.motherInsuranceEndDate
           ? { endDate: input.motherInsuranceEndDate }
           : {}),
+        ...(input.motherEndReason
+          ? { endReason: input.motherEndReason }
+          : {}),
+        ...(input.motherInsuranceEndDate &&
+        input.motherInsuranceEndDate < rightDate
+          ? { endedDuringPregnancy: true }
+          : {}),
         ...(input.motherPayerSize ? { payerSize: input.motherPayerSize } : {}),
         workingTimeFraction: String(input.employmentFraction ?? 1),
         ...(input.motherContributionDebt !== undefined
@@ -252,6 +256,9 @@ function mapParents(input: CalculatorInput, rightDate: string): ParentInput[] {
           : {}),
         ...(input.fatherInsuranceEndDate
           ? { endDate: input.fatherInsuranceEndDate }
+          : {}),
+        ...(input.fatherEndReason
+          ? { endReason: input.fatherEndReason }
           : {}),
         ...(input.fatherPayerSize ? { payerSize: input.fatherPayerSize } : {}),
         workingTimeFraction: String(input.employmentFraction ?? 1),
@@ -621,9 +628,26 @@ function eligibleFor(
   )
 }
 
+function historicalInfo(input: CalculatorInput): Pick<
+  CalculatorResult,
+  "historicalSimulation" | "historicalRuleSetVersion" | "earliestSupportedDate"
+> {
+  const earliestSupportedDate = EARLIEST_SUPPORTED_DATE
+  const eventDate = input.birthDate ?? input.placementDate
+  const historicalSimulation =
+    eventDate !== undefined && eventDate < earliestSupportedDate
+  return {
+    historicalSimulation,
+    historicalRuleSetVersion: historicalSimulation ? latestRuleSet().version : null,
+    earliestSupportedDate,
+  }
+}
+
 function emptyResult(input: CalculatorInput): CalculatorResult {
   const zeroBasis = 0
+  const historical = historicalInfo(input)
   return {
+    ...historical,
     input,
     mode: input.mode ?? "BIRTH",
     eligible: false,
@@ -679,7 +703,14 @@ function emptyResult(input: CalculatorInput): CalculatorResult {
       determinations: [],
       warnings: [],
     },
-    warnings: ["Uwzględnij co najmniej jednego rodzica."],
+    warnings: [
+      "Uwzględnij co najmniej jednego rodzica.",
+      ...(historical.historicalSimulation
+        ? [
+            `Sprawa jest sprzed ${historical.earliestSupportedDate}. To symulacja na najnowszym zestawie reguł, a nie ocena prawa z dnia zdarzenia.`,
+          ]
+        : []),
+    ],
     trace: [],
   }
 }
@@ -714,13 +745,6 @@ export function calculateBenefits(
     event,
     parents,
     plan: mapPlan(input, rules),
-    externalParameters: {
-      minimumWageGrosze: MINIMUM_WAGE_GROSZE,
-      ...(ruleSet
-        ? {}
-        : { parentalBenefitAmountGrosze: PARENTAL_BENEFIT_FLOOR_GROSZE }),
-      sourceNote: EXTERNAL_NOTE,
-    },
   }
   const { assessment, schedule } = evaluate(request, rules)
   const lines = mapLines(assessment, input.mode ?? "BIRTH")
@@ -892,6 +916,13 @@ export function calculateBenefits(
     })
   }
 
+  const historical = historicalInfo(input)
+  if (historical.historicalSimulation) {
+    warnings.push(
+      `Sprawa jest sprzed ${historical.earliestSupportedDate}. To symulacja na najnowszym zestawie reguł (${historical.historicalRuleSetVersion}), a nie ocena prawa obowiązującego w dniu zdarzenia — nie traktuj jej jako decyzji ZUS.`
+    )
+  }
+
   const analysis: CalculatorResult["analysis"] = {
     status: assessment.status,
     eligibilityStatus: assessment.eligibility.status,
@@ -906,6 +937,7 @@ export function calculateBenefits(
   }
 
   return {
+    ...historical,
     input,
     mode: input.mode ?? "BIRTH",
     eligible,

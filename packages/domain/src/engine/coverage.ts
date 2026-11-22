@@ -16,7 +16,12 @@ import type {
 export function sicknessCoverage(parent: ParentInput | undefined): SicknessCoverage | undefined {
   const insurance = parent?.insurance
   if (!insurance?.title) return undefined
-  if (insurance.title === "EMPLOYMENT") return "COMPULSORY"
+  // An explicit "no coverage" wins over the default implied by the title: an
+  // employee can be found not to be subject to insurance (e.g. a sham contract
+  // or a ZUS decision of non-subjection), and the engine must not assume cover.
+  if (insurance.title === "EMPLOYMENT") {
+    return insurance.sicknessInsurance === "NONE" ? "NONE" : "COMPULSORY"
+  }
   if (insurance.title === "NONE") return "NONE"
   return insurance.sicknessInsurance
 }
@@ -105,11 +110,13 @@ export interface DebtGate {
   paymentBy?: string
 }
 
-/** U art. 2a ust. 1–2, art. 64 ust. 3 — self-employed (and similar) only. */
+/** U art. 2a ust. 1–2, art. 64 ust. 3 — self-employed, cooperating persons and similar only. */
 export function debtGate(ctx: EvaluationContext, parent: ParentInput, rightDate: string, benefit: BenefitType): DebtGate {
-  if (parent.insurance?.title !== "SELF_EMPLOYMENT") return { status: "NOT_APPLICABLE" }
+  const insurance = parent.insurance
+  const title = insurance?.title
+  if (title !== "SELF_EMPLOYMENT" && title !== "OTHER") return { status: "NOT_APPLICABLE" }
   ctx.use("LR-108")
-  const debt = parent.insurance.contributionDebt
+  const debt = insurance?.contributionDebt
   const repaymentDeadline = addMonths(rightDate, ctx.p.debt.expiryMonths)
   if (!debt) {
     ctx.need({

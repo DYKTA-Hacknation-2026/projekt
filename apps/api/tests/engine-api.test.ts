@@ -111,6 +111,19 @@ describe("engine REST endpoints", () => {
     expect(body.missingEvidence.map((item: any) => item.key)).toContain("insurance.title")
   })
 
+  it("refuses to assess an event older than the available rule sets", async () => {
+    const body = await (
+      await post(calculate, {
+        ...household,
+        event: { kind: "BIRTH", birthDate: "2024-01-10", childrenCount: 1 },
+      })
+    ).json()
+    expect(body.status).toBe("MANUAL_REVIEW")
+    expect(body.unsupported.map((item: any) => item.code)).toContain("U-01")
+    expect(body.totals.totalGrosze).toBeNull()
+    expect(body.manualReviewReasons.join(" ")).toContain("2026-07-01")
+  })
+
   it("returns a manual-review outcome for inconsistent evidence", async () => {
     const body = await (await post(calculate, { ...household, event: { kind: "BIRTH", birthDate: "2027-06-01" } })).json()
     expect(body.status).toBe("MANUAL_REVIEW")

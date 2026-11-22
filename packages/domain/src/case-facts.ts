@@ -6,6 +6,8 @@
  * The record deliberately holds no names, identifiers or medical details.
  */
 
+import type { TitleEndReason } from "./engine/types"
+
 export type EmploymentKind =
   | "EMPLOYMENT"
   | "MANDATE"
@@ -31,21 +33,49 @@ export interface CaseFacts {
   insuranceStartDate?: string
   /** Last day of the insurance title, when it has already ended. */
   insuranceEndDate?: string
+  /** Why the title ended (liquidation, resignation, etc.). */
+  insuranceEndReason?: TitleEndReason
+  /** Employer provided other employment after liquidation/bankruptcy/death (U art. 30 ust. 3). */
+  otherEmploymentProvided?: boolean
   familyEvent?: FamilyEventKind
   /** Birth or care-taking date, if it already happened. */
   eventDate?: string
   expectedDueDate?: string
   childrenCount?: number
   hasZaZyciem?: boolean
+  /** All children were stillborn. */
+  stillbirth?: boolean
+  /** Child's date of birth for adoption/foster age limits. */
+  childBirthDate?: string
+  /** Adoption: date of the application to the guardianship court. */
+  courtApplicationDate?: string
+  /** Adoption: date the adoption order became final. */
+  adoptionFinalDate?: string
+  /** Completed weeks of pregnancy at birth (premature birth rules). */
+  gestationalWeeksCompleted?: number
+  /** Lowest birth weight among the children, grams. */
+  lowestBirthWeightGrams?: number
+  /** Child's hospital stay in whole weeks (supplementary maternity leave). */
+  childHospitalWeeks?: number
+  /** Child's hospital days between day 5 and 28 (term births). */
+  childHospitalDaysDay5To28?: number
   /** Professional foster family (rodzina zastępcza zawodowa). */
   professionalFosterFamily?: boolean
   /** Contribution arrears (self-employed and similar, U art. 2a). */
   contributionArrears?: boolean
+  /** The arrears exceed 1% of the minimum wage, as confirmed by ZUS. */
+  contributionDebtExceedsThreshold?: boolean
   payerSize?: PayerSize
   /** At least one e-ZLA period is marked as related to pregnancy. */
   pregnancySickLeave?: boolean
   /** Total days of e-ZLA periods in the analysed history. */
   sickLeaveDays?: number
+  /** First day of a sick leave relevant to the assessment. */
+  sickLeaveStart?: string
+  /** Last day of that sick leave. */
+  sickLeaveEnd?: string
+  /** Payment variant requested for the leave plan (does not change eligibility). */
+  paymentOption?: "STANDARD_100_70" | "FLAT_81_5"
 }
 
 export type FactKey = keyof CaseFacts
@@ -59,7 +89,26 @@ export interface MissingFact {
 }
 
 export const FACT_QUESTIONS: Record<
-  Exclude<FactKey, "childrenCount" | "hasZaZyciem" | "professionalFosterFamily">,
+  Exclude<
+    FactKey,
+    | "childrenCount"
+    | "hasZaZyciem"
+    | "professionalFosterFamily"
+    | "insuranceEndReason"
+    | "otherEmploymentProvided"
+    | "stillbirth"
+    | "childBirthDate"
+    | "courtApplicationDate"
+    | "adoptionFinalDate"
+    | "gestationalWeeksCompleted"
+    | "lowestBirthWeightGrams"
+    | "childHospitalWeeks"
+    | "childHospitalDaysDay5To28"
+    | "contributionDebtExceedsThreshold"
+    | "sickLeaveStart"
+    | "sickLeaveEnd"
+    | "paymentOption"
+  >,
   MissingFact
 > = {
   parentRole: {

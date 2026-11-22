@@ -41,7 +41,7 @@ Pola opcjonalne to m.in. daty ubezpieczenia, wielkość płatnika, zaległości,
 ### 1.5 Nierozwiązane parametry prawne
 
 - **Q-15** — reguła zaokrąglania kwot zasiłków. Silnik przyjmuje zaokrąglenie do pełnych groszy (A-20); nadal `PARTIAL`.
-- **Q-29** — minimalne wynagrodzenie, kwota świadczenia rodzicielskiego, przeciętne wynagrodzenie i waloryzacja rehabilitacji. Adapter kalkulatora podaje skonfigurowane stałe, ale wynik pozostaje `verified: false`.
+- **Q-29** — minimalne wynagrodzenie, kwota świadczenia rodzicielskiego, przeciętne wynagrodzenie i waloryzacja rehabilitacji. Adapter kalkulatora **nie podstawia własnych stałych**: brak wartości w aktywnym zestawie reguł daje dolną/górną granicę albo brak kwoty, a wynik pozostaje `verified: false`.
 - **Q-30** — interpretacja 9 tygodni przy adopcji/rodzinie zastępczej blisko limitu wieku; silnik kieruje sprawę do `MANUAL_REVIEW`.
 
 ## 2. Projekt UX

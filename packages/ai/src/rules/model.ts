@@ -156,6 +156,7 @@ export function plannedToolInput(
       return { benefits: chooseBenefits(text, extracted), facts }
     case "calculateBenefit":
       return {
+        facts,
         ...(extracted.grossMonthlyIncomePln !== undefined
           ? { grossMonthlyIncomePln: extracted.grossMonthlyIncomePln }
           : {}),
@@ -173,6 +174,7 @@ export function plannedToolInput(
       }
     case "compareLeaveScenarios":
       return {
+        facts,
         ...(extracted.grossMonthlyIncomePln !== undefined
           ? { grossMonthlyIncomePln: extracted.grossMonthlyIncomePln }
           : {}),

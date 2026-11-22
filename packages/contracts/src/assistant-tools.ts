@@ -17,6 +17,20 @@ export const benefitCodeSchema = z.enum([
   "SICKNESS_IN_PREGNANCY",
 ])
 
+const titleEndReasonSchema = z.enum([
+  "EMPLOYER_DEATH",
+  "EMPLOYER_BANKRUPTCY",
+  "EMPLOYER_LIQUIDATION",
+  "UNLAWFUL_TERMINATION_FINAL_JUDGMENT",
+  "FIXED_TERM_CONTRACT_END",
+  "TERMINATION_BY_EMPLOYER",
+  "RESIGNATION_OR_AGREEMENT",
+  "MANDATE_CONTRACT_END",
+  "BUSINESS_CLOSED",
+  "VOLUNTARY_INSURANCE_WITHDRAWN",
+  "OTHER",
+])
+
 export const caseFactsSchema = z
   .object({
     parentRole: z.enum(["MOTHER", "FATHER"]).optional(),
@@ -31,6 +45,16 @@ export const caseFactsSchema = z
       .optional()
       .describe("Only if the user said it. Employees are COMPULSORY."),
     insuranceStartDate: isoDateSchema.optional(),
+    insuranceEndDate: isoDateSchema.optional(),
+    insuranceEndReason: titleEndReasonSchema
+      .optional()
+      .describe("Why the insurance title ended, only if the user said it."),
+    otherEmploymentProvided: z
+      .boolean()
+      .optional()
+      .describe(
+        "After liquidation/bankruptcy/death of the employer: did they provide other employment? Only if stated."
+      ),
     familyEvent: z
       .enum(["PREGNANCY", "BIRTH", "ADOPTION", "FOSTER_CARE"])
       .optional(),
@@ -38,12 +62,29 @@ export const caseFactsSchema = z
     expectedDueDate: isoDateSchema.optional(),
     childrenCount: z.number().int().min(1).max(10).optional(),
     hasZaZyciem: z.boolean().optional(),
+    stillbirth: z.boolean().optional(),
+    childBirthDate: isoDateSchema.optional(),
+    courtApplicationDate: isoDateSchema.optional(),
+    adoptionFinalDate: isoDateSchema.optional(),
+    gestationalWeeksCompleted: z.number().int().min(0).max(45).optional(),
+    lowestBirthWeightGrams: z.number().int().min(1).max(10_000).optional(),
+    childHospitalWeeks: z.number().int().min(0).max(60).optional(),
+    childHospitalDaysDay5To28: z.number().int().min(0).max(24).optional(),
     professionalFosterFamily: z.boolean().optional(),
     contributionArrears: z.boolean().optional(),
+    contributionDebtExceedsThreshold: z
+      .boolean()
+      .optional()
+      .describe("Only if ZUS confirmed the arrears exceed 1% of the minimum wage."),
     payerSize: z
       .enum(["OVER_20", "UP_TO_20"])
       .optional()
       .describe("Payer reporting more than 20 insured persons, or up to 20."),
+    pregnancySickLeave: z.boolean().optional(),
+    sickLeaveDays: z.number().int().min(0).max(400).optional(),
+    sickLeaveStart: isoDateSchema.optional(),
+    sickLeaveEnd: isoDateSchema.optional(),
+    paymentOption: z.enum(["STANDARD_100_70", "FLAT_81_5"]).optional(),
   })
   .strict()
   .describe(
@@ -80,6 +121,7 @@ export const checkBenefitEligibilityInputSchema = z
 
 export const calculateBenefitInputSchema = z
   .object({
+    facts: caseFactsSchema.optional(),
     grossMonthlyIncomePln: z
       .number()
       .min(0)
@@ -109,6 +151,7 @@ export const leaveScenarioInputSchema = z
 
 export const compareLeaveScenariosInputSchema = z
   .object({
+    facts: caseFactsSchema.optional(),
     grossMonthlyIncomePln: z.number().min(0).max(1_000_000).optional(),
     childrenCount: z.number().int().min(1).max(5).optional(),
     hasZaZyciem: z.boolean().optional(),

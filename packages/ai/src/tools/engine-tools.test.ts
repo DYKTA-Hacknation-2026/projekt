@@ -23,7 +23,7 @@ async function call<T = Record<string, any>>(name: string, input: unknown, optio
 
 describe("calculateBenefit", () => {
   it("returns engine amounts: 8 000 zł, 20 weeks maternity + 32 weeks parental, 100% and 70%", async () => {
-    const out = await call("calculateBenefit", { grossMonthlyIncomePln: 8000 })
+    const out = await call("calculateBenefit", { grossMonthlyIncomePln: 8000, facts: { employmentType: "EMPLOYMENT" } })
     expect(out.status).toBe("OK")
     const maternity = out.lines.find((item: any) => item.kind === "MATERNITY")
     const parental = out.lines.find((item: any) => item.kind === "PARENTAL")
@@ -41,6 +41,7 @@ describe("calculateBenefit", () => {
       grossMonthlyIncomePln: 8000,
       paymentOption: "FLAT_81_5",
       secondParentParentalWeeks: 9,
+      facts: { employmentType: "EMPLOYMENT" },
     })
     expect(out.lines.find((item: any) => item.kind === "MATERNITY").ratePercent).toBe(81.5)
     const parental = out.lines.filter((item: any) => item.kind === "PARENTAL")
@@ -48,15 +49,21 @@ describe("calculateBenefit", () => {
   })
 
   it("never invents an income", async () => {
-    const out = await call("calculateBenefit", {})
+    const out = await call("calculateBenefit", { facts: { employmentType: "EMPLOYMENT" } })
     expect(out.status).toBe("NEEDS_INPUT")
     expect(out.missing[0].key).toBe("grossMonthlyIncomePln")
     expect(out.lines).toBeUndefined()
     expect(out.totalFormatted).toBeUndefined()
   })
 
-  it("discloses that the period was placed on an assumed date when no due date is known", async () => {
+  it("never assumes an employment type", async () => {
     const out = await call("calculateBenefit", { grossMonthlyIncomePln: 8000 })
+    expect(out.status).toBe("NEEDS_INPUT")
+    expect(out.missing[0].key).toBe("employmentType")
+  })
+
+  it("discloses that the period was placed on an assumed date when no due date is known", async () => {
+    const out = await call("calculateBenefit", { grossMonthlyIncomePln: 8000, facts: { employmentType: "EMPLOYMENT" } })
     expect(out.warnings.join(" ")).toContain("umownej daty")
   })
 
@@ -106,6 +113,22 @@ describe("checkBenefitEligibility", () => {
     expect(maternity.engineStatus).toBe("CONDITIONAL")
   })
 
+  it("flags an event older than the available rule sets as unsupported instead of guessing", async () => {
+    const out = await call("checkBenefitEligibility", {
+      benefits: ["MATERNITY_ALLOWANCE"],
+      facts: {
+        parentRole: "MOTHER",
+        employmentType: "EMPLOYMENT",
+        insuranceStartDate: "2023-01-01",
+        familyEvent: "BIRTH",
+        eventDate: "2024-01-10",
+      },
+    })
+    expect(out.assessment.periodUnsupported?.code).toBe("U-01")
+    expect(out.notice).toContain("Nie mamy przepisów")
+    expect(out.assessment.determinations).toHaveLength(0)
+  })
+
   it("does not grant paternity leave to the mother", async () => {
     const out = await call("checkBenefitEligibility", {
       benefits: ["PATERNITY_BENEFIT"],
@@ -122,7 +145,7 @@ describe("compareLeaveScenarios", () => {
   ]
 
   it("returns engine amounts and the difference between plans", async () => {
-    const out = await call("compareLeaveScenarios", { grossMonthlyIncomePln: 8000, dueDate: "2027-03-10", scenarios })
+    const out = await call("compareLeaveScenarios", { grossMonthlyIncomePln: 8000, dueDate: "2027-03-10", scenarios, facts: { employmentType: "EMPLOYMENT" } })
     expect(out.status).toBe("OK")
     expect(out.outcomes[0]).toMatchObject({ maternityWeeks: 20, motherParentalWeeks: 32, secondParentWeeks: 0, totalGrosze: 6_829_566 })
     // The father has the same income here: 63 days at 70% of 6 903,20 zł.
@@ -132,7 +155,7 @@ describe("compareLeaveScenarios", () => {
   })
 
   it("returns weeks but no amounts when the income is unknown", async () => {
-    const out = await call("compareLeaveScenarios", { dueDate: "2027-03-10", scenarios })
+    const out = await call("compareLeaveScenarios", { dueDate: "2027-03-10", scenarios, facts: { employmentType: "EMPLOYMENT" } })
     expect(out.status).toBe("PARTIAL")
     expect(out.amountsAvailable).toBe(false)
     expect(out.outcomes[1].secondParentWeeks).toBe(9)

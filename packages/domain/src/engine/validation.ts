@@ -117,7 +117,7 @@ function checkParent(ctx: EvaluationContext, parent: ParentInput, birth: string 
     ctx.need({ key, parent: parent.role, question, why: text, affects: ["MATERNITY", "PARENTAL", "PATERNITY", "SICKNESS_IN_PREGNANCY"] })
   }
   if (!insurance) return
-  if (insurance.title === "EMPLOYMENT" && insurance.sicknessInsurance && insurance.sicknessInsurance !== "COMPULSORY") {
+  if (insurance.title === "EMPLOYMENT" && insurance.sicknessInsurance && insurance.sicknessInsurance !== "COMPULSORY" && insurance.sicknessInsurance !== "NONE") {
     flag("insurance.sicknessInsurance", `Umowa o pracę ${who} oznacza obowiązkowe ubezpieczenie chorobowe, a podano „${insurance.sicknessInsurance}”.`, "Czy na pewno pracujesz na umowę o pracę?")
   }
   if ((insurance.title === "SELF_EMPLOYMENT" || insurance.title === "MANDATE") && insurance.sicknessInsurance === "COMPULSORY") {

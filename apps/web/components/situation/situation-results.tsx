@@ -205,6 +205,9 @@ export function SituationResults({
 }) {
   const { calculation, documents } = analysis
   const status = ASSESSMENT_STATUS[calculation.status]
+  const unsupportedPeriod = calculation.unsupported.find(
+    (item) => item.code === "U-01"
+  )
   const summary = situationSummary(answers)
   const totalKnown =
     calculation.totals.totalGrosze !== null &&
@@ -227,32 +230,47 @@ export function SituationResults({
 
   return (
     <div className="space-y-6" data-testid="situation-results">
-      <Alert
-        variant={
-          calculation.status === "COMPLETE"
-            ? "success"
-            : calculation.status === "PARTIAL"
-              ? "warning"
-              : "destructive"
-        }
-      >
-        {calculation.status === "COMPLETE" ? (
-          <CheckCircle2 aria-hidden="true" />
-        ) : (
+      {unsupportedPeriod ? (
+        <Alert variant="destructive">
           <AlertTriangle aria-hidden="true" />
-        )}
-        <AlertTitle className="flex flex-wrap items-center gap-2">
-          {status.label}
-          <Badge variant={status.variant}>
-            {calculation.anchor.estimated
-              ? "termin szacunkowy"
-              : "termin znany"}
-          </Badge>
-        </AlertTitle>
-        <AlertDescription>
-          {status.description} {calculation.disclaimer}
-        </AlertDescription>
-      </Alert>
+          <AlertTitle>Brak przepisów dla tego okresu</AlertTitle>
+          <AlertDescription>
+            Twoje zdarzenie jest sprzed{" "}
+            {formatDate(calculation.ruleSet.effectiveFrom)}. Aplikacja ma dane
+            prawne dopiero od tej daty, więc nie oceniamy tej sprawy według
+            prawa, które obowiązywało wtedy. To nie jest decyzja ZUS,
+            przyznanie ani odmowa świadczenia. Sprawdź uprawnienia
+            bezpośrednio w ZUS.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert
+          variant={
+            calculation.status === "COMPLETE"
+              ? "success"
+              : calculation.status === "PARTIAL"
+                ? "warning"
+                : "destructive"
+          }
+        >
+          {calculation.status === "COMPLETE" ? (
+            <CheckCircle2 aria-hidden="true" />
+          ) : (
+            <AlertTriangle aria-hidden="true" />
+          )}
+          <AlertTitle className="flex flex-wrap items-center gap-2">
+            {status.label}
+            <Badge variant={status.variant}>
+              {calculation.anchor.estimated
+                ? "termin szacunkowy"
+                : "termin znany"}
+            </Badge>
+          </AlertTitle>
+          <AlertDescription>
+            {status.description} {calculation.disclaimer}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <section aria-labelledby="situation-summary">
         <Card>
@@ -300,8 +318,9 @@ export function SituationResults({
           <CardContent className="space-y-3 pt-6">
             {calculation.eligibility.determinations.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Silnik nie zwrócił uprawnień. Najczęściej oznacza to brak
-                wymaganej daty albo brak danych o ubezpieczeniu.
+                {unsupportedPeriod
+                  ? "Dla okresu sprzed 1.07.2026 nie mamy przepisów, więc nie wskazujemy uprawnień. To nie jest odmowa — sprawdź swoją sytuację w ZUS."
+                  : "Silnik nie zwrócił uprawnień. Najczęściej oznacza to brak wymaganej daty albo brak danych o ubezpieczeniu."}
               </p>
             ) : (
               calculation.eligibility.determinations.map(
@@ -439,18 +458,22 @@ export function SituationResults({
                 Łącznie za wskazany plan
               </p>
               <p className="mt-1 text-2xl font-semibold tabular-nums">
-                {totalKnown
-                  ? `${calculation.totals.amountStatus === "CALCULATED_LOWER_BOUND" ? "co najmniej " : calculation.totals.amountStatus === "CALCULATED_UPPER_BOUND" ? "co najwyżej " : ""}${formatPln(calculation.totals.totalGrosze ?? 0)}`
-                  : "Nie można wiarygodnie wyliczyć"}
+                {unsupportedPeriod
+                  ? "Nie wyliczamy kwot dla tego okresu"
+                  : totalKnown
+                    ? `${calculation.totals.amountStatus === "CALCULATED_LOWER_BOUND" ? "co najmniej " : calculation.totals.amountStatus === "CALCULATED_UPPER_BOUND" ? "co najwyżej " : ""}${formatPln(calculation.totals.totalGrosze ?? 0)}`
+                    : "Nie można wiarygodnie wyliczyć"}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Status kwoty:{" "}
-                {AMOUNT_STATUS_LABEL[calculation.totals.amountStatus]}.
-                {calculation.totals.amountStatus === "BASIS_UNKNOWN"
-                  ? " Brakuje podstawy wymiaru — uzupełnij wynagrodzenie albo podstawę z Z-3/Z-3a."
-                  : ""}
+                {unsupportedPeriod
+                  ? "Aplikacja nie ma przepisów obowiązujących przed 1.07.2026. To nie jest odmowa ani przyznanie świadczenia — sprawdź swoją sprawę w ZUS."
+                  : `Status kwoty: ${AMOUNT_STATUS_LABEL[calculation.totals.amountStatus]}.${
+                      calculation.totals.amountStatus === "BASIS_UNKNOWN"
+                        ? " Brakuje podstawy wymiaru — uzupełnij wynagrodzenie albo podstawę z Z-3/Z-3a."
+                        : ""
+                    }`}
               </p>
-              {periodRange && (
+              {!unsupportedPeriod && periodRange && (
                 <p className="mt-1 text-xs text-muted-foreground">
                   Okres: {formatDate(periodRange.start)} –{" "}
                   {formatDate(periodRange.end)}.
@@ -631,7 +654,9 @@ export function SituationResults({
           <CardContent className="space-y-3 pt-6">
             {documents.documents.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Brak dokumentów do wskazania na podstawie obecnych danych.
+                {unsupportedPeriod
+                  ? "Dla okresu sprzed 1.07.2026 nie wskazujemy dokumentów, bo nie mamy ówczesnych przepisów. Sprawdź wymagane dokumenty w ZUS."
+                  : "Brak dokumentów do wskazania na podstawie obecnych danych."}
               </p>
             ) : (
               documents.documents.map((document) => (

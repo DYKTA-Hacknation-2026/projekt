@@ -84,10 +84,19 @@ function coverageFromTitle(
   employment: EmploymentType
 ): SicknessCoverage {
   const coverage = record(title.sicknessCoverage)
+  // A ZUS decision of non-subjection (sham contract, no insurance on the
+  // birth date) overrides the coverage implied by the title.
+  if (booleanValue(coverage?.coverageDenied) === true) return "NONE"
+  const note = `${text(coverage?.note) ?? ""} ${text(coverage?.denialReason) ?? ""}`
+  if (/brak\s+zg[łl]oszenia|nie\s+zg[łl]osz/i.test(note)) return "NONE"
   const mode = text(coverage?.mode)?.toUpperCase()
   if (mode === "NONE") return "NONE"
   if (mode === "VOLUNTARY") return "VOLUNTARY"
-  if (mode === "COMPULSORY") return "COMPULSORY"
+  if (mode === "COMPULSORY") {
+    // A mandate is never subject to compulsory sickness insurance. Without a
+    // voluntary registration the extracted "COMPULSORY" cannot be right.
+    return employment === "CONTRACTOR" ? "NONE" : "COMPULSORY"
+  }
   return employment === "EMPLOYEE" ? "COMPULSORY" : "VOLUNTARY"
 }
 
@@ -102,8 +111,28 @@ interface ParentFacts {
   workingTimeFraction?: number
   insuranceStartDate?: string
   insuranceEndDate?: string
+  endReason?: NonNullable<CalculatorInput["motherEndReason"]>
   payerSize?: "OVER_20" | "UP_TO_20"
   contributionDebt?: boolean
+}
+
+function endReasonFromTitle(title: UnknownRecord): NonNullable<CalculatorInput["motherEndReason"]> | undefined {
+  const raw = text(title.endReason)?.toUpperCase()
+  if (!raw) return undefined
+  const mapped: Record<string, NonNullable<CalculatorInput["motherEndReason"]>> = {
+    LIQUIDATION: "EMPLOYER_LIQUIDATION",
+    BANKRUPTCY: "EMPLOYER_BANKRUPTCY",
+    DEATH: "EMPLOYER_DEATH",
+    UNLAWFUL_TERMINATION_FINAL_JUDGMENT: "UNLAWFUL_TERMINATION_FINAL_JUDGMENT",
+    FIXED_TERM_CONTRACT_END: "FIXED_TERM_CONTRACT_END",
+    TERMINATION_BY_EMPLOYER: "TERMINATION_BY_EMPLOYER",
+    RESIGNATION_OR_AGREEMENT: "RESIGNATION_OR_AGREEMENT",
+    MANDATE_CONTRACT_END: "MANDATE_CONTRACT_END",
+    BUSINESS_CLOSED: "BUSINESS_CLOSED",
+    VOLUNTARY_INSURANCE_WITHDRAWN: "VOLUNTARY_INSURANCE_WITHDRAWN",
+    OTHER: "OTHER",
+  }
+  return mapped[raw]
 }
 
 function baseFromParent(
@@ -159,6 +188,11 @@ function baseFromParent(
     .find((period): period is UnknownRecord => period !== null)
   const payer = record(title.payer)
   const insuredCount = numberValue(payer?.insuredCountOn30Nov)
+  const titleDebt = record(title.contributionDebt)
+  const contributionDebt =
+    booleanValue(parent.contributionArrears) ??
+    booleanValue(titleDebt?.exists) ??
+    undefined
   const common = {
     role,
     employmentType,
@@ -168,13 +202,14 @@ function baseFromParent(
       isoDate(title.startDate) ?? isoDate(coveragePeriod?.from) ?? undefined,
     insuranceEndDate:
       isoDate(title.endDate) ?? isoDate(coveragePeriod?.to) ?? undefined,
+    endReason: endReasonFromTitle(title),
     payerSize:
       insuredCount === null
         ? undefined
         : insuredCount > 20
           ? ("OVER_20" as const)
           : ("UP_TO_20" as const),
-    contributionDebt: booleanValue(parent.contributionArrears) ?? undefined,
+    contributionDebt,
   }
 
   if (monthlyIncomes.length > 0) {
@@ -343,7 +378,21 @@ export function mapSampleCaseToCalculatorInput(raw: unknown): SampleCaseMapping 
   let hospitalWeeks = 0
   let supplementaryWeeks = 0
   let preBirthWeeks = 0
-  const birthDate = isoDate(familyEvent.date)
+  const birthDate = isoDate(familyEvent.date) ?? (mode === "BIRTH"
+    ? isoDate(
+        segments.find((segment) => {
+          const kind = text(segment.kind)?.toUpperCase()
+          return kind === "MATERNITY" || kind === "MATERNITY_TERMS"
+        })?.start ??
+          segments.find((segment) => {
+            const kind = text(segment.kind)?.toUpperCase()
+            return kind === "MATERNITY" || kind === "MATERNITY_TERMS"
+          })?.from
+      )
+    : undefined)
+  if (!isoDate(familyEvent.date) && birthDate) {
+    notes.push(`Brak daty porodu w aktach — przyjęto start zasiłku macierzyńskiego ${birthDate}.`)
+  }
   const motherMaternityWeeks = numberValue(
     segments.find(
       (segment) =>
@@ -431,7 +480,10 @@ export function mapSampleCaseToCalculatorInput(raw: unknown): SampleCaseMapping 
   }
 
   const paymentOption: PaymentOption =
-    text(scenario.paymentOption) === "FLAT_81_5" ? "FLAT_81_5" : "STANDARD_100_70"
+    text(scenario.paymentOption) === "FLAT_81_5" ||
+    segments.some((segment) => numberValue(segment.rate) === 0.815)
+      ? "FLAT_81_5"
+      : "STANDARD_100_70"
   const flatRateApplicationDate = isoDate(
     scenario.option81_5ApplicationDate ?? scenario.flatRateApplicationDate
   )
@@ -443,7 +495,7 @@ export function mapSampleCaseToCalculatorInput(raw: unknown): SampleCaseMapping 
     .map(text)
     .filter((note): note is string => note !== null)
   const eventDate = placementDate ?? birthDate
-  const historical = eventDate !== null && eventDate < "2026-07-01"
+  const historical = eventDate != null && eventDate < "2026-07-01"
 
   const input: CalculatorInput = {
     grossMonthlyIncomeGrosze: Math.round(motherIncome),
@@ -498,6 +550,8 @@ export function mapSampleCaseToCalculatorInput(raw: unknown): SampleCaseMapping 
     fatherInsuranceStartDate: activeFather?.insuranceStartDate,
     motherInsuranceEndDate: activeMother?.insuranceEndDate,
     fatherInsuranceEndDate: activeFather?.insuranceEndDate,
+    motherEndReason: activeMother?.endReason,
+    fatherEndReason: activeFather?.endReason,
     motherPayerSize: activeMother?.payerSize,
     fatherPayerSize: activeFather?.payerSize,
     motherContributionDebt: activeMother?.contributionDebt,

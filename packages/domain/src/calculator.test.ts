@@ -7,7 +7,7 @@ import {
 } from "./scenarios"
 import { buildRuleSet } from "./rule-set"
 import { testRuleParameters, testRuleSet } from "./testing"
-import { averageMonthlyIncome, basisFromGross, minimumBasis } from "./basis"
+import { averageMonthlyIncome, basisFromGross } from "./basis"
 import { daysAmount } from "./money"
 import { PRESET_CASES } from "./presets"
 import type { CalculatorInput } from "./types"
@@ -43,6 +43,18 @@ describe("calculateBenefits", () => {
     expect(result.secondParentWeeks).toBe(0)
     expect(result.trace.map((step) => step.ruleId)).toContain("LR-123")
     expect(result.ruleSetVersion).toBe("2026.11-Z1")
+  })
+
+  it("marks an event before the earliest rule set as a historical simulation", () => {
+    const old = calculateBenefits(input({ birthDate: "2024-01-01" }), ruleSet)
+    expect(old.historicalSimulation).toBe(true)
+    expect(old.historicalRuleSetVersion).toBeTruthy()
+    expect(old.earliestSupportedDate).toBe("2026-07-01")
+    expect(old.warnings.join(" ")).toContain("symulacja")
+
+    const current = calculateBenefits(input({ birthDate: "2026-08-01" }), ruleSet)
+    expect(current.historicalSimulation).toBe(false)
+    expect(current.historicalRuleSetVersion).toBeNull()
   })
 
   it("never marks the preview as a verified entitlement while Q-29/Q-15 are open", () => {
@@ -506,13 +518,18 @@ describe("individual basis (FR-CALC-05)", () => {
     expect(result.basisGrosze).toBe(862_900)
   })
 
-  it("raises the basis of an employee to the minimum and lifts tiny amounts to 1 000 zł", () => {
+  it("does not invent the minimum wage when the rule set does not contain it", () => {
     const result = calculateBenefits(
       input({ grossMonthlyIncomeGrosze: 100_000 })
     )
-    expect(result.basisGrosze).toBe(minimumBasis(1))
-    expect(minimumBasis(1)).toBe(basisFromGross(480_600))
+    expect(result.basisGrosze).toBe(basisFromGross(100_000))
+    expect(result.lines.find((l) => l.kind === "MATERNITY")?.minimumApplied).toBe(
+      false
+    )
+    expect(result.analysis.amountStatus).toBe("CALCULATED_LOWER_BOUND")
+  })
 
+  it("lifts tiny parental amounts to the parental-benefit floor only when the rule set has it", () => {
     const contractor = calculateBenefits(
       input({
         grossMonthlyIncomeGrosze: 100_000,
@@ -528,6 +545,21 @@ describe("individual basis (FR-CALC-05)", () => {
 })
 
 describe("insurance, both parents and ZUS correctness", () => {
+  it("keeps maternity cover after an employer liquidation instead of treating it as no insurance", () => {
+    const result = calculateBenefits(
+      input({
+        birthDate: "2026-08-01",
+        motherInsuranceEndDate: "2026-01-31",
+        motherEndReason: "EMPLOYER_LIQUIDATION",
+      })
+    )
+    const maternity = result.analysis.determinations.find(
+      (entry) => entry.benefit === "MATERNITY"
+    )
+    expect(maternity?.status).toBe("ELIGIBLE")
+    expect(result.motherEligible).toBe(true)
+  })
+
   it("does not transfer the nine non-transferable weeks between parents", () => {
     const result = calculateBenefits(
       input({ motherParentalWeeks: 5, secondParentParentalWeeks: 36 })

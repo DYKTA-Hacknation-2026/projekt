@@ -1,4 +1,4 @@
-import { FACT_QUESTIONS, type BenefitCode, type CaseFacts, type FactKey, type MissingFact } from "@zpr/domain"
+import { FACT_QUESTIONS, addDays, type BenefitCode, type CaseFacts, type FactKey, type MissingFact } from "@zpr/domain"
 import {
   RULES,
   ratio,
@@ -31,8 +31,6 @@ export interface HouseholdOptions {
   plan?: LeavePlanInput
   /** Add the other parent with the same income and title (simplified what-if, disclosed). */
   secondParentLikeFirst?: boolean
-  /** Use "employee" when the title is unknown (what-if estimate, disclosed). */
-  assumeEmployeeIfUnknown?: boolean
   /** Due date used only when the user gave none; amounts do not depend on the calendar date (disclosed). */
   nominalDueDate?: string
 }
@@ -48,11 +46,7 @@ export interface HouseholdInput {
 export function householdInput(facts: CaseFacts, options: HouseholdOptions): HouseholdInput {
   const assumptions: string[] = []
   const role = facts.parentRole ?? "MOTHER"
-  let title = facts.employmentType
-  if (!title && options.assumeEmployeeIfUnknown) {
-    title = "EMPLOYMENT"
-    assumptions.push("Nie podano tytułu ubezpieczenia — szacunek liczony jak dla umowy o pracę.")
-  }
+  const title = facts.employmentType
   const basis: ParentInput["basis"] =
     options.grossMonthlyIncomePln && options.grossMonthlyIncomePln > 0
       ? { method: "GROSS_MONTHLY", grossMonthlyGrosze: plnToExactGrosze(options.grossMonthlyIncomePln) }
@@ -61,8 +55,24 @@ export function householdInput(facts: CaseFacts, options: HouseholdOptions): Hou
     title,
     sicknessInsurance: facts.sicknessInsurance,
     startDate: facts.insuranceStartDate,
+    endDate: facts.insuranceEndDate,
+    endReason: facts.insuranceEndReason,
+    ...(facts.insuranceEndDate &&
+    facts.eventDate &&
+    facts.insuranceEndDate < facts.eventDate
+      ? { endedDuringPregnancy: true }
+      : {}),
+    otherEmploymentProvided: facts.otherEmploymentProvided,
     payerSize: facts.payerSize,
-    contributionDebt: facts.contributionArrears === undefined ? undefined : { exists: facts.contributionArrears },
+    contributionDebt:
+      facts.contributionArrears === undefined
+        ? undefined
+        : {
+            exists: facts.contributionArrears,
+            ...(facts.contributionDebtExceedsThreshold !== undefined
+              ? { exceedsThreshold: facts.contributionDebtExceedsThreshold }
+              : {}),
+          },
   }
   const asker: ParentInput = { role, insurance, basis }
   const parents: ParentInput[] = [asker]
@@ -79,6 +89,28 @@ export function householdInput(facts: CaseFacts, options: HouseholdOptions): Hou
       `Nie podano daty porodu — okresy liczono od umownej daty ${nominalDate}. Kwoty nie zależą od daty kalendarzowej, ale terminy i okresy są orientacyjne.`
     )
   }
+  const birthDate = kind === "BIRTH" ? facts.eventDate : undefined
+  const hospitalStays = birthDate
+    ? [
+        ...(facts.childHospitalWeeks && facts.childHospitalWeeks > 0
+          ? [
+              {
+                start: birthDate,
+                end: addDays(birthDate, facts.childHospitalWeeks * 7 - 1),
+              },
+            ]
+          : []),
+        ...(facts.childHospitalDaysDay5To28 && facts.childHospitalDaysDay5To28 > 0
+          ? [
+              {
+                start: addDays(birthDate, 4),
+                end: addDays(birthDate, 4 + facts.childHospitalDaysDay5To28 - 1),
+              },
+            ]
+          : []),
+      ]
+    : []
+
   return {
     role,
     roleKnown: facts.parentRole !== undefined,
@@ -88,14 +120,31 @@ export function householdInput(facts: CaseFacts, options: HouseholdOptions): Hou
       event: {
         kind,
         expectedDueDate: facts.expectedDueDate ?? nominalDate,
-        birthDate: kind === "BIRTH" ? facts.eventDate : undefined,
+        birthDate,
         careTakingDate: adoption ? facts.eventDate : undefined,
+        childBirthDate: facts.childBirthDate,
+        courtApplicationDate: adoption ? facts.courtApplicationDate : undefined,
+        adoptionFinalDate: adoption ? facts.adoptionFinalDate : undefined,
         childrenCount: facts.childrenCount,
         zaZyciem: facts.hasZaZyciem,
+        stillbirth: facts.stillbirth,
+        gestationalWeeksCompleted: facts.gestationalWeeksCompleted,
+        lowestBirthWeightGrams: facts.lowestBirthWeightGrams,
+        childHospitalStays: hospitalStays.length > 0 ? hospitalStays : undefined,
         professionalFosterFamily: facts.professionalFosterFamily,
       },
       parents,
-      plan: options.plan,
+      plan:
+        options.plan ??
+        (facts.paymentOption ? { paymentOption: facts.paymentOption } : undefined),
+      sickLeave:
+        facts.sickLeaveStart && facts.sickLeaveEnd
+          ? {
+              start: facts.sickLeaveStart,
+              end: facts.sickLeaveEnd,
+              pregnancyCode: facts.pregnancySickLeave,
+            }
+          : undefined,
     },
   }
 }
@@ -164,6 +213,11 @@ export interface EligibilityView {
   determinations: DeterminationView[]
   nextQuestion: MissingFact | null
   disclaimer: string
+  /**
+   * Set when the event is older than the available rule sets. The tool result
+   * must not be presented as an assessment under the law of that time.
+   */
+  periodUnsupported: { code: string; text: string } | null
 }
 
 /** The engine report in the shape of the eligibility card (one row per legacy benefit code and parent). */
@@ -239,7 +293,18 @@ export function eligibilityView(
     determinations.find((d) => d.status === "NEEDS_INPUT")?.missingFacts[0] ??
     determinations.flatMap((d) => d.missingFacts)[0] ??
     (report.missingEvidence[0] ? toMissingFact(report.missingEvidence[0].key, report.missingEvidence[0]) : null)
-  return { kind: "PRELIMINARY_GUIDANCE", asOf: report.asOf, determinations, nextQuestion, disclaimer: report.disclaimer }
+  const periodUnsupported =
+    report.unsupported.find((item) => item.code === "U-01") ?? null
+  return {
+    kind: "PRELIMINARY_GUIDANCE",
+    asOf: report.asOf,
+    determinations,
+    nextQuestion,
+    disclaimer: report.disclaimer,
+    periodUnsupported: periodUnsupported
+      ? { code: periodUnsupported.code, text: periodUnsupported.text }
+      : null,
+  }
 }
 
 const CHANNELS = {
