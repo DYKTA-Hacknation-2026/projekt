@@ -1302,12 +1302,10 @@ function EligibilityPreview({ preview }: { preview: PreviewResponse }) {
             key={determination.benefit}
             className="rounded-lg border border-border/70 p-3 text-sm"
           >
-            <div className="flex items-start justify-between gap-2">
-              <p className="font-medium">{determination.label}</p>
-              <Badge variant={eligibilityVariant(determination.status)}>
-                {eligibilityLabel(determination.status)}
-              </Badge>
-            </div>
+            <Badge variant={eligibilityVariant(determination.status)}>
+              {eligibilityLabel(determination.status)}
+            </Badge>
+            <p className="mt-2 font-medium text-pretty">{determination.label}</p>
             {determination.reasons[0] && (
               <p className="mt-1 text-xs text-pretty text-muted-foreground">
                 {determination.reasons[0].text}
@@ -1650,12 +1648,12 @@ function Field({
   children: ReactNode
 }) {
   return (
-    <div className={`space-y-1.5 ${className ?? ""}`}>
-      <div className="flex flex-wrap items-center justify-between gap-1.5">
-        <Label htmlFor={id}>{label}</Label>
-        <OriginBadge source={source} />
-      </div>
+    <div className={`flex min-w-0 flex-col gap-1.5 ${className ?? ""}`}>
+      <Label htmlFor={id} className="block truncate" title={label}>
+        {label}
+      </Label>
       {children}
+      <OriginBadge source={source} />
     </div>
   )
 }
