@@ -97,7 +97,7 @@ export function StepHeading({
 }): ReactNode {
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium tracking-wide text-primary uppercase">
+      <p className="text-sm font-medium text-primary">
         Krok {step} z {total}
       </p>
       <h2 className="text-xl font-semibold tracking-tight text-balance">

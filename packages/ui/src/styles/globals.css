@@ -79,7 +79,7 @@
   --zpr-mist: #edf5ee;
   --zpr-ink: #22372b;
   --zpr-ink-muted: #405347;
-  --zpr-line: #dce3e9;
+  --zpr-line: #dce7df;
   --zpr-amber: #fab856;
   --zpr-amber-ink: #7a4d12;
 
@@ -95,14 +95,14 @@
   --primary-foreground: #ffffff;
   --secondary: var(--zpr-mist);
   --secondary-foreground: var(--zpr-navy);
-  --muted: #eef2f4;
+  --muted: #f1f6f2;
   --muted-foreground: var(--zpr-ink-muted);
   --accent: var(--zpr-green-soft);
   --accent-foreground: var(--zpr-navy);
   --destructive: #b42318;
   --destructive-foreground: #ffffff;
   --border: var(--zpr-line);
-  --input: #cbd6df;
+  --input: #b9ccbf;
   --ring: var(--zpr-navy);
   --info: var(--zpr-navy);
   --info-foreground: var(--zpr-navy-deep);

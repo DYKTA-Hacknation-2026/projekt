@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Source_Sans_3 } from "next/font/google"
 
 import "@workspace/ui/globals.css"
+import "./workspace.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SiteFooter } from "@/components/site-footer"
 import { SiteHeader } from "@/components/site-header"

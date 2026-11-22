@@ -47,17 +47,20 @@ export default async function CalculatorPage() {
         lead={calculator.lead}
       />
 
-      <Alert variant="info">
-        <Info aria-hidden="true" />
-        <AlertTitle>Wynik demonstracyjny, ale deterministyczny</AlertTitle>
-        <AlertDescription>
-          Ten sam zestaw danych wejściowych zawsze daje ten sam wynik. Silnik
-          korzysta z zestawu reguł {ruleSet.version} zapisanego w bazie.
-          {ruleSet.verified
-            ? " Wszystkie parametry są zweryfikowane."
-            : " Część parametrów (Q-29, Q-15) nie jest jeszcze zweryfikowana — wynik jest oznaczony jako szacunek."}
-        </AlertDescription>
-      </Alert>
+      <details className="calculator-notice">
+        <summary>Ważne o wyniku demonstracyjnym</summary>
+        <Alert variant="info">
+          <Info aria-hidden="true" />
+          <AlertTitle>Wynik demonstracyjny, ale deterministyczny</AlertTitle>
+          <AlertDescription>
+            Ten sam zestaw danych wejściowych zawsze daje ten sam wynik. Silnik
+            korzysta z zestawu reguł {ruleSet.version} zapisanego w bazie.
+            {ruleSet.verified
+              ? " Wszystkie parametry są zweryfikowane."
+              : " Część parametrów (Q-29, Q-15) nie jest jeszcze zweryfikowana — wynik jest oznaczony jako szacunek."}
+          </AlertDescription>
+        </Alert>
+      </details>
 
       <CalculatorForm ruleSet={ruleSet} />
 

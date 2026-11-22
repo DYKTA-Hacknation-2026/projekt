@@ -1,0 +1,285 @@
+/* The family guide's palette and type continue into its working screens. */
+#tresc:not(:has(.home)) {
+  background: var(--secondary);
+  min-height: 65svh;
+  padding-bottom: 32px;
+}
+#tresc > .max-w-6xl {
+  max-width: 1320px;
+}
+#tresc :where(.grid, .flex) > * {
+  min-width: 0;
+}
+.page-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 8px 16px;
+}
+.page-heading__copy {
+  max-width: 760px;
+}
+.page-heading h1 {
+  color: var(--heading);
+  font-size: clamp(26px, 2.3vw, 32px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.page-heading p {
+  margin-top: 16px;
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+.page-heading__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#tresc [data-slot="card-title"] {
+  color: var(--heading);
+  font-weight: 600;
+}
+#tresc [data-slot="card-description"] {
+  line-height: 1.55;
+}
+#tresc [data-slot="table-container"] {
+  max-width: 100%;
+}
+#tresc :where(input, select, textarea) {
+  font-variant-numeric: tabular-nums;
+}
+#tresc summary {
+  min-height: 44px;
+  align-content: center;
+}
+#tresc summary:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 4px;
+}
+.calculator-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px;
+  background: var(--zpr-green-soft);
+  border-radius: 24px;
+}
+.calculator-mode {
+  border-radius: 18px;
+  padding: 20px 24px;
+  text-align: left;
+  transition: background 160ms;
+}
+.calculator-mode > span:first-child {
+  font-size: 18px;
+  color: var(--heading);
+}
+.calculator-mode--active {
+  background: var(--card);
+}
+.advanced-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 8px 0;
+}
+.advanced-intro > div {
+  max-width: 760px;
+}
+.advanced-intro h2 {
+  color: var(--heading);
+  font-size: 24px;
+}
+.advanced-intro p {
+  margin-top: 8px;
+  line-height: 1.55;
+}
+/* The form and results share the same full-width frame at every breakpoint. */
+.advanced-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+.calculator-case-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 20px;
+  background: var(--muted);
+}
+.advanced-fields > fieldset {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin-top: 32px;
+  min-width: 0;
+}
+.advanced-fields > fieldset > legend {
+  padding: 0 0 16px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--heading);
+}
+.calculator-workspace :where(.text-xs) {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.calculator-workspace label {
+  line-height: 1.45;
+}
+.calculator-workspace input:is([type="radio"], [type="checkbox"]) {
+  flex-shrink: 0;
+}
+.calculator-workspace label:has(> input:is([type="radio"], [type="checkbox"])) {
+  min-height: 44px;
+}
+.advanced-fields label:has(> input[type="radio"]) {
+  background: var(--muted);
+  border-color: transparent;
+  box-shadow: none;
+  padding: 16px;
+}
+.advanced-fields label:has(> input[type="radio"]:checked) {
+  background: var(--accent);
+  border-color: var(--primary);
+}
+.advanced-fields > details {
+  padding: 16px 20px;
+  background: var(--secondary);
+  border: 0;
+  border-radius: 16px;
+}
+.calculator-results {
+  min-width: 0;
+}
+.calculator-empty {
+  background: var(--zpr-green-soft);
+  --tw-ring-color: transparent;
+}
+.calculator-empty [data-slot="card-title"] {
+  font-size: 24px;
+}
+.calculator-empty p {
+  line-height: 1.6;
+}
+@media (max-width: 1100px) {
+  .advanced-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .calculator-empty {
+    gap: 0;
+  }
+  .calculator-empty [data-slot="card-title"] {
+    font-size: 18px;
+  }
+  .calculator-empty [data-slot="card-content"] {
+    padding-top: 12px;
+  }
+  .advanced-intro {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+  }
+}
+@media (max-width: 640px) {
+  .page-heading {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .page-heading p {
+    font-size: 16px;
+    margin-top: 12px;
+  }
+  .calculator-modes {
+    gap: 4px;
+    padding: 6px;
+    border-radius: 20px;
+  }
+  .calculator-mode {
+    padding: 14px 12px;
+    border-radius: 15px;
+  }
+  .calculator-mode > span:first-child {
+    font-size: 16px;
+    align-items: flex-start;
+  }
+  .calculator-mode svg {
+    display: none;
+  }
+  .calculator-mode > span:last-child {
+    font-size: 13px;
+  }
+  .calculator-case-tabs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .calculator-case-tabs button {
+    text-align: left;
+  }
+  .calculator-workspace [data-slot="card"] {
+    --card-spacing: 20px;
+  }
+  .calculator-workspace [data-slot="button"] {
+    white-space: normal;
+    height: auto;
+    padding-block: 10px;
+  }
+  .advanced-fields > fieldset {
+    margin-top: 28px;
+  }
+}
+
+/* A full-width form avoids a vacant rail beside long insurance sections. */
+.calculator-results:has(.calculator-empty) {
+  position: static;
+}
+.calculator-results {
+  scroll-margin-top: 92px;
+  outline: none;
+}
+.calculator-results:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 4px;
+}
+.calculator-notice {
+  color: var(--muted-foreground);
+  font-size: 14px;
+}
+.calculator-notice summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.calculator-notice [data-slot="alert"] {
+  margin-top: 8px;
+}
+@media (min-width: 1101px) {
+  .advanced-fields > fieldset > .grid.sm\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .calculator-mode > span:last-child {
+    display: none;
+  }
+  .advanced-intro p {
+    font-size: 14px;
+  }
+  .page-heading h1 {
+    font-size: 24px;
+  }
+}
+
+/* Small green labels need the deeper ink on tinted working surfaces. */
+#tresc:not(:has(.home)) .text-primary {
+  color: var(--info-foreground);
+}

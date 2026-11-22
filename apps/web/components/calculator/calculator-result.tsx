@@ -162,7 +162,7 @@ export function CalculatorResultView({
               </p>
             ) : (
               <>
-                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <p className="text-sm font-medium text-muted-foreground">
                   {result.verified ? "Kwota brutto" : "Kwota szacunkowa"}
                 </p>
                 <p className="text-4xl font-semibold tracking-tight tabular-nums">
