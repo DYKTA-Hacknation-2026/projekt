@@ -5,10 +5,6 @@ przysługuje?” do konkretnego planu: uprawnień, szacunkowych kwot, terminów,
 dokumentów i kolejnych kroków. Łączy deterministyczny kalkulator świadczeń,
 planer urlopów, analizę dokumentów, centrum wiedzy i asystenta rozmownego.
 
-Projekt powstał na hackathon i jest rozwijany jako modularny monolit:
-Next.js + TypeScript + PostgreSQL z pgvector. Wszystko działa lokalnie, bez
-kluczy AI i bez integracji z systemami państwowymi.
-
 > **Status demo.** Wszystkie dane rządowe, dokumenty i integracje są
 > symulowane. Kalkulator zwraca status `INDETERMINATE` („Wymaga danych”) dla
 > wyników zależnych od niezatwierdzonych parametrów: minimalnej podstawy,
@@ -16,13 +12,9 @@ kluczy AI i bez integracji z systemami państwowymi.
 > odpowiada wyłącznie na podstawie pobranych źródeł i deterministycznych usług —
 > nigdy nie wymyśla kwot, terminów ani decyzji o uprawnieniach.
 
-**Ważne:** to nie jest oficjalny serwis ZUS. Wyniki nie zastępują decyzji ZUS
-ani płatnika składek. Materiał ma charakter informacyjny.
-
 ## Spis treści
 
 - [Czym jest ten projekt](#czym-jest-ten-projekt)
-- [Dla kogo](#dla-kogo)
 - [Jak obejrzeć system w działaniu](#jak-obejrzeć-system-w-działaniu)
 - [Co jest prawdziwe, a co symulowane](#co-jest-prawdziwe-a-co-symulowane)
 - [Najważniejsze funkcje](#najważniejsze-funkcje)
@@ -54,16 +46,6 @@ Aplikacja składa się z dwóch projektów Next.js (web i REST API) oraz wspóln
 pakietów domenowych. Reguły prawne są kodem, a ich parametry — wersjonowanymi
 danymi. Dzięki temu ten sam zestaw danych zawsze daje ten sam wynik, a każdą
 zmianę parametrów można prześledzić w historii.
-
-## Dla kogo
-
-- **Dla rodziców i osób planujących dziecko** — żeby uporządkować formalności
-  przed porodem i zobaczyć, co może przysługiwać obojgu rodzicom.
-- **Dla jury, recenzentów i osób testujących demo** — żeby w kilka minut
-  zobaczyć działanie systemu na gotowych, syntetycznych danych, bez zakładania
-  konta i bez konfigurowania kluczy AI.
-- **Dla programistów i osób rozwijających projekt** — żeby zrozumieć
-  architekturę, kontrakty API, model danych i sposób wersjonowania reguł.
 
 ## Jak obejrzeć system w działaniu
 
