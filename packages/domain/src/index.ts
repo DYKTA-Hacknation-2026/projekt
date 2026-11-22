@@ -13,6 +13,7 @@ export * from "./sick-leave"
 export * from "./documents"
 export * from "./deadlines"
 export * from "./scenarios"
+export * from "./situation"
 export * as engine from "./engine"
 export {
   calculatorToAssessmentInput,

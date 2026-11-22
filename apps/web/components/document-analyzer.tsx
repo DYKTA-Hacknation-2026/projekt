@@ -38,8 +38,10 @@ import {
   type SampleCaseSummary,
   type ValidationFinding,
 } from "@zpr/contracts/documents"
+import type { CaseProfile, CaseProfileComparison } from "@zpr/contracts/case-profile"
 
 import { serializeDocumentPrefill } from "@/lib/document-prefill"
+import { readCaseProfile } from "@/lib/situation-profile"
 import { formatDate, formatPln } from "@/lib/format"
 import { documents as t } from "@/messages/pl"
 
@@ -75,8 +77,13 @@ export function DocumentAnalyzer() {
   const [pending, setPending] = useState<"analyze" | "confirm" | "delete" | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<string>("")
+  const [profile, setProfile] = useState<CaseProfile | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const consentId = useId()
+
+  useEffect(() => {
+    setProfile(readCaseProfile(window.sessionStorage))
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -184,7 +191,10 @@ export function DocumentAnalyzer() {
       const result = await request<DocumentAssessment>(`/api/v1/documents/${meta.documentId}/fields`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ fields: fields.map(({ key, value, confirmed }) => ({ key, value, confirmed })) }),
+        body: JSON.stringify({
+          fields: fields.map(({ key, value, confirmed }) => ({ key, value, confirmed })),
+          ...(profile ? { profile } : {}),
+        }),
       })
       setAssessment(result)
       setExtraction(result.extraction)
@@ -226,6 +236,34 @@ export function DocumentAnalyzer() {
       <p className="sr-only" aria-live="polite" role="status">
         {status}
       </p>
+
+      {profile ? (
+        <Alert variant="info" data-testid="case-profile-banner">
+          <Info aria-hidden="true" />
+          <AlertTitle>Porównujemy dokument z Twoją sprawą</AlertTitle>
+          <AlertDescription>
+            Profil: {profile.label}
+            {profile.savedCaseNumber ? ` · sprawa ${profile.savedCaseNumber}` : ""}. Użyjemy
+            danych, które już podano w kreatorze.{" "}
+            <Link href="/start" className="underline underline-offset-4">
+              Zmień profil
+            </Link>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert data-testid="no-case-profile">
+          <Info aria-hidden="true" />
+          <AlertTitle>Nie mamy jeszcze profilu sprawy</AlertTitle>
+          <AlertDescription>
+            Możesz sprawdzić dokument bez profilu. Aby porównać go z Twoją
+            sytuacją i nie wpisywać danych drugi raz,{" "}
+            <Link href="/start" className="underline underline-offset-4">
+              opisz najpierw swoją sytuację
+            </Link>
+            .
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-start">
         <div className="space-y-4">
@@ -619,6 +657,9 @@ function AssessmentView({ assessment }: { assessment: DocumentAssessment }) {
 
   return (
     <div className="space-y-4" data-testid="document-assessment">
+      {assessment.profileComparison && (
+        <ProfileComparisonView comparison={assessment.profileComparison} />
+      )}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{t.resultTitle}</CardTitle>
@@ -745,5 +786,106 @@ function AssessmentView({ assessment }: { assessment: DocumentAssessment }) {
         </Card>
       )}
     </div>
+  )
+}
+
+function ProfileComparisonView({
+  comparison,
+}: {
+  comparison: CaseProfileComparison
+}) {
+  const groups: Array<{
+    title: string
+    rows: CaseProfileComparison["matches"]
+    variant: "success" | "warning" | "destructive"
+    empty: string
+  }> = [
+    {
+      title: "Zgodne z profilem",
+      rows: comparison.matches,
+      variant: "success",
+      empty: "Brak pól, które można było porównać.",
+    },
+    {
+      title: "Brakuje w dokumencie",
+      rows: comparison.missingInDocument,
+      variant: "warning",
+      empty: "Dokument zawiera wszystkie porównywane dane.",
+    },
+    {
+      title: "Wykryte rozbieżności",
+      rows: comparison.mismatches,
+      variant: "destructive",
+      empty: "Nie wykryto rozbieżności w porównywanych polach.",
+    },
+  ]
+
+  return (
+    <Card data-testid="profile-comparison">
+      <CardHeader>
+        <CardTitle className="flex flex-wrap items-center gap-2 text-base">
+          Porównanie z Twoją sprawą
+          <Badge variant={comparison.status === "MATCH" ? "success" : "warning"}>
+            {comparison.status === "MATCH" ? "brak rozbieżności" : "wymaga uwagi"}
+          </Badge>
+        </CardTitle>
+        <CardDescription>
+          To zestawienie faktów, nie ocena kompletności ani decyzja ZUS.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        {groups.map((group) => (
+          <section key={group.title}>
+            <h3 className="flex items-center gap-2 text-sm font-medium">
+              {group.variant === "success" ? (
+                <CheckCircle2 aria-hidden="true" className="size-4 text-success" />
+              ) : group.variant === "warning" ? (
+                <AlertTriangle aria-hidden="true" className="size-4 text-warning-foreground" />
+              ) : (
+                <XCircle aria-hidden="true" className="size-4 text-destructive" />
+              )}
+              {group.title}
+            </h3>
+            {group.rows.length === 0 ? (
+              <p className="mt-1 text-xs text-muted-foreground">{group.empty}</p>
+            ) : (
+              <ul className="mt-1 space-y-1">
+                {group.rows.map((row) => (
+                  <li
+                    key={`${group.title}-${row.label}`}
+                    className="rounded-md border border-border/70 p-2 text-xs"
+                  >
+                    <span className="font-medium">{row.label}:</span> w sprawie „
+                    {row.profile}”, w dokumencie „{row.document}”.
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ))}
+
+        {comparison.manualReview.length > 0 && (
+          <section>
+            <h3 className="text-sm font-medium">Wymaga ręcznej weryfikacji</h3>
+            <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+              {comparison.manualReview.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        <section>
+          <h3 className="text-sm font-medium">Sugerowane działania</h3>
+          <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+            {comparison.suggestions.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+
+        <p className="text-xs text-pretty text-muted-foreground">{comparison.disclaimer}</p>
+      </CardContent>
+    </Card>
   )
 }

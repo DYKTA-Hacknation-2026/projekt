@@ -157,7 +157,7 @@ function PeriodBarButton({
         <span className="truncate text-[11px] leading-tight font-semibold">
           {compact ? "" : period.title}
         </span>
-        <span className="truncate text-[10px] leading-tight opacity-80">
+        <span className="truncate text-[10px] leading-tight">
           {compact ? "" : formatDateRange(period.start, period.end)}
         </span>
       </span>

@@ -9,6 +9,7 @@ export * from "./content"
 export * from "./mobywatel"
 export * from "./data-import"
 export * from "./engine"
+export * from "./case-profile"
 export * from "./rules-admin"
 
 export const AI_DISCLOSURE =

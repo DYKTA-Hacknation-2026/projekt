@@ -3,6 +3,7 @@ import { z } from "zod"
 import type { engine } from "@zpr/domain"
 
 import { isoDateSchema, uuidSchema } from "./common"
+import { caseProfileSchema, type CaseProfileComparison } from "./case-profile"
 import type { AssessmentRequest } from "./engine"
 
 /**
@@ -201,6 +202,12 @@ export const confirmFieldsRequestSchema = z
     fields: z.array(fieldUpdateSchema).min(1).max(80),
     /** Evaluation date override for tests and demos; defaults to today (Europe/Warsaw). */
     asOf: isoDateSchema.optional(),
+    /**
+     * Profile from `/start`. Fills facts the document does not carry and lets
+     * the API compare the document with the user's own case. Never overrides a
+     * value read from the document.
+     */
+    profile: caseProfileSchema.optional(),
   })
   .strict()
 export type ConfirmFieldsRequest = z.infer<typeof confirmFieldsRequestSchema>
@@ -289,6 +296,8 @@ export interface DocumentAssessment {
   checklist: ChecklistItem[]
   /** Demo-mode comparison with the sample-case manifest. */
   comparison?: { expected: SampleCaseExpected; matches: boolean; details: string[] }
+  /** Comparison with the `/start` case profile, when one was supplied. */
+  profileComparison?: CaseProfileComparison
 }
 
 /* ------------------------------------------------------------------------ */

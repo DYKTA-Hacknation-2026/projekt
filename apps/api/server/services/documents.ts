@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { readFile } from "node:fs/promises"
 
 import { warsawToday } from "@zpr/ai"
+import type { CaseProfile } from "@zpr/contracts/case-profile"
 import {
   DOCUMENT_PROCESSING_CONSENT,
   FORM_TITLES,
@@ -22,7 +23,9 @@ import { uuidv7 } from "@zpr/db"
 import type { DocumentRepository, DocumentUploadRecord } from "@zpr/db/repositories"
 import {
   PdfReadError,
+  applyCaseProfile,
   applyFieldUpdates,
+  compareDocumentWithProfile,
   createTesseractOcr,
   extractFromPdf,
   hasPdfSignature,
@@ -220,8 +223,10 @@ export function createDocumentService(deps: DocumentServiceDeps) {
     return { expected, matches: statusOk && basisOk && amountOk, details }
   }
 
-  async function assess(row: DocumentUploadRecord, extraction: DocumentExtraction, ownerKey: string): Promise<DocumentAssessment> {
-    const mapping = mapDocumentFacts(extraction)
+  async function assess(row: DocumentUploadRecord, extraction: DocumentExtraction, ownerKey: string, profile?: CaseProfile): Promise<DocumentAssessment> {
+    const documentMapping = mapDocumentFacts(extraction)
+    const useProfile = Boolean(profile && extraction.status === "CONFIRMED")
+    const mapping = useProfile && profile ? applyCaseProfile(documentMapping, profile, extraction) : documentMapping
     const base: DocumentAssessment = {
       documentId: row.id,
       status: extraction.status,
@@ -265,6 +270,9 @@ export function createDocumentService(deps: DocumentServiceDeps) {
       routing: documents.routing,
       timeline: timeline.timeline,
       checklist,
+    }
+    if (useProfile && profile) {
+      result.profileComparison = compareDocumentWithProfile(profile, extraction, documentMapping)
     }
     const expected = await expectedFor(row.sampleCaseId)
     if (expected) result.comparison = compare(expected, result)
@@ -333,7 +341,7 @@ export function createDocumentService(deps: DocumentServiceDeps) {
       if (unknown) throw new AppError(422, "VALIDATION_ERROR", "Nieznane pole dokumentu.", { issues: [{ path: "fields", message: `Nieznany klucz: ${unknown.key}` }] })
       const updated = applyFieldUpdates(current.extraction, request.fields, { asOf: request.asOf ?? today() })
       await deps.repo.updateExtraction(current.id, updated, updated.status === "CONFIRMED")
-      return assess(row, updated, ownerKey)
+      return assess(row, updated, ownerKey, request.profile)
     },
 
     async remove(id: string, ownerKey: string): Promise<void> {

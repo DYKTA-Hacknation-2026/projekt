@@ -189,6 +189,45 @@ describe("upload → extract → confirm → engine", () => {
     expect(await repo.listChecklist(cookieSid(), id)).toHaveLength(body.checklist.length)
   })
 
+  it("uses the /start case profile and reports differences instead of asking again", async () => {
+    const { id, extraction } = await uploadAndExtract()
+    const profile = {
+      version: 1 as const,
+      scenario: "BIRTH" as const,
+      label: "Dziecko już się urodziło",
+      analyzedAt: "2026-11-21T10:00:00.000Z",
+      request: {
+        asOf: "2026-11-21",
+        event: { kind: "BIRTH" as const, birthDate: "2026-11-10" },
+        parents: [
+          {
+            role: "FATHER" as const,
+            insurance: { title: "MANDATE" as const, sicknessInsurance: "VOLUNTARY" as const },
+            basis: { method: "GROSS_MONTHLY" as const, grossMonthlyGrosze: 500_000 },
+          },
+        ],
+        plan: { paymentOption: "FLAT_81_5" as const },
+      },
+    }
+    const response = await call(putFields, {
+      method: "PUT",
+      id,
+      json: { ...confirmAll(extraction), profile },
+    })
+    const body = (await response.json()) as DocumentAssessment
+    expect(body.profileComparison?.status).toBe("DIFFERENCES")
+    expect(body.profileComparison?.mismatches.map((row) => row.label)).toEqual(
+      expect.arrayContaining(["Forma zatrudnienia", "Podstawa wymiaru"])
+    )
+    expect(body.profileComparison?.disclaimer).toMatch(/nie jest potwierdzenie/i)
+    expect(body.mapping.notes.join(" ")).toMatch(/profilu sprawy/i)
+    // The document value still wins over the profile.
+    expect(body.calculation?.basis[0]).toMatchObject({
+      method: "KNOWN_BASIS",
+      monthlyBasisGrosze: 600_000,
+    })
+  })
+
   it("does not run the engine until required fields are confirmed; placeholders are rejected", async () => {
     const { id, extraction } = await uploadAndExtract()
     const response = await call(putFields, {
