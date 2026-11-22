@@ -26,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
+import { ImportOfferDialog } from "@/components/import-offer-dialog"
 import { PageHeader } from "@/components/page-header"
 import { SituationWizard } from "@/components/situation-wizard"
 import { mobywatel as copy } from "@/messages/pl"
@@ -73,6 +74,7 @@ export default async function StartPage({
   const session = await getMobywatelSession()
   const params = await searchParams
   const importAccepted = params.import === "accepted"
+  const showImportOffer = Boolean(session) && params["import-offer"] === "1"
 
   return (
     <div className="page-shell py-10">
@@ -89,6 +91,8 @@ export default async function StartPage({
           </Button>
         }
       />
+
+      {showImportOffer && <ImportOfferDialog />}
 
       {importAccepted && (
         <Alert variant="info" className="mt-6">

@@ -407,7 +407,10 @@ export function MobywatelLogin({ personas }: MobywatelLoginProps) {
                 {copy.successText}
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button type="button" onClick={() => router.push("/start")}>
+                <Button
+                  type="button"
+                  onClick={() => router.push("/start?import-offer=1")}
+                >
                   {copy.successCta}
                   <ArrowRight data-icon="inline-end" aria-hidden="true" />
                 </Button>

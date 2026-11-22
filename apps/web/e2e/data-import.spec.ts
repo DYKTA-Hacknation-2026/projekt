@@ -4,7 +4,10 @@ import { expect, test } from "@playwright/test"
 // a cold Turbopack cache when the full suite runs in parallel.
 test.setTimeout(90_000)
 
-async function loginAsAnna(page: import("@playwright/test").Page) {
+async function loginAsAnna(
+  page: import("@playwright/test").Page,
+  offerChoice: "manual" | "download" = "manual"
+) {
   await page.goto("/mobywatel")
   const providerButton = page.getByRole("button", {
     name: /Aplikacja mObywatel/i,
@@ -23,7 +26,23 @@ async function loginAsAnna(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: "Potwierdź w aplikacji" }).click()
   await expect(page.getByText("Dane zostały przekazane")).toBeVisible()
   await page.getByRole("button", { name: "Przejdź do kreatora" }).click()
-  await expect(page).toHaveURL(/\/start/)
+  await expect(page).toHaveURL(/\/start\?import-offer=1$/)
+
+  const offer = page.getByRole("dialog")
+  await expect(offer).toBeVisible()
+
+  if (offerChoice === "download") {
+    await offer
+      .getByRole("button", { name: /Pobierz dane automatycznie/i })
+      .click()
+    await expect(page).toHaveURL(/\/dane/)
+    return
+  }
+
+  await offer
+    .getByRole("button", { name: /Wypełnię formularz samodzielnie/i })
+    .click()
+  await expect(page).toHaveURL(/\/start$/)
 }
 
 test("simulated data import fills the wizard and survives verification", async ({
@@ -81,6 +100,18 @@ test("simulated data import fills the wizard and survives verification", async (
   await expect(page.getByLabel("Pracodawca / zleceniodawca")).toHaveValue(
     "Przykładowy Pracodawca S.A."
   )
+})
+
+test("post-login offer can start the data import directly", async ({ page }) => {
+  await loginAsAnna(page, "download")
+
+  await expect(
+    page.getByRole("heading", {
+      level: 1,
+      name: /Uzupełnij dane automatycznie/i,
+    })
+  ).toBeVisible()
+  await expect(page.getByText("ZUS — ubezpieczenie i składki")).toBeVisible()
 })
 
 test("manual path skips retrieval and keeps the wizard usable", async ({ page }) => {
