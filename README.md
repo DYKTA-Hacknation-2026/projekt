@@ -71,7 +71,7 @@ pól → kwota i uprawnienia → kalkulator z wypełnionymi danymi.
 
 ### 1. Strona główna — trzy przykładowe sytuacje
 
-Otwórz <http://localhost:3000> i zjedź niżej, do sekcji **„Różne rodziny. Różne
+Otwórz https://zpr.makonew.com/ i zjedź niżej, do sekcji **„Różne rodziny. Różne
 potrzeby.”**. Znajdziesz tam trzy karty — wybierz jedną, żeby zobaczyć system od
 praktycznej strony:
 
