@@ -37,7 +37,17 @@ test("simulated mObywatel login prefills the onboarding wizard", async ({
   expect(session?.httpOnly).toBe(true)
 
   await page.getByRole("button", { name: "Przejdź do kreatora" }).click()
+  await expect(page).toHaveURL(/\/start\?import-offer=1$/)
+
+  const offer = page.getByRole("dialog")
+  await expect(
+    offer.getByRole("heading", { name: /Chcesz pobrać dane z innych ośrodków/i })
+  ).toBeVisible()
+  await offer
+    .getByRole("button", { name: /Wypełnię formularz samodzielnie/i })
+    .click()
   await expect(page).toHaveURL(/\/start$/)
+
   await expect(page.getByLabel("Imię")).toHaveValue("Anna")
   await expect(page.getByLabel("Nazwisko")).toHaveValue("Kowalska")
   await expect(page.getByLabel("Adres e-mail")).toHaveValue(

@@ -477,6 +477,17 @@ export const mobywatel = {
   sessionText:
     "Dane osobowe zostały wstępnie uzupełnione. Sprawdź je i możesz poprawić przed zapisaniem sprawy.",
   sessionChange: "Zmień profil",
+  importOffer: {
+    title: "Chcesz pobrać dane z innych ośrodków?",
+    lead: "Logowanie się udało. Możesz uzupełnić formularz danymi z symulowanych systemów ZUS, pracodawcy, e-ZLA, USC i PUE/eZUS. Możesz też wypełnić go samodzielnie — obie ścieżki prowadzą do tego samego kreatora.",
+    download: "Pobierz dane automatycznie",
+    downloadHint:
+      "Około 2 minut. Zdecydujesz, jakie zakresy danych udostępnisz.",
+    manual: "Wypełnię formularz samodzielnie",
+    manualHint: "Przejdziesz od razu do pytań kreatora.",
+    note: "Pobieranie danych jest symulacją. Nie łączy się z systemami państwowymi i nie wywołuje skutków prawnych.",
+    close: "Zamknij",
+  },
 } as const
 
 export const knowledge = {
