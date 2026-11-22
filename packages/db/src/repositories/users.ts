@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm"
+import { and, desc, eq, sql } from "drizzle-orm"
 
 import type { OnboardingInput } from "@zpr/contracts/onboarding"
 
@@ -6,13 +6,16 @@ import type { Database } from "../client"
 import { uuidv7 } from "../ids"
 import {
   benefitCases,
+  contributionBases,
   familyEvents,
   insurancePeriods,
   employmentRecords,
+  sickLeavePeriods,
   userProfiles,
   users,
 } from "../schema"
 import type {
+  AssistantProfileRecord,
   HouseholdRepository,
   UserRecord,
   UserRepository,
@@ -52,6 +55,116 @@ export class DrizzleUserRepository implements UserRepository {
       .where(eq(users.email, email))
       .limit(1)
     return row ?? null
+  }
+
+  /**
+   * Read-only, minimised view of one user's confirmed facts for the
+   * assistant. Selects no names, e-mail, city, birth date or health fields.
+   * The caller must already have authorised `userId` (session principal).
+   */
+  async getAssistantProfile(
+    userId: string
+  ): Promise<AssistantProfileRecord | null> {
+    const [profile] = await this.db
+      .select({
+        userId: userProfiles.userId,
+        aiAssistantConsent: userProfiles.aiAssistantConsent,
+        updatedAt: userProfiles.updatedAt,
+      })
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userId))
+      .limit(1)
+    if (!profile) return null
+
+    const [employment] = await this.db
+      .select({
+        contractType: employmentRecords.contractType,
+        grossMonthlyAmountGrosze: employmentRecords.grossMonthlyAmountGrosze,
+      })
+      .from(employmentRecords)
+      .where(and(eq(employmentRecords.userId, userId), eq(employmentRecords.isCurrent, true)))
+      .orderBy(desc(employmentRecords.createdAt))
+      .limit(1)
+
+    const insuranceRows = await this.db
+      .select({
+        coverageMode: insurancePeriods.coverageMode,
+        startDate: insurancePeriods.startDate,
+        endDate: insurancePeriods.endDate,
+        isActive: insurancePeriods.isActive,
+      })
+      .from(insurancePeriods)
+      .where(eq(insurancePeriods.userId, userId))
+      .orderBy(desc(insurancePeriods.startDate))
+
+    const insurance =
+      insuranceRows.find((row) => row.isActive) ?? insuranceRows[0]
+
+    const [unpaidContribution] = await this.db
+      .select({ id: contributionBases.id })
+      .from(contributionBases)
+      .where(
+        and(
+          eq(contributionBases.userId, userId),
+          eq(contributionBases.paid, false)
+        )
+      )
+      .limit(1)
+
+    const sickLeaves = await this.db
+      .select({
+        pregnancyRelated: sickLeavePeriods.pregnancyRelated,
+        days: sickLeavePeriods.days,
+      })
+      .from(sickLeavePeriods)
+      .where(eq(sickLeavePeriods.userId, userId))
+
+    const [event] = await this.db
+      .select({
+        eventType: familyEvents.eventType,
+        eventDate: familyEvents.eventDate,
+        expectedDueDate: familyEvents.expectedDueDate,
+        childCount: familyEvents.childCount,
+        hasZaZyciem: familyEvents.hasZaZyciem,
+      })
+      .from(familyEvents)
+      .where(eq(familyEvents.userId, userId))
+      .orderBy(desc(familyEvents.createdAt))
+      .limit(1)
+
+    const [benefitCase] = await this.db
+      .select({ caseNumber: benefitCases.caseNumber })
+      .from(benefitCases)
+      .where(eq(benefitCases.userId, userId))
+      .orderBy(desc(benefitCases.createdAt))
+      .limit(1)
+
+    return {
+      userId: profile.userId,
+      aiAssistantConsent: profile.aiAssistantConsent,
+      employmentType: employment?.contractType ?? null,
+      coverageMode: insurance?.coverageMode ?? null,
+      insuranceStartDate: insurance?.startDate ?? null,
+      insuranceEndDate: insurance?.endDate ?? null,
+      contributionArrears:
+        unpaidContribution === undefined ? null : Boolean(unpaidContribution),
+      pregnancySickLeave:
+        sickLeaves.length === 0
+          ? null
+          : sickLeaves.some((leave) => leave.pregnancyRelated),
+      sickLeaveDays:
+        sickLeaves.length === 0
+          ? null
+          : sickLeaves.reduce((sum, leave) => sum + leave.days, 0),
+      grossMonthlyAmountGrosze: employment?.grossMonthlyAmountGrosze ?? null,
+      familyEvent: event?.eventType ?? null,
+      eventDate: event?.eventDate ?? null,
+      expectedDueDate: event?.expectedDueDate ?? null,
+      childCount: event?.childCount ?? null,
+      hasZaZyciem: event?.hasZaZyciem ?? null,
+      caseNumber: benefitCase?.caseNumber ?? null,
+      updatedAt: profile.updatedAt,
+    }
   }
 }
 

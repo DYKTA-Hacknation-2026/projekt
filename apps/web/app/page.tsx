@@ -1,680 +1,373 @@
+import type { Metadata } from "next"
+import Image from "next/image"
 import Link from "next/link"
-import type { ReactNode } from "react"
 import {
   ArrowRight,
   ArrowUpRight,
-  BookOpen,
-  Calculator,
-  CalendarDays,
-  CheckCircle2,
-  ChevronDown,
-  ExternalLink,
-  FileCheck2,
-  FileText,
-  Info,
+  Check,
   ListChecks,
   MessagesSquare,
-  Scale,
-  ShieldCheck,
-  Sparkles,
   type LucideIcon,
 } from "lucide-react"
+import { home } from "@/messages/pl"
+import { HomeLeavePreview } from "@/components/home-leave-preview"
+import { HomeMotion } from "@/components/home-motion"
+import "./home.css"
 
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
-import { cn } from "@workspace/ui/lib/utils"
-import { LeaveOverview } from "@/components/leave-overview"
-import {
-  AI_DISCLOSURE,
-  LEGAL_DISCLOSURE,
-  SIMULATION_DISCLOSURE,
-  home,
-} from "@/messages/pl"
-
-const heroIcons = [Scale, CalendarDays, Calculator, ShieldCheck]
-const toolIcons = [Calculator, CalendarDays, FileCheck2]
-const trustIcons = [Scale, BookOpen, ShieldCheck]
-
-function Eyebrow({ children }: { children: ReactNode }) {
-  return (
-    <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
-      {children}
-    </p>
-  )
+export const metadata: Metadata = {
+  title: "Świadczenia i urlopy dla rodziców",
 }
 
-function SectionHeader({
-  eyebrow,
-  title,
-  lead,
-  className,
-}: {
-  eyebrow: string
-  title: string
-  lead?: string
-  className?: string
-}) {
-  return (
-    <div className={cn("max-w-2xl", className)}>
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 className="mt-2 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-        {title}
-      </h2>
-      {lead && (
-        <p className="mt-3 text-sm text-pretty text-muted-foreground sm:text-base">
-          {lead}
-        </p>
-      )}
-    </div>
-  )
-}
+type HomeMethod = (typeof home.methods)["form"] | (typeof home.methods)["chat"]
 
-function HeroChoice({
+function MethodCard({
   method,
-  tone,
   icon: Icon,
+  tone,
 }: {
-  method: (typeof home.methods)["form"] | (typeof home.methods)["chat"]
-  tone: "primary" | "success"
+  method: HomeMethod
   icon: LucideIcon
+  tone: "form" | "chat"
 }) {
   return (
     <Link
       href={method.href}
-      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none sm:p-6"
+      className={`home-method home-method--${tone}`}
+      data-reveal="item"
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          "absolute inset-x-0 top-0 h-1",
-          tone === "primary" ? "bg-primary" : "bg-success"
-        )}
-      />
-      <div className="flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
-          <span
-            className={cn(
-              "grid size-8 place-items-center rounded-lg",
-              tone === "primary"
-                ? "bg-primary/10 text-primary"
-                : "bg-success/10 text-success-foreground"
-            )}
-          >
-            <Icon aria-hidden="true" className="size-4" />
-          </span>
-          {method.label}
-        </span>
-        <ArrowUpRight
-          aria-hidden="true"
-          className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary"
-        />
-      </div>
+      <span className="home-method__label">
+        <Icon size={19} aria-hidden="true" />
+        {method.label}
+      </span>
+      <h3>{method.title}</h3>
+      <p>{method.description}</p>
 
-      <p className="mt-4 text-xl font-semibold tracking-tight">
-        {method.title}
-      </p>
-      <p className="mt-2 text-sm text-pretty text-muted-foreground">
-        {method.shortDescription}
-      </p>
-
-      <div className="mt-auto pt-5">
-        <span className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors group-hover:bg-primary/85">
-          {method.cta}
-          <ArrowRight aria-hidden="true" className="size-4" />
-        </span>
-        <span className="mt-2 block text-xs text-muted-foreground">
-          {method.meta}
-        </span>
-      </div>
-    </Link>
-  )
-}
-
-function MethodPanel({
-  method,
-  tone,
-  icon: Icon,
-}: {
-  method: (typeof home.methods)["form"] | (typeof home.methods)["chat"]
-  tone: "primary" | "success"
-  icon: LucideIcon
-}) {
-  return (
-    <div
-      className={cn(
-        "flex h-full flex-col rounded-2xl border border-t-2 border-border/80 bg-card p-6",
-        tone === "primary" ? "border-t-primary" : "border-t-success"
-      )}
-    >
-      <div className="flex items-center gap-3">
-        <span
-          className={cn(
-            "grid size-11 shrink-0 place-items-center rounded-xl",
-            tone === "primary"
-              ? "bg-primary/10 text-primary"
-              : "bg-success/10 text-success-foreground"
-          )}
-        >
-          <Icon aria-hidden="true" className="size-5" />
-        </span>
-        <div>
-          <p className="text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
-            {method.label}
-          </p>
-          <h3 className="text-xl font-semibold tracking-tight">
-            {method.title}
-          </h3>
-        </div>
-      </div>
-
-      <p className="mt-4 text-sm text-pretty text-muted-foreground">
-        {method.description}
-      </p>
-
-      <ul className="mt-5 space-y-2.5">
+      <ul className="home-method__list">
         {method.bullets.map((bullet) => (
-          <li key={bullet} className="flex items-start gap-2 text-sm">
-            <CheckCircle2
-              aria-hidden="true"
-              className={cn(
-                "mt-0.5 size-4 shrink-0",
-                tone === "primary" ? "text-primary" : "text-success"
-              )}
-            />
-            <span className="text-pretty">{bullet}</span>
+          <li key={bullet}>
+            <Check size={17} aria-hidden="true" />
+            {bullet}
           </li>
         ))}
       </ul>
 
-      <div className="mt-auto pt-6">
-        <Button asChild className="h-10 w-full px-4 sm:w-auto">
-          <Link href={method.href}>
-            {method.cta}
-            <ArrowRight data-icon="inline-end" aria-hidden="true" />
-          </Link>
-        </Button>
-        <p className="mt-2 text-xs text-muted-foreground">{method.meta}</p>
-      </div>
-    </div>
-  )
-}
-
-function KnowledgeRow({
-  link,
-}: {
-  link: (typeof home.knowledge.links)[number]
-}) {
-  const content = (
-    <>
-      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-        <BookOpen aria-hidden="true" className="size-4" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5 text-sm font-medium">
-          {link.label}
-          {link.external && (
-            <ExternalLink
-              aria-hidden="true"
-              className="size-3.5 text-muted-foreground"
-            />
-          )}
+      <span className="home-method__footer">
+        <span className="home-method__cta">
+          {method.cta}
+          <ArrowRight size={18} aria-hidden="true" />
         </span>
-        <span className="mt-0.5 block text-xs text-pretty text-muted-foreground">
-          {link.description}
-        </span>
+        <span className="home-method__meta">{method.meta}</span>
       </span>
-      {link.external ? (
-        <ArrowUpRight
-          aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-        />
-      ) : (
-        <ArrowRight
-          aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5"
-        />
-      )}
-    </>
-  )
-
-  const className =
-    "group flex items-center gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:border-primary/40 hover:bg-muted/30 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-
-  if (link.external) {
-    return (
-      <a
-        href={link.href}
-        target="_blank"
-        rel="noreferrer"
-        className={className}
-      >
-        {content}
-      </a>
-    )
-  }
-
-  return (
-    <Link href={link.href} className={className}>
-      {content}
     </Link>
   )
 }
 
 export default function HomePage() {
   return (
-    <>
-      <section className="relative overflow-hidden border-b border-border/70">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(60%_60%_at_85%_10%,color-mix(in_oklch,var(--primary)_12%,transparent),transparent_70%),radial-gradient(50%_50%_at_10%_90%,color-mix(in_oklch,var(--warning)_18%,transparent),transparent_70%)]"
-        />
-        <div className="mx-auto w-full max-w-6xl px-4 pt-14 pb-12 sm:px-6 lg:pt-20 lg:pb-16">
-          <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-            <div className="order-1 space-y-6 lg:col-start-1 lg:row-start-1">
-              <Badge
-                variant="outline"
-                className="h-6 gap-1.5 bg-background/70 px-3"
-              >
-                <Sparkles aria-hidden="true" className="size-3.5" />
-                {home.eyebrow}
-              </Badge>
-              <div className="space-y-5">
-                <h1 className="max-w-2xl text-4xl leading-[1.05] font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-                  {home.title}
-                </h1>
-                <p className="max-w-xl text-lg text-pretty text-muted-foreground">
-                  {home.lead}
-                </p>
-              </div>
-              <p className="max-w-xl text-sm font-medium text-foreground/80">
-                {home.methods.equalityNote}
-              </p>
-            </div>
+    <div className="home">
+      <HomeMotion />
+      <section className="home-hero home-shell" aria-labelledby="home-title">
+        <div className="home-hero__copy">
+          <h1 id="home-title" data-reveal="heading">
+            Więcej czasu
+            <br />
+            dla rodziny.
+          </h1>
+          <p className="home-hero__lead" data-reveal="copy">
+            {home.lead}
+          </p>
 
-            <div className="order-2 lg:col-span-2 lg:row-start-2">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <HeroChoice
-                  method={home.methods.form}
-                  tone="primary"
-                  icon={ListChecks}
-                />
-                <HeroChoice
-                  method={home.methods.chat}
-                  tone="success"
-                  icon={MessagesSquare}
-                />
-              </div>
-              <p className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
-                <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-                <span className="text-pretty">{home.methods.note}</span>
-              </p>
-            </div>
-
-            <div className="order-3 rounded-2xl border border-border/70 bg-card/85 p-5 shadow-sm backdrop-blur sm:p-6 lg:col-start-2 lg:row-start-1">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold tracking-[0.16em] text-primary uppercase">
-                  Po sprawdzeniu
-                </p>
-                <Badge variant="outline" className="bg-background/70">
-                  DEMO
-                </Badge>
-              </div>
-              <ul className="mt-5 grid gap-4">
-                {home.heroPoints.map((point, index) => {
-                  const Icon = heroIcons[index] ?? Info
-                  return (
-                    <li key={point.title} className="flex gap-3">
-                      <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-secondary text-primary">
-                        <Icon aria-hidden="true" className="size-4" />
-                      </span>
-                      <div>
-                        <p className="text-sm font-medium">{point.title}</p>
-                        <p className="text-xs text-pretty text-muted-foreground">
-                          {point.text}
-                        </p>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-              <p className="mt-5 border-t border-border/70 pt-4 text-xs text-muted-foreground">
-                Wersja demonstracyjna. Bez logowania i bez numeru PESEL.
-              </p>
-            </div>
+          <div className="home-hero__actions" data-reveal="copy">
+            <Link
+              href={home.methods.form.href}
+              className="home-button home-button--white"
+            >
+              {home.methods.form.cta}
+              <ListChecks size={20} aria-hidden="true" />
+            </Link>
+            <Link
+              href={home.methods.chat.href}
+              className="home-button home-button--white"
+            >
+              {home.methods.chat.cta}
+              <MessagesSquare size={20} aria-hidden="true" />
+            </Link>
           </div>
+          <p className="home-hero__choice-note" data-reveal="copy">
+            {home.methods.equalityNote}
+          </p>
+
+          <Link href="#sposob" className="home-hero__secondary">
+            Poznaj oba sposoby
+          </Link>
+        </div>
+        <div className="home-hero__photo" data-reveal="photo">
+          <Image
+            src="/images/hero-rodzice-z-noworodkiem.jpg"
+            alt="Rodzice trzymają nowo narodzone dziecko przy oknie w domu."
+            fill
+            priority
+            sizes="(max-width: 760px) 100vw, 55vw"
+          />
         </div>
       </section>
-
-      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
-        <SectionHeader
-          eyebrow={home.methods.eyebrow}
-          title={home.methods.title}
-          lead={home.methods.lead}
-        />
-
-        <div className="mt-8 grid gap-4 lg:grid-cols-2">
-          <MethodPanel
-            method={home.methods.form}
-            tone="primary"
-            icon={ListChecks}
-          />
-          <MethodPanel
-            method={home.methods.chat}
-            tone="success"
-            icon={MessagesSquare}
-          />
-        </div>
-
-        <div className="mt-4 grid gap-4 rounded-2xl border border-border/70 bg-secondary/40 p-5 sm:grid-cols-3">
-          {home.methods.shared.map((item) => (
-            <div key={item.title}>
-              <p className="text-sm font-medium">{item.title}</p>
-              <p className="mt-1 text-xs text-pretty text-muted-foreground">
-                {item.text}
-              </p>
-            </div>
+      <div className="home-shell">
+        <ul className="home-trust" aria-label="Korzystanie z przewodnika">
+          {home.trust.map((item) => (
+            <li key={item}>
+              <Check size={18} aria-hidden="true" />
+              {item}
+            </li>
           ))}
-        </div>
-      </section>
+        </ul>
+      </div>
 
-      <section className="border-y border-border/70 bg-secondary/30">
-        <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <SectionHeader
-              eyebrow={home.tools.eyebrow}
-              title={home.tools.title}
+      <section
+        className="home-section home-methods-section"
+        id="sposob"
+        aria-labelledby="methods-title"
+      >
+        <div className="home-shell">
+          <div className="home-methods__intro">
+            <h2 id="methods-title" data-reveal="heading">
+              {home.methods.title}
+            </h2>
+            <p data-reveal="copy">{home.methods.lead}</p>
+          </div>
+
+          <div className="home-methods">
+            <MethodCard
+              method={home.methods.form}
+              icon={ListChecks}
+              tone="form"
             />
-            <p className="max-w-sm text-sm text-pretty text-muted-foreground">
-              {home.tools.lead}
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {home.tools.items.map((item, index) => {
-              const Icon = toolIcons[index] ?? FileText
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="group flex h-full flex-col rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-                >
-                  <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-                    <Icon aria-hidden="true" className="size-5" />
-                  </span>
-                  <h3 className="mt-4 text-lg font-semibold tracking-tight">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-pretty text-muted-foreground">
-                    {item.description}
-                  </p>
-                  <span className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-medium text-primary group-hover:underline">
-                    {item.cta}
-                    <ArrowRight aria-hidden="true" className="size-4" />
-                  </span>
-                </Link>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-        <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-          <SectionHeader
-            eyebrow={home.leave.eyebrow}
-            title={home.leave.title}
-            lead={home.leave.lead}
-          />
-          <div className="rounded-xl border border-border/70 bg-secondary/40 p-4 text-sm text-pretty text-muted-foreground">
-            {home.leave.note}
-          </div>
-        </div>
-
-        <div className="mt-8 rounded-2xl border border-border/70 bg-card p-4 sm:p-6">
-          <LeaveOverview />
-          <div className="mt-6 flex flex-col gap-3 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="max-w-xl text-xs text-pretty text-muted-foreground">
-              To skrót przykładowego planu. W pełnym planerze zmienisz termin
-              porodu, liczbę dzieci, tygodnie drugiego rodzica i zobaczysz
-              wszystkie terminy, wnioski i dokumenty.
-            </p>
-            <Button asChild variant="outline" className="shrink-0">
-              <Link href="/os-czasu">
-                {home.leave.cta}
-                <ArrowRight data-icon="inline-end" aria-hidden="true" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-border/70 bg-secondary/30">
-        <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <SectionHeader
-              eyebrow="Przykładowe sytuacje"
-              title="Różne rodziny. Różne potrzeby."
+            <MethodCard
+              method={home.methods.chat}
+              icon={MessagesSquare}
+              tone="chat"
             />
-            <p className="max-w-md text-sm text-pretty text-muted-foreground">
-              Każda historia to syntetyczny scenariusz z dokumentacji projektu.
-              Pokazuje, że system uwzględnia różne sytuacje rodzinne i zawodowe.
-            </p>
           </div>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
-            {home.personas.map((persona) => (
-              <article
-                key={persona.name}
-                className="flex h-full flex-col rounded-2xl border border-border/70 bg-card p-5"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <span className="grid size-10 place-items-center rounded-full bg-primary/10 font-heading text-lg font-semibold text-primary">
-                    {persona.name.slice(0, 1)}
-                  </span>
-                  <Badge variant="outline" className="font-mono text-[10px]">
-                    {persona.scenario}
-                  </Badge>
-                </div>
-
-                <blockquote className="mt-4">
-                  <p className="text-lg leading-snug font-medium text-pretty">
-                    „{persona.story}”
-                  </p>
-                </blockquote>
-
-                <div className="mt-4 space-y-1 text-sm">
-                  <p className="font-medium">{persona.name}</p>
-                  <p className="text-muted-foreground">{persona.role}</p>
-                </div>
-                <p className="mt-3 text-xs text-pretty text-muted-foreground">
-                  {persona.note}
-                </p>
-
-                <div className="mt-auto pt-5">
-                  <Link
-                    href="/start"
-                    className="inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    Sprawdź podobną sytuację
-                    <ArrowRight aria-hidden="true" className="size-4" />
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <p className="mt-4 text-xs text-pretty text-muted-foreground">
-            Wszystkie osoby i dane są syntetyczne. Scenariusze służą do
-            porównania działania systemu, a nie do oceny konkretnej sprawy.
+          <p className="home-small" data-reveal="copy">
+            {home.methods.note}
           </p>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-        <SectionHeader
-          eyebrow={home.trust.eyebrow}
-          title={home.trust.title}
-          lead={home.trust.lead}
-        />
-
-        <div className="mt-10 grid gap-8 md:grid-cols-3">
-          {home.trust.items.map((item, index) => {
-            const Icon = trustIcons[index] ?? ShieldCheck
-            return (
-              <div key={item.title} className="border-t border-border pt-5">
-                <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
-                  <Icon aria-hidden="true" className="size-4" />
-                </span>
-                <h3 className="mt-3 text-lg font-semibold tracking-tight">
-                  {item.title}
-                </h3>
-                <p className="mt-2 text-sm text-pretty text-muted-foreground">
-                  {item.text}
-                </p>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="mt-10 rounded-2xl border border-border/70 bg-card p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="max-w-3xl">
-              <p className="flex items-center gap-2 text-sm font-medium">
-                <Info aria-hidden="true" className="size-4 text-primary" />
-                Demo, źródła i ograniczenia
-              </p>
-              <p className="mt-2 text-sm text-pretty text-muted-foreground">
-                {home.trust.note}
-              </p>
-            </div>
-            <Button asChild variant="outline" size="sm" className="shrink-0">
-              <Link href="/o-projekcie">
-                O projekcie i AI
-                <ArrowRight data-icon="inline-end" aria-hidden="true" />
-              </Link>
-            </Button>
-          </div>
-          <div className="mt-4 grid gap-4 border-t border-border/70 pt-4 text-xs text-pretty text-muted-foreground md:grid-cols-3">
-            <p>{SIMULATION_DISCLOSURE}</p>
-            <p>{LEGAL_DISCLOSURE}</p>
-            <p>{AI_DISCLOSURE}</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-border/70 bg-secondary/30">
-        <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-          <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-            <div>
-              <SectionHeader
-                eyebrow={home.faq.eyebrow}
-                title={home.faq.title}
+      <section
+        className="home-section"
+        id="mozliwosci"
+        aria-labelledby="tools-title"
+      >
+        <div className="home-shell home-tools">
+          <div className="home-tools__intro">
+            <h2 id="tools-title" data-reveal="heading">
+              {home.tools.title}
+            </h2>
+            <p data-reveal="copy">{home.tools.lead}</p>
+            <div className="home-tools__photo" data-reveal="photo">
+              <Image
+                src="/images/oczekiwanie-na-dziecko.jpg"
+                alt="Przyszli rodzice układają dłonie w serce na ciążowym brzuchu."
+                fill
+                sizes="(max-width: 760px) 100vw, 40vw"
               />
-              <p className="mt-4 max-w-sm text-sm text-pretty text-muted-foreground">
-                Nie znalazłeś odpowiedzi? Zapytaj asystenta albo sprawdź
-                szczegóły w sekcji o projekcie.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/asystent">Zapytaj asystenta</Link>
-                </Button>
-                <Button asChild variant="ghost" size="sm">
-                  <Link href="/o-projekcie">O projekcie</Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/70 bg-card">
-              {home.faq.items.map((item) => (
-                <details
-                  key={item.question}
-                  className="[&[open]_svg]:rotate-180"
-                >
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-sm font-medium hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
-                    <span>{item.question}</span>
-                    <ChevronDown
-                      aria-hidden="true"
-                      className="size-4 shrink-0 text-muted-foreground transition-transform"
-                    />
-                  </summary>
-                  <p className="px-5 pb-4 text-sm text-pretty text-muted-foreground">
-                    {item.answer}
-                  </p>
-                </details>
-              ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
-          <SectionHeader
-            eyebrow={home.knowledge.eyebrow}
-            title={home.knowledge.title}
-            lead={home.knowledge.lead}
-          />
-
-          <ul className="grid gap-3">
-            {home.knowledge.links.map((link) => (
-              <li key={link.href}>
-                <KnowledgeRow link={link} />
+          <ul className="home-tool-list">
+            {home.paths.map((path) => (
+              <li key={path.href} data-reveal="item">
+                <Link href={path.href}>
+                  <div>
+                    <h3>{path.title}</h3>
+                    <p>{path.description}</p>
+                  </div>
+                  <ArrowUpRight size={23} aria-hidden="true" />
+                </Link>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6">
-        <div className="overflow-hidden rounded-3xl bg-primary px-6 py-10 text-primary-foreground shadow-lg shadow-primary/10 sm:px-10 sm:py-12">
-          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-            <div>
-              <p className="text-xs font-semibold tracking-[0.18em] uppercase opacity-80">
-                {home.finalCta.eyebrow}
-              </p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-                {home.finalCta.title}
-              </h2>
-              <p className="mt-3 max-w-xl text-sm text-pretty text-primary-foreground/85 sm:text-base">
-                {home.finalCta.lead}
-              </p>
+      <section
+        className="home-plan"
+        id="jak-to-dziala"
+        aria-labelledby="plan-title"
+      >
+        <div className="home-shell home-plan__grid">
+          <div className="home-plan__copy">
+            <h2 id="plan-title" data-reveal="heading">
+              Wasz urlop.
+              <br />
+              Wasz podział.
+            </h2>
+            <p data-reveal="copy">
+              Pierwsze miesiące to wspólny czas. Zobacz przykładowy podział
+              urlopów między rodzicami, a potem ułóż plan dopasowany do swojej
+              sytuacji.
+            </p>
+            <Link href="/os-czasu" className="home-text-link">
+              Otwórz planer urlopów <ArrowRight size={19} aria-hidden="true" />
+            </Link>
+            <div className="home-plan__photo" data-reveal="photo">
+              <Image
+                src="/images/bliskosc-z-dzieckiem.webp"
+                alt="Mała dłoń dziecka trzyma palec rodzica."
+                fill
+                sizes="(max-width: 760px) 100vw, 40vw"
+              />
             </div>
-
-            <div>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-                <Button
-                  asChild
-                  size="lg"
-                  variant="secondary"
-                  className="h-12 w-full px-5"
-                >
-                  <Link href="/start">
-                    <ListChecks data-icon="inline-start" aria-hidden="true" />
-                    {home.finalCta.form}
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  size="lg"
-                  variant="secondary"
-                  className="h-12 w-full px-5"
-                >
-                  <Link href="/asystent">
-                    <MessagesSquare
-                      data-icon="inline-start"
-                      aria-hidden="true"
-                    />
-                    {home.finalCta.chat}
-                  </Link>
-                </Button>
-              </div>
-              <p className="mt-3 text-xs text-pretty text-primary-foreground/75">
-                {home.finalCta.note}
-              </p>
-            </div>
+          </div>
+          <div data-reveal="copy">
+            <HomeLeavePreview />
           </div>
         </div>
       </section>
-    </>
+
+      <section
+        className="home-section"
+        id="scenariusze"
+        aria-labelledby="stories-title"
+      >
+        <div className="home-shell home-stories">
+          <div className="home-stories__photo" data-reveal="photo">
+            <Image
+              src="/images/rodzina-z-dzieckiem.jpg"
+              alt="Rodzice przytulają niemowlę w domu."
+              fill
+              sizes="(max-width: 760px) 100vw, 50vw"
+            />
+          </div>
+          <div className="home-stories__copy">
+            <h2 id="stories-title" data-reveal="heading">
+              Różne rodziny.
+              <br />
+              Różne potrzeby.
+            </h2>
+            <p data-reveal="copy">
+              Etat czy własna działalność? Poznaj przykładowe sytuacje i zobacz,
+              jak korzystać z przewodnika.
+            </p>
+            <ul className="home-personas">
+              {home.personas.map((persona) => (
+                <li key={persona.name} data-reveal="item">
+                  <Link href="/panel">
+                    <div>
+                      <h3>{persona.name}</h3>
+                      <p className="home-persona-story">„{persona.story}”</p>
+                      <span>{persona.role}</span>
+                      <p>{persona.note}</p>
+                    </div>
+                    <ArrowUpRight size={22} aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="home-small">
+              Przykłady demonstracyjne. Dane osób są syntetyczne.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-questions" aria-labelledby="questions-title">
+        <div className="home-shell home-questions__grid">
+          <div>
+            <h2 id="questions-title" data-reveal="heading">
+              Pytania
+              <br />i odpowiedzi.
+            </h2>
+            <p data-reveal="copy">
+              Jasne zasady i źródła. Zanim podasz informacje o swojej sytuacji,
+              sprawdź, jak działa przewodnik.
+            </p>
+            <Link href="/o-projekcie" className="home-text-link">
+              O projekcie i jego ograniczeniach{" "}
+              <ArrowUpRight size={19} aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="home-faq">
+            {[
+              {
+                q: "Czy to oficjalny serwis ZUS?",
+                a: "Nie. To projekt demonstracyjny. Dane, dokumenty i integracje rządowe są symulowane. Informacje nie zastępują decyzji ZUS ani płatnika składek.",
+              },
+              {
+                q: "Czym różni się formularz od rozmowy z asystentem?",
+                a: "To dwa sposoby rozpoczęcia tej samej analizy. Formularz prowadzi krok po kroku i porządkuje dane. Rozmowa pozwala opisać sytuację własnymi słowami i od razu dopytać o przepisy. Obie ścieżki prowadzą do tego samego kalkulatora i tych samych zastrzeżeń.",
+              },
+              {
+                q: "Czy muszę się logować?",
+                a: "Możesz rozpocząć demonstracyjną analizę bez logowania i bez numeru PESEL. Kreator pyta o informacje potrzebne do opisania sytuacji rodziny.",
+              },
+              {
+                q: "Skąd pochodzą wyniki?",
+                a: "Obliczenia opierają się na wersjonowanych regułach. Przy wynikach znajdziesz źródła i założenia. Brakujące dane oraz niezweryfikowane parametry są jawnie oznaczane.",
+              },
+            ].map(({ q, a }) => (
+              <details key={q} data-reveal="item">
+                <summary>
+                  {q}
+                  <span aria-hidden="true" />
+                </summary>
+                <p>{a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="home-section" aria-labelledby="knowledge-title">
+        <div className="home-shell home-questions__grid">
+          <div>
+            <h2 id="knowledge-title" data-reveal="heading">
+              Centrum wiedzy.
+            </h2>
+            <p data-reveal="copy">
+              Artykuły, najczęstsze pytania, karty dokumentów, przewodniki i
+              słownik pojęć. Wszystko prostym językiem, z datą weryfikacji i
+              odnośnikiem do oficjalnego źródła.
+            </p>
+          </div>
+          <div className="flex flex-col items-start gap-4" data-reveal="copy">
+            <Link href="/wiedza" className="home-text-link">
+              Przeglądaj wiedzę <ArrowUpRight size={19} aria-hidden="true" />
+            </Link>
+            <Link href="/wiedza/faq" className="home-text-link">
+              Najczęstsze pytania <ArrowUpRight size={19} aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="home-close" aria-labelledby="close-title">
+        <div className="home-shell">
+          <div>
+            <h2 id="close-title" data-reveal="heading">
+              {home.finalCta.title}
+            </h2>
+            <p data-reveal="copy">{home.finalCta.text}</p>
+          </div>
+          <div className="home-close__actions" data-reveal="copy">
+            <Link
+              href={home.methods.form.href}
+              className="home-button home-button--white"
+            >
+              {home.finalCta.form}
+              <ListChecks size={20} aria-hidden="true" />
+            </Link>
+            <Link
+              href={home.methods.chat.href}
+              className="home-button home-button--white"
+            >
+              {home.finalCta.chat}
+              <MessagesSquare size={20} aria-hidden="true" />
+            </Link>
+            <p className="home-close__note">{home.finalCta.note}</p>
+          </div>
+        </div>
+      </section>
+    </div>
   )
 }

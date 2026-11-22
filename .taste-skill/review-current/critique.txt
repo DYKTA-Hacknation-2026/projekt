@@ -1,0 +1,14 @@
+ROUND 1 — review only; existing direction retained, no draw or redraw
+Seen in one second: green family-benefits guide with a large family photograph and clear white action.
+Idea (one sentence): parental time is expressed by family photography and a shared leave preview, in the existing ZUS-inspired green.
+Live thing: parent selection in the example leave timeline.
+Layout words by section: hero=split / tools=split-list / plan=split-interface / families=split-list / FAQ=split-accordion / close=horizontal-call
+Scores: design 7.5 · usability 8 · creativity 6 · content 7.5 → overall 7.35
+Caps applied: concept remains transferable to another parental-benefits guide; creativity capped at 6.
+Top three problems (most visible first), each with the screenshot it shows in and the fix:
+1. desktop-page-01.jpg: tools, plan and families repeatedly use a split composition. A future variant should change one section, preserving the hero.
+2. desktop-page-01.jpg and mobile-page-01.jpg: warm yellow baby-hand photograph differs from cooler family photographs. Prefer a closer stock match or a restrained consistent photographic treatment.
+3. mobile-page-01.jpg: tools heading is evocative rather than descriptive. Test 'Świadczenia i dokumenty'; FAQ could use 'Pytania i odpowiedzi'.
+Measurements: lint 0 FAIL/0 WARN. Runtime inspect 0 FAIL/3 WARN at 1440/768/390.
+Warnings: no video (a stock loop would add little practical value; keep still photography); off-centre 84/116px detected (visually hero edges are balanced, inspect scope before changing); some secondary text 5.6:1 at tablet/mobile (readable, but body copy should be distinguished from notes and increased toward 7:1).
+Scope: current development server only. No new production build, no interaction regression tests, no source changes. All seven screenshot files viewed. No alternative implemented because the review does not justify replacing the approved direction.

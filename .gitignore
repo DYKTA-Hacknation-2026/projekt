@@ -51,3 +51,6 @@ blob-report/
 
 # ZUS-provided materials and sample cases — never commit (see docs/legal-assumptions.md Q-19)
 fixtures/private/
+
+# Uploaded documents (local private storage)
+var/

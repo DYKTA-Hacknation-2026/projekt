@@ -33,7 +33,18 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "passThroughEnv": [
+        "APP_*",
+        "API_URL",
+        "DATABASE_*",
+        "EMBEDDING_*",
+        "AI_*",
+        "ADMIN_*",
+        "SESSION_SECRET",
+        "RATE_LIMIT_REQUESTS_PER_MINUTE",
+        "LOG_LEVEL"
+      ]
     },
     "test": {
       "dependsOn": [
@@ -48,7 +59,20 @@
       "dependsOn": [
         "build"
       ],
-      "cache": false
+      "cache": false,
+      "passThroughEnv": [
+        "APP_*",
+        "API_URL",
+        "DATABASE_*",
+        "EMBEDDING_*",
+        "AI_*",
+        "ADMIN_*",
+        "SESSION_SECRET",
+        "RATE_LIMIT_REQUESTS_PER_MINUTE",
+        "LOG_LEVEL",
+        "CI",
+        "PLAYWRIGHT_BASE_URL"
+      ]
     }
   }
 }

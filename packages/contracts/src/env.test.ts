@@ -48,4 +48,15 @@ describe("parseEnv", () => {
       /EMBEDDING_DIMENSIONS/
     )
   })
+
+  it("validates the assistant provider configuration", () => {
+    expect(parseEnv({}).AI_PROVIDER).toBe("none")
+    expect(() => parseEnv({ AI_PROVIDER: "openrouter" })).toThrow(/AI_API_KEY/)
+    expect(parseEnv({ AI_PROVIDER: "openrouter", AI_MODEL: "vendor/model", AI_API_KEY: "k" }).AI_PROVIDER).toBe("openrouter")
+    expect(() => parseEnv({ AI_PROVIDER: "anthropic" })).toThrow(/AI_API_KEY/)
+    expect(() => parseEnv({ AI_PROVIDER: "ollama", AI_MODEL: "llama" })).toThrow(/AI_BASE_URL/)
+    const env = parseEnv({ AI_PROVIDER: "ollama", AI_MODEL: "llama", AI_BASE_URL: "http://localhost:11434/v1" })
+    expect(env.AI_MAX_STEPS).toBe(8)
+    expect(env.AI_TEMPERATURE).toBe(0.2)
+  })
 })

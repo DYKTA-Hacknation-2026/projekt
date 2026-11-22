@@ -42,6 +42,16 @@ const PERSONAS: readonly MobywatelPersona[] = [
     description: "Ojciec, umowa o pracę, drugi rodzic.",
     initials: "TK",
   },
+  {
+    id: "marek-wisniewski",
+    firstName: "Marek",
+    lastName: "Wiśniewski",
+    birthDate: "1988-07-19",
+    city: "Wrocław",
+    email: "marek.wisniewski@example.test",
+    description: "Działalność gospodarcza, dobrowolne ubezpieczenie chorobowe, jedno dziecko.",
+    initials: "MW",
+  },
 ]
 
 export const MOBYWATEL_PIN_HINT = "1234"

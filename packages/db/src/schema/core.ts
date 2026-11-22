@@ -17,6 +17,13 @@ import {
   type AnyPgColumn,
 } from "drizzle-orm/pg-core"
 import { sql, type SQL } from "drizzle-orm"
+import type {
+  GuideDocumentRef,
+  GuideProblem,
+  GuideStep,
+  KnowledgeBlock,
+  KnowledgeKeyPoint,
+} from "@zpr/contracts/content"
 
 import { uuidv7 } from "../ids"
 
@@ -94,6 +101,61 @@ export const recipientEnum = appSchema.enum("application_recipient", [
   "ZUS",
 ])
 
+export const dataSourceEnum = appSchema.enum("data_source_id", [
+  "ZUS",
+  "EMPLOYER",
+  "EZLA",
+  "USC",
+  "PUE",
+])
+
+export const sourceFetchStatusEnum = appSchema.enum("source_fetch_status", [
+  "PENDING",
+  "SUCCESS",
+  "PARTIAL",
+  "EMPTY",
+  "ERROR",
+])
+
+export const importSessionStatusEnum = appSchema.enum("import_session_status", [
+  "CONSENTED",
+  "RUNNING",
+  "COMPLETED",
+  "ACCEPTED",
+  "SKIPPED",
+])
+
+export const payerTypeEnum = appSchema.enum("payer_type", [
+  "EMPLOYER",
+  "SELF_EMPLOYED",
+  "MANDATE_PRINCIPAL",
+])
+
+export const salaryComponentKindEnum = appSchema.enum(
+  "salary_component_kind",
+  ["BASE", "BONUS", "ALLOWANCE", "OVERTIME", "OTHER"]
+)
+
+export const absenceKindEnum = appSchema.enum("absence_kind", [
+  "SICK_LEAVE",
+  "MATERNITY",
+  "PARENTAL",
+  "UNPAID",
+  "OTHER",
+])
+
+export const sickLeaveKindEnum = appSchema.enum("sick_leave_kind", [
+  "SICKNESS",
+  "PREGNANCY",
+  "CARE",
+  "REHABILITATION",
+])
+
+export const benefitApplicationStatusEnum = appSchema.enum(
+  "benefit_application_status",
+  ["SUBMITTED", "IN_PROGRESS", "DECISION_ISSUED", "PAID", "REJECTED"]
+)
+
 export const verificationStatusEnum = legalSchema.enum("verification_status", [
   "VERIFIED",
   "UNVERIFIED",
@@ -146,6 +208,35 @@ export const distanceMetricEnum = kbSchema.enum("distance_metric", [
   "COSINE",
   "L2",
   "INNER_PRODUCT",
+])
+
+/* Centrum wiedzy — editorial content status and taxonomy. */
+export const contentStatusEnum = kbSchema.enum("content_status", [
+  "DRAFT",
+  "IN_REVIEW",
+  "PUBLISHED",
+  "ARCHIVED",
+])
+export const contentItemTypeEnum = kbSchema.enum("content_item_type", [
+  "ARTICLE",
+  "FAQ",
+  "DOCUMENT",
+  "GUIDE",
+  "GLOSSARY",
+])
+export const contentSourceKindEnum = kbSchema.enum("content_source_kind", [
+  "LEGAL_ACT",
+  "OFFICIAL_GUIDANCE",
+  "OFFICIAL_FORM",
+  "GOVERNMENT_PAGE",
+  "EDITORIAL",
+  "OTHER",
+])
+export const documentKindEnum = kbSchema.enum("document_kind", [
+  "FORM",
+  "CERTIFICATE",
+  "ATTACHMENT",
+  "DEMO",
 ])
 
 export const conversationStatusEnum = chatSchema.enum("conversation_status", [
@@ -476,6 +567,252 @@ export const applicationDrafts = appSchema.table(
 )
 
 /* -------------------------------------------------------------------------- */
+/* app — simulated external data, accepted snapshots and provenance            */
+/* -------------------------------------------------------------------------- */
+
+export const dataImportSessions = appSchema.table(
+  "data_import_sessions",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    ownerKey: text("owner_key").notNull(),
+    userId: uuid("user_id").references(() => users.id, {
+      onDelete: "cascade",
+    }),
+    personaId: text("persona_id").notNull(),
+    scenarioId: text("scenario_id").notNull(),
+    scopes: jsonb("scopes").$type<string[]>().notNull().default([]),
+    status: importSessionStatusEnum("status").notNull().default("CONSENTED"),
+    acceptedData: jsonb("accepted_data")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    fieldSources: jsonb("field_sources")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    summary: jsonb("summary")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    engineVersion: text("engine_version").notNull().default("1.0.0-sim"),
+    createdAt,
+    updatedAt,
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("data_import_sessions_owner_idx").on(table.ownerKey, table.createdAt),
+    index("data_import_sessions_user_idx").on(table.userId, table.acceptedAt),
+    index("data_import_sessions_status_idx").on(table.status),
+  ]
+)
+
+export const dataImportSnapshots = appSchema.table(
+  "data_import_snapshots",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => dataImportSessions.id, { onDelete: "cascade" }),
+    sourceId: dataSourceEnum("source_id").notNull(),
+    status: sourceFetchStatusEnum("status").notNull().default("PENDING"),
+    payload: jsonb("payload")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    issues: jsonb("issues").$type<unknown[]>().notNull().default([]),
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }),
+    createdAt,
+  },
+  (table) => [
+    uniqueIndex("data_import_snapshots_session_source_uq").on(
+      table.sessionId,
+      table.sourceId
+    ),
+    index("data_import_snapshots_session_idx").on(table.sessionId),
+  ]
+)
+
+export const contributionPayers = appSchema.table(
+  "contribution_payers",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    payerType: payerTypeEnum("payer_type").notNull().default("EMPLOYER"),
+    taxId: text("tax_id").notNull(),
+    city: text("city"),
+    isCurrent: boolean("is_current").notNull().default(true),
+    source: text("source").notNull().default("SIMULATED"),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [index("contribution_payers_user_idx").on(table.userId)]
+)
+
+export const payrollComponents = appSchema.table(
+  "payroll_components",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    employmentRecordId: uuid("employment_record_id")
+      .notNull()
+      .references(() => employmentRecords.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    kind: salaryComponentKindEnum("kind").notNull().default("BASE"),
+    amountGrosze: integer("amount_grosze").notNull().default(0),
+    validFrom: date("valid_from").notNull(),
+    validTo: date("valid_to"),
+    createdAt,
+  },
+  (table) => [
+    index("payroll_components_employment_idx").on(table.employmentRecordId),
+  ]
+)
+
+export const contributionBases = appSchema.table(
+  "contribution_bases",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    insurancePeriodId: uuid("insurance_period_id").references(
+      () => insurancePeriods.id,
+      { onDelete: "set null" }
+    ),
+    periodStart: date("period_start").notNull(),
+    periodEnd: date("period_end").notNull(),
+    basisGrosze: integer("basis_grosze").notNull().default(0),
+    sicknessContributionGrosze: integer("sickness_contribution_grosze")
+      .notNull()
+      .default(0),
+    paid: boolean("paid").notNull().default(true),
+    paidAt: date("paid_at"),
+    source: text("source").notNull().default("SIMULATED_ZUS"),
+    createdAt,
+  },
+  (table) => [
+    index("contribution_bases_user_idx").on(table.userId),
+    index("contribution_bases_period_idx").on(table.periodStart, table.periodEnd),
+  ]
+)
+
+export const sickLeavePeriods = appSchema.table(
+  "sick_leave_periods",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    days: integer("days").notNull(),
+    kind: sickLeaveKindEnum("kind").notNull().default("SICKNESS"),
+    pregnancyRelated: boolean("pregnancy_related").notNull().default(false),
+    certificateRef: text("certificate_ref").notNull(),
+    payerName: text("payer_name").notNull(),
+    status: text("status").notNull().default("FINISHED"),
+    source: text("source").notNull().default("SIMULATED_EZLA"),
+    createdAt,
+  },
+  (table) => [index("sick_leave_periods_user_idx").on(table.userId, table.startDate)]
+)
+
+export const importedChildren = appSchema.table(
+  "children",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    familyEventId: uuid("family_event_id").references(() => familyEvents.id, {
+      onDelete: "set null",
+    }),
+    firstName: text("first_name"),
+    birthDate: date("birth_date").notNull(),
+    childrenInBirth: integer("children_in_birth").notNull().default(1),
+    isAdopted: boolean("is_adopted").notNull().default(false),
+    adoptionDate: date("adoption_date"),
+    birthPlace: text("birth_place"),
+    source: text("source").notNull().default("SIMULATED_USC"),
+    createdAt,
+  },
+  (table) => [index("children_user_idx").on(table.userId, table.birthDate)]
+)
+
+export const benefitApplications = appSchema.table(
+  "benefit_applications",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    caseNumber: text("case_number").notNull(),
+    applicationType: text("application_type").notNull(),
+    benefitKind: text("benefit_kind").notNull(),
+    status: benefitApplicationStatusEnum("status")
+      .notNull()
+      .default("SUBMITTED"),
+    submittedAt: date("submitted_at").notNull(),
+    decisionNumber: text("decision_number"),
+    decisionDate: date("decision_date"),
+    periodFrom: date("period_from"),
+    periodTo: date("period_to"),
+    amountGrosze: integer("amount_grosze"),
+    documents: jsonb("documents")
+      .$type<Record<string, unknown>[]>()
+      .notNull()
+      .default([]),
+    source: text("source").notNull().default("SIMULATED_PUE"),
+    createdAt,
+  },
+  (table) => [
+    uniqueIndex("benefit_applications_user_case_uq").on(
+      table.userId,
+      table.caseNumber
+    ),
+    index("benefit_applications_user_idx").on(table.userId, table.submittedAt),
+  ]
+)
+
+export const payrollAbsences = appSchema.table(
+  "payroll_absences",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    employmentRecordId: uuid("employment_record_id")
+      .notNull()
+      .references(() => employmentRecords.id, { onDelete: "cascade" }),
+    kind: absenceKindEnum("kind").notNull().default("OTHER"),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    note: text("note"),
+    createdAt,
+  },
+  (table) => [
+    index("payroll_absences_employment_idx").on(table.employmentRecordId),
+  ]
+)
+
+/* -------------------------------------------------------------------------- */
 /* kb — knowledge sources, documents, chunks and embeddings                    */
 /* -------------------------------------------------------------------------- */
 
@@ -731,6 +1068,349 @@ export const ingestionJobs = kbSchema.table(
 )
 
 /* -------------------------------------------------------------------------- */
+/* kb — Centrum wiedzy: editorial categories, articles, FAQ, documents,       */
+/* guides, glossary, sources and cross-links                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Editorial content is separate from the RAG corpus above. Articles are read
+ * by people; chunks are retrieved for the assistant. Both can reference the
+ * same official sources, but they have different lifecycles: a curated article
+ * is reviewed and published, a RAG document is extracted and indexed.
+ */
+
+export const contentCategories = kbSchema.table(
+  "content_categories",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    /** Lucide icon key rendered by the web app. */
+    icon: text("icon").notNull().default("BookOpen"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    status: contentStatusEnum("status").notNull().default("PUBLISHED"),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_categories_slug_uq").on(table.slug),
+    index("content_categories_order_idx").on(table.sortOrder),
+  ]
+)
+
+export const contentSources = kbSchema.table(
+  "content_sources",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    publisher: text("publisher").notNull(),
+    kind: contentSourceKindEnum("kind").notNull().default("OFFICIAL_GUIDANCE"),
+    url: text("url"),
+    description: text("description"),
+    /** Date the source was last opened and checked by an editor. */
+    accessedAt: date("accessed_at"),
+    lastVerifiedAt: date("last_verified_at").notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_sources_slug_uq").on(table.slug),
+    index("content_sources_kind_idx").on(table.kind),
+  ]
+)
+
+export const contentLegalReferences = kbSchema.table(
+  "content_legal_references",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    /** Short citation used in the UI, e.g. "KP art. 180 § 1". */
+    citation: text("citation").notNull(),
+    title: text("title").notNull(),
+    actTitle: text("act_title").notNull(),
+    url: text("url"),
+    effectiveFrom: date("effective_from"),
+    notes: text("notes"),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_legal_references_citation_uq").on(table.citation),
+  ]
+)
+
+export const contentArticles = kbSchema.table(
+  "content_articles",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => contentCategories.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    summary: text("summary").notNull(),
+    /** Structured sections; rendered without dangerouslySetInnerHTML. */
+    blocks: jsonb("blocks").$type<KnowledgeBlock[]>().notNull().default([]),
+    keyPoints: jsonb("key_points")
+      .$type<KnowledgeKeyPoint[]>()
+      .notNull()
+      .default([]),
+    practicalTips: jsonb("practical_tips")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    keywords: jsonb("keywords").$type<string[]>().notNull().default([]),
+    readingMinutes: integer("reading_minutes").notNull().default(5),
+    isFeatured: boolean("is_featured").notNull().default(false),
+    /** Editorial popularity used for "popularne pytania" ordering. */
+    popularity: integer("popularity").notNull().default(0),
+    status: contentStatusEnum("status").notNull().default("DRAFT"),
+    lastReviewedAt: date("last_reviewed_at").notNull(),
+    publishedAt: date("published_at"),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_articles_slug_uq").on(table.slug),
+    index("content_articles_category_idx").on(table.categoryId),
+    index("content_articles_status_idx").on(table.status),
+    index("content_articles_featured_idx").on(table.isFeatured),
+    index("content_articles_updated_idx").on(table.updatedAt),
+  ]
+)
+
+export const contentFaqItems = kbSchema.table(
+  "content_faq_items",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => contentCategories.id, { onDelete: "restrict" }),
+    question: text("question").notNull(),
+    /** The one-sentence answer shown before expanding. */
+    shortAnswer: text("short_answer").notNull(),
+    /** Fuller explanation; plain text, may contain several paragraphs. */
+    explanation: text("explanation").notNull(),
+    conditions: text("conditions"),
+    whatToDo: text("what_to_do"),
+    isImportant: boolean("is_important").notNull().default(false),
+    popularity: integer("popularity").notNull().default(0),
+    articleId: uuid("article_id").references(() => contentArticles.id, {
+      onDelete: "set null",
+    }),
+    calculatorHref: text("calculator_href"),
+    guideHref: text("guide_href"),
+    status: contentStatusEnum("status").notNull().default("DRAFT"),
+    lastReviewedAt: date("last_reviewed_at").notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_faq_items_slug_uq").on(table.slug),
+    index("content_faq_category_idx").on(table.categoryId),
+    index("content_faq_status_idx").on(table.status),
+    index("content_faq_popularity_idx").on(table.popularity),
+  ]
+)
+
+export const contentDocuments = kbSchema.table(
+  "content_documents",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => contentCategories.id, { onDelete: "restrict" }),
+    /** Official form code, e.g. "Z-3", if the item has one. */
+    code: text("code"),
+    name: text("name").notNull(),
+    kind: documentKindEnum("kind").notNull().default("FORM"),
+    purpose: text("purpose").notNull(),
+    whenRequired: text("when_required").notNull(),
+    filledBy: text("filled_by").notNull(),
+    submittedBy: text("submitted_by").notNull(),
+    informationNeeded: jsonb("information_needed")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    additionalDocuments: jsonb("additional_documents")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    submissionChannels: jsonb("submission_channels")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    officialUrl: text("official_url"),
+    officialSourceLabel: text("official_source_label"),
+    /** Link to an in-app generator or calculator, when one exists. */
+    generatorHref: text("generator_href"),
+    generatorLabel: text("generator_label"),
+    note: text("note"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    status: contentStatusEnum("status").notNull().default("DRAFT"),
+    lastReviewedAt: date("last_reviewed_at").notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_documents_slug_uq").on(table.slug),
+    index("content_documents_category_idx").on(table.categoryId),
+    index("content_documents_code_idx").on(table.code),
+    index("content_documents_status_idx").on(table.status),
+  ]
+)
+
+export const contentGuides = kbSchema.table(
+  "content_guides",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    categoryId: uuid("category_id")
+      .notNull()
+      .references(() => contentCategories.id, { onDelete: "restrict" }),
+    title: text("title").notNull(),
+    summary: text("summary").notNull(),
+    audience: text("audience").notNull(),
+    conditions: jsonb("conditions").$type<string[]>().notNull().default([]),
+    documents: jsonb("documents")
+      .$type<GuideDocumentRef[]>()
+      .notNull()
+      .default([]),
+    steps: jsonb("steps").$type<GuideStep[]>().notNull().default([]),
+    deadlines: jsonb("deadlines").$type<string[]>().notNull().default([]),
+    places: jsonb("places").$type<string[]>().notNull().default([]),
+    problems: jsonb("problems").$type<GuideProblem[]>().notNull().default([]),
+    calculatorHref: text("calculator_href"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    status: contentStatusEnum("status").notNull().default("DRAFT"),
+    lastReviewedAt: date("last_reviewed_at").notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_guides_slug_uq").on(table.slug),
+    index("content_guides_category_idx").on(table.categoryId),
+    index("content_guides_status_idx").on(table.status),
+  ]
+)
+
+export const contentGlossaryTerms = kbSchema.table(
+  "content_glossary_terms",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    slug: text("slug").notNull(),
+    term: text("term").notNull(),
+    /** Uppercase first letter used for the alphabetical filter. */
+    letter: char("letter", { length: 1 }).notNull(),
+    definition: text("definition").notNull(),
+    explanation: text("explanation"),
+    example: text("example"),
+    status: contentStatusEnum("status").notNull().default("DRAFT"),
+    lastReviewedAt: date("last_reviewed_at").notNull(),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("content_glossary_slug_uq").on(table.slug),
+    index("content_glossary_letter_idx").on(table.letter),
+    index("content_glossary_status_idx").on(table.status),
+  ]
+)
+
+export const contentArticleSources = kbSchema.table(
+  "content_article_sources",
+  {
+    articleId: uuid("article_id")
+      .notNull()
+      .references(() => contentArticles.id, { onDelete: "cascade" }),
+    sourceId: uuid("source_id")
+      .notNull()
+      .references(() => contentSources.id, { onDelete: "cascade" }),
+    /** Where in the source the statement can be checked, e.g. "s. 30". */
+    locator: text("locator"),
+    isPrimary: boolean("is_primary").notNull().default(false),
+    createdAt,
+  },
+  (table) => [
+    primaryKey({
+      name: "content_article_sources_pk",
+      columns: [table.articleId, table.sourceId],
+    }),
+    index("content_article_sources_source_idx").on(table.sourceId),
+  ]
+)
+
+export const contentArticleLegalReferences = kbSchema.table(
+  "content_article_legal_references",
+  {
+    articleId: uuid("article_id")
+      .notNull()
+      .references(() => contentArticles.id, { onDelete: "cascade" }),
+    legalReferenceId: uuid("legal_reference_id")
+      .notNull()
+      .references(() => contentLegalReferences.id, { onDelete: "cascade" }),
+    locator: text("locator"),
+    createdAt,
+  },
+  (table) => [
+    primaryKey({
+      name: "content_article_legal_refs_pk",
+      columns: [table.articleId, table.legalReferenceId],
+    }),
+  ]
+)
+
+/**
+ * Generic cross-links between editorial items (article ↔ document, article ↔
+ * guide, glossary ↔ article, …). A generic table keeps the model extensible
+ * without adding a join table for every pair.
+ */
+export const contentRelations = kbSchema.table(
+  "content_relations",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => uuidv7()),
+    fromType: contentItemTypeEnum("from_type").notNull(),
+    fromId: uuid("from_id").notNull(),
+    toType: contentItemTypeEnum("to_type").notNull(),
+    toId: uuid("to_id").notNull(),
+    label: text("label"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt,
+  },
+  (table) => [
+    uniqueIndex("content_relations_pair_uq").on(
+      table.fromType,
+      table.fromId,
+      table.toType,
+      table.toId
+    ),
+    index("content_relations_from_idx").on(table.fromType, table.fromId),
+    index("content_relations_to_idx").on(table.toType, table.toId),
+  ]
+)
+
+/* -------------------------------------------------------------------------- */
 /* chat — conversations, messages, tool calls and retrieved evidence           */
 /* -------------------------------------------------------------------------- */
 
@@ -743,6 +1423,11 @@ export const conversations = chatSchema.table(
     userId: uuid("user_id").references(() => users.id, {
       onDelete: "cascade",
     }),
+    /**
+     * Opaque owner of the conversation (signed session id). Every read and
+     * delete is filtered by it, so a guest can only reach their own chats.
+     */
+    ownerKey: text("owner_key"),
     title: text("title").notNull().default("Nowa rozmowa"),
     status: conversationStatusEnum("status").notNull().default("ACTIVE"),
     isSimulated: boolean("is_simulated").notNull().default(true),
@@ -752,6 +1437,7 @@ export const conversations = chatSchema.table(
   (table) => [
     index("conversations_user_idx").on(table.userId),
     index("conversations_updated_idx").on(table.updatedAt),
+    index("conversations_owner_idx").on(table.ownerKey, table.updatedAt),
   ]
 )
 

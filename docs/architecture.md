@@ -9,41 +9,42 @@ Status: v0.2 · 2026-11-21 · Covers NFR-01…12, FR-* (see `requirements-tracea
 | Correct, explainable calculations checked by the jury against the sample cases | T §6 | A pure, versioned, test-first rules engine with golden tests from the sample cases |
 | Parameters editable when the law changes | T p.14 | Rule sets as data (DB) with versioning, verification status and an admin UI |
 | Many simulated government integrations | T p.13–14 | One `integrations-sim` module behind production-shaped ports (interfaces) |
-| Production potential and a code-structure review | T §5–6 | A modular monolith with clear package boundaries, REST, OpenAPI, Docker, tests |
+| Production potential and a code-structure review | T §5–6 | Separate web and REST API applications with clear package boundaries, OpenAPI, Docker, and tests |
 | AI allowed but must be disclosed; legal accuracy is paramount | T §9, brief | The AI layer is advisory only. It calls deterministic tools and cites sources. |
 | Health data and confidential sample cases | RODO art. 9, T p.12 | Data minimisation, encryption, TTL for uploads, private storage for the sample cases |
 | RWD, WCAG 2.2 AA, Polish UI | T §4–5, brief | shadcn/ui (Radix) primitives, a11y tests in CI, a Polish message catalogue |
 
-## 2. Style: modular monolith
+## 2. Web and API applications
 
-There is one deployable Next.js application (`apps/web`) that hosts the following:
+The pnpm workspace contains two deployable Next.js applications.
 
-- **Presentation**: RSC pages and client components.
-- **REST API**: `app/api/v1/**/route.ts`, kept thin.
-- **Composition root**: `apps/web/server/`, where it wires the packages together.
+- `apps/web` renders pages, applies the admin page gate, and forwards browser
+  requests under `/api/*` to the API service on the same public origin.
+- `apps/api` handles REST requests, validates inputs, enforces rate limits,
+  and wires application services to PostgreSQL through `@zpr/db`.
 
-Domain logic lives in **workspace packages** with enforced dependency directions. Microservices are rejected: one team, one hackathon, and no independent scaling needs. Package boundaries still allow later extraction, for example of the rules engine as a service for ZUS systems.
+Web server components fetch dashboard and admin view data over private REST
+endpoints using service authentication. Admin reads also require a valid admin
+session when the gate is enabled.
 
-### Dependency graph (allowed imports)
-
-```
-apps/web ─┬─▶ @zpr/contracts ─▶ @zpr/domain
-          ├─▶ @zpr/domain            (pure; imports nothing internal except decimal/date libs)
-          ├─▶ @zpr/db ─────────▶ @zpr/domain (types only)
-          ├─▶ @zpr/integrations-sim ─▶ @zpr/contracts
-          ├─▶ @zpr/documents ───▶ @zpr/contracts, @zpr/ai (LLM fallback port)
-          ├─▶ @zpr/rag ─────────▶ @zpr/ai (embedding port), @zpr/db
-          ├─▶ @zpr/ai ──────────▶ @zpr/contracts (tool schemas)
-          └─▶ @workspace/ui
+```text
+Browser → apps/web → HTTP → apps/api → @zpr/db → PostgreSQL
+              │                │
+              └── @zpr/contracts ──▶ @zpr/domain
 ```
 
-The graph is enforced with `eslint-plugin-boundaries` or `dependency-cruiser` in CI. `@zpr/domain` may **not** import `db`, `ai`, `rag`, `next` or any Node I/O.
+The shared domain package contains pure business rules. Shared contracts
+describe request and response data at the HTTP boundary.
 
 ## 3. Folder structure (target)
 
 ```
 .
 ├── apps/
+│   ├── api/
+│   │   ├── app/api/                     # public REST endpoints
+│   │   ├── app/internal/                # dashboard and admin reads
+│   │   └── server/                      # composition root, application services, HTTP helpers
 │   └── web/
 │       ├── app/
 │       │   ├── (public)/                 # no session needed
@@ -65,15 +66,11 @@ The graph is enforced with `eslint-plugin-boundaries` or `dependency-cruiser` in
 │       │   │   └── asystent/             # RAG assistant
 │       │   ├── (sim)/mobywatel/          # simulated mObywatel login screens (clearly branded SYMULACJA)
 │       │   ├── admin/                    # rule sets, parameters, KB sources, charities, links, flags
-│       │   ├── api/v1/…/route.ts         # REST (see §6)
+│       │   ├── api/[...path]/route.ts    # same-origin REST forwarding (see §6)
 │       │   ├── layout.tsx                # lang="pl", skip link, simulation banner slot
 │       │   └── globals.css
 │       ├── proxy.ts                      # Next 16 "proxy" (formerly middleware): session + admin gating
-│       ├── server/                       # composition root (server-only)
-│       │   ├── container.ts              # builds services from packages + env
-│       │   ├── services/                 # application services (use cases) shared by RSC and route handlers
-│       │   ├── auth/                     # session, simulated mObywatel adapter, admin auth
-│       │   └── http/                     # route-handler helpers: zod parsing, problem+json errors, rate limit
+│       ├── server/                       # server-side REST client and admin session reader
 │       ├── components/                   # app-specific components (calculator steps, timeline, citations)
 │       ├── messages/pl/                  # all Polish copy (reasons, labels, help texts)
 │       ├── e2e/                          # Playwright specs (+ axe a11y checks)
@@ -93,12 +90,12 @@ The graph is enforced with `eslint-plugin-boundaries` or `dependency-cruiser` in
 │   └── typescript-config/                # exists
 ├── infra/
 │   ├── docker/postgres/                  # Dockerfile: pgvector + Polish ispell dictionary; init.sql
-│   └── docker/web/Dockerfile             # standalone Next build
+│   └── docker/Dockerfile                 # API and web image targets
 ├── fixtures/
 │   ├── personas/                         # synthetic, committed (our own invented data)
 │   └── private/                          # ZUS sample cases — .gitignored (Q-19)
 ├── docs/                                 # this documentation
-├── docker-compose.yml                    # postgres(pgvector) + web (+ optional ollama for local LLM)
+├── docker-compose.yml                    # postgres(pgvector) + api + web (+ optional ollama for local LLM)
 └── turbo.json / pnpm-workspace.yaml
 ```
 
@@ -107,10 +104,10 @@ Packages are "just-in-time" TypeScript packages, the same as the existing `@work
 ## 4. Layering inside the app
 
 ```
-Route handler / RSC page / Server action
+Browser gateway / server component → API route handler
         │  (parse with Zod from @zpr/contracts; auth from proxy+session)
         ▼
-Application service (apps/web/server/services)       ← use cases, transactions, audit
+Application service (apps/api/server/services)       ← use cases, transactions, audit
         │
         ├─▶ @zpr/domain.evaluate(facts, ruleSet)      ← pure
         ├─▶ repositories (@zpr/db)                    ← Drizzle
@@ -119,7 +116,7 @@ Application service (apps/web/server/services)       ← use cases, transactions
 DTO (Zod) → JSON (REST) or props (RSC)
 ```
 
-- **Reads in RSC** call application services directly, in-process with no HTTP hop.
+- **Reads in RSC** call the API over HTTP using the server-side REST client.
 - **Mutations and all calculator calls** from client components go through **REST** (`/api/v1`), as T §5 recommends. Server actions are used only for trivial form posts in admin, if at all.
 - All errors use the `application/problem+json` format with stable error codes.
 
@@ -168,6 +165,7 @@ Base path: `/api/v1`. JSON only. OpenAPI 3.1 is generated from the Zod schemas (
 | POST | `/assistant/chat` | Streaming chat (AI SDK UI message stream over SSE) | FR-PRD-07 |
 | GET | `/assistant/conversations/{id}` | History with citations | FR-PRD-07 |
 | * | `/admin/rulesets…`, `/admin/kb/sources…`, `/admin/content…` | Admin (role `ADMIN`) | FR-ADM-01/02 |
+| GET/POST | `/internal/admin-rules` | Rule editor: versions with parameters; appends an immutable version | FR-ADM-01 |
 | GET | `/health` · `/openapi.json` | Ops | NFR-03 |
 
 ## 7. Cross-cutting concerns
@@ -239,3 +237,28 @@ All UI copy is in Polish and lives in `apps/web/messages/pl`. A plain typed obje
 | LLM hallucinating amounts or law | Trust and correctness | Tools-only numbers, a post-generation numeric guard, mandatory citations, refusal policy |
 | Scope too big for the hackathon timebox | Incomplete demo | Roadmap phases with an "MVP cut line" (see `implementation-roadmap.md`) |
 | Next 16 API differences | Build breaks | Read `node_modules/next/dist/docs` before coding (AGENTS.md) |
+
+## 11. Implemented simulated data retrieval (`/dane`)
+
+The retrieval flow is a vertical slice behind production-shaped ports:
+
+```
+apps/web/app/dane + components/data-import-wizard.tsx   # 4-step UI
+apps/api/app/api/v1/data-import/**                      # REST endpoints
+apps/api/server/services/data-import.ts                 # orchestration + sessions
+apps/api/server/sim/mobywatel.ts                        # existing login personas
+packages/data-sources/
+  scenarios/                                            # Anna, Marek, Kasia demo data
+  providers/                                            # ZUS, employer, e-ZLA, USC, PUE
+  mapping.ts                                            # prefill + eligibility + calculator
+packages/contracts/src/data-import.ts                   # Zod entities and API contracts
+packages/db/src/repositories/imports.ts                 # sessions, snapshots, projection
+```
+
+Each provider implements `DataSourceProvider.fetch(context)` and returns a typed
+`SourceFetchResult` with status, activities, issues, records and simulated
+provenance. A real integration replaces only that provider. The mapping layer
+uses only fetched records; missing or failed sources leave the form field empty
+and produce a manual-completion item. Eligibility (`assessEligibility`) and the
+calculator (`calculateBenefits`) run before acceptance, so the user sees the
+consequences of the data and can correct it.

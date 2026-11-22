@@ -6,13 +6,16 @@ import {
   Database,
   History,
   ListChecks,
-  Plus,
   Scale,
   ShieldCheck,
   Users,
 } from "lucide-react"
 
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -37,7 +40,8 @@ import { StatCard } from "@/components/stat-card"
 import { formatDate, formatNumber } from "@/lib/format"
 import { statusLabels } from "@/messages/pl"
 import { getAdminSession } from "@/server/auth/admin-session"
-import { getAdminData, type AdminData } from "@/server/services/admin"
+import type { AdminData } from "@zpr/contracts/views"
+import { getAdminData } from "@/server/api-client"
 
 export const dynamic = "force-dynamic"
 
@@ -107,12 +111,15 @@ function AdminContent({ data }: { data: AdminData }) {
                   Wersje reguł prawnych
                 </CardTitle>
                 <CardDescription>
-                  Publikacja jest niezmienna. Nowa wersja wymaga nowego rekordu.
+                  Publikacja jest niezmienna. Zmiana parametrów tworzy nową
+                  wersję z własną datą wejścia w życie.
                 </CardDescription>
               </div>
-              <Button type="button" size="sm" variant="outline" disabled>
-                <Plus aria-hidden="true" />
-                Nowa wersja (etap 2)
+              <Button asChild size="sm" variant="outline">
+                <Link href="/admin/reguly">
+                  <Scale aria-hidden="true" />
+                  Edytuj parametry
+                </Link>
               </Button>
             </div>
           </CardHeader>
@@ -200,10 +207,12 @@ function AdminContent({ data }: { data: AdminData }) {
                   className="flex items-start justify-between gap-2 rounded-lg border border-border/70 p-2.5 text-sm"
                 >
                   <div>
-                    <p className="line-clamp-1 font-medium">{job.documentTitle}</p>
+                    <p className="line-clamp-1 font-medium">
+                      {job.documentTitle}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {job.chunksCreated} fragmentów ·{" "}
-                      {formatDate(job.createdAt)}
+                      {formatDate(new Date(job.createdAt))}
                     </p>
                   </div>
                   <Badge variant={statusVariant(job.status)}>
@@ -376,13 +385,27 @@ export default async function AdminPage() {
       <PageHeader
         eyebrow="Administracja"
         title="Panel administratora"
-        lead="Szkielet operacyjny: podgląd wersji reguł, modeli embeddingów, źródeł i jobów. Zapis zmian jest przygotowany w schemacie, ale nie w tym etapie."
+        lead="Operacyjny podgląd wersji reguł, modeli embeddingów, źródeł i jobów. Parametry prawne zmienisz w edytorze bez deployu."
         actions={
-          session.gateEnabled ? (
-            <AdminLogout />
-          ) : (
-            <Badge variant="warning">Tryb demo bez logowania</Badge>
-          )
+          <>
+            <Button asChild variant="outline">
+              <Link href="/admin/reguly">
+                <Scale data-icon="inline-start" aria-hidden="true" />
+                Parametry prawne
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/admin/wiedza">
+                <BookOpen data-icon="inline-start" aria-hidden="true" />
+                Centrum wiedzy
+              </Link>
+            </Button>
+            {session.gateEnabled ? (
+              <AdminLogout />
+            ) : (
+              <Badge variant="warning">Tryb demo bez logowania</Badge>
+            )}
+          </>
         }
       />
 
@@ -396,7 +419,10 @@ export default async function AdminPage() {
               <code>ADMIN_GATE_ENABLED=true</code> w <code>.env</code> i użyj
               danych z <code>ADMIN_EMAIL</code> /{" "}
               <code>ADMIN_DEMO_PASSWORD</code>.{" "}
-              <Link href="/admin/login" className="underline underline-offset-4">
+              <Link
+                href="/admin/login"
+                className="underline underline-offset-4"
+              >
                 Otwórz ekran logowania
               </Link>
               .

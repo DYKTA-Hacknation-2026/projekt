@@ -17,22 +17,20 @@ export const LEGAL_DISCLOSURE =
   "Materiał informacyjny. Ostateczna decyzja należy do ZUS lub płatnika składek. Przed złożeniem wniosku sprawdź aktualne przepisy."
 
 export const navItems = [
-  { href: "/start", label: "Formularz" },
-  { href: "/asystent", label: "Rozmowa" },
-  { href: "/kalkulator", label: "Kalkulator" },
-  { href: "/os-czasu", label: "Planer" },
+  { href: "/panel", label: "Moja sytuacja" },
+  { href: "/kalkulator", label: "Świadczenia" },
+  { href: "/wiedza", label: "Wiedza" },
+  { href: "/asystent", label: "Asystent" },
   { href: "/dokumenty", label: "Dokumenty" },
-  { href: "/panel", label: "Panel" },
+  { href: "/os-czasu", label: "Plan rodzicielstwa" },
 ] as const
 
 export const footerLinks = [
-  { href: "/start", label: "Formularz sprawdzenia" },
-  { href: "/asystent", label: "Rozmowa z asystentem" },
-  { href: "/kalkulator", label: "Kalkulator zasiłków" },
-  { href: "/os-czasu", label: "Planer urlopów" },
-  { href: "/dokumenty", label: "Analiza dokumentów" },
+  { href: "/wiedza", label: "Centrum wiedzy" },
+  { href: "/start", label: "Kreator analizy" },
+  { href: "/dane", label: "Pobierz dane (symulacja)" },
+  { href: "/mobywatel", label: "Logowanie mObywatel (symulacja)" },
   { href: "/o-projekcie", label: "O projekcie i AI" },
-  { href: "/mobywatel", label: "mObywatel (symulacja)" },
   { href: "/admin", label: "Panel administratora" },
 ] as const
 
@@ -53,47 +51,34 @@ export const statusLabels = {
   QUEUED: "W kolejce",
   RUNNING: "W toku",
   SUCCEEDED: "Zakończone",
+  PUBLISHED: "Opublikowany",
+  ARCHIVED: "Zarchiwizowany",
+  ELIGIBLE: "Wstępnie spełnia",
+  NOT_ELIGIBLE: "Nie spełnia",
+  NEEDS_INPUT: "Brakuje danych",
 } as const
 
 export const home = {
-  eyebrow: "Dla rodziców i osób planujących rodzinę",
+  eyebrow: "Przewodnik dla rodziców",
   title: "Więcej czasu dla rodziny.",
   lead: "Sprawdź, jakie świadczenia i urlopy mogą Ci przysługiwać. Przeanalizuj swoją sytuację krok po kroku lub porozmawiaj z naszym asystentem.",
-  heroPoints: [
-    {
-      title: "Możliwe świadczenia i urlopy",
-      text: "Macierzyński, rodzicielski, ojcowski i sytuacje niestandardowe.",
-    },
-    {
-      title: "Terminy i dokumenty",
-      text: "Wnioski, terminy i lista dokumentów bez szukania po całym internecie.",
-    },
-    {
-      title: "Kwoty i warianty",
-      text: "Deterministyczny kalkulator pokazuje założenia i ślad obliczeń.",
-    },
-    {
-      title: "Źródła i braki danych",
-      text: "Cytaty, wersje reguł i jasne oznaczenie niepewności.",
-    },
-  ],
+  primaryCta: "Sprawdź przez formularz",
+  secondaryCta: "Sprawdź w rozmowie",
+  trust: ["Bez logowania", "Bez numeru PESEL", "Źródła przy każdym wyniku"],
   methods: {
-    eyebrow: "Dwie drogi, jeden cel",
-    title: "Wybierz sposób, który Ci odpowiada",
+    title: "Wybierz sposób, który Ci odpowiada.",
     lead: "Nie musisz znać przepisów ani wiedzieć, od czego zacząć. Obie ścieżki prowadzą do konkretnych kolejnych kroków. Formularz porządkuje Twoje dane, a rozmowa pomaga zrozumieć przepisy i źródła.",
     equalityNote:
       "Obie metody pomagają przeanalizować Twoją sytuację i potencjalne uprawnienia. Różni się forma: uporządkowane pytania albo swobodna rozmowa.",
     form: {
       label: "Formularz",
       title: "Sprawdź przez formularz",
-      shortDescription:
-        "Odpowiedz na kilka uporządkowanych pytań i poznaj swoją sytuację.",
       description:
-        "Uporządkowany proces krok po kroku. Zbieramy tylko dane potrzebne do sprawdzenia sytuacji, a na końcu powstaje sprawa demo z listą kolejnych kroków.",
+        "Odpowiedz na kilka uporządkowanych pytań i poznaj swoją sytuację. Na końcu powstaje sprawa demo z listą kolejnych kroków.",
       bullets: [
         "Pytania o sytuację rodzinną, pracę i ubezpieczenie.",
         "Podsumowanie danych przed zapisaniem sprawy.",
-        "Lista kolejnych kroków i przejście do kalkulatora.",
+        "Przejście do kalkulatora i planera urlopów.",
       ],
       cta: "Sprawdź przez formularz",
       href: "/start",
@@ -102,10 +87,8 @@ export const home = {
     chat: {
       label: "Rozmowa",
       title: "Sprawdź w rozmowie",
-      shortDescription:
-        "Opowiedz asystentowi o swojej sytuacji i przejdź przez analizę w formie rozmowy.",
       description:
-        "Naturalna rozmowa własnymi słowami. Asystent odpowie na podstawie źródeł i podpowie, co sprawdzić dalej, a do wyliczeń skieruje do tego samego kalkulatora.",
+        "Opowiedz asystentowi o swojej sytuacji i przejdź przez analizę w formie rozmowy. Asystent korzysta ze źródeł i podpowiada kolejne kroki.",
       bullets: [
         "Opisujesz sytuację tak, jak jest Ci wygodnie.",
         "Każda odpowiedź ma źródło i zastrzeżenie AI.",
@@ -115,62 +98,98 @@ export const home = {
       href: "/asystent",
       meta: "Rozmowa po polsku · źródła przy odpowiedzi",
     },
-    shared: [
-      {
-        title: "Ten sam cel",
-        text: "Obie ścieżki pomagają zrozumieć, jakie masz możliwości i co zrobić dalej.",
-      },
-      {
-        title: "Ten sam kalkulator",
-        text: "Kwoty zawsze liczy deterministyczny moduł — nie model językowy.",
-      },
-      {
-        title: "Te same zastrzeżenia",
-        text: "Wynik jest demonstracyjny i nie zastępuje decyzji ZUS.",
-      },
-    ],
     note: "Asystent nie wydaje decyzji o uprawnieniach i nie wylicza kwot samodzielnie. Konkretne wyliczenie powstaje w kalkulatorze, który korzysta z wersjonowanych reguł.",
   },
   tools: {
-    eyebrow: "Pozostałe narzędzia",
-    title: "Kalkulator, planer i dokumenty",
+    title: "Pozostałe narzędzia.",
     lead: "Masz już ogólny obraz? Przejdź do konkretów — bez tworzenia nowego konta i bez powtarzania tych samych danych.",
-    items: [
-      {
-        href: "/kalkulator",
-        title: "Oblicz wysokość świadczeń",
-        description:
-          "Macierzyński, rodzicielski i ojcowski. Porównaj warianty i zobacz założenia, braki danych oraz ślad reguł.",
-        cta: "Otwórz kalkulator",
-      },
-      {
-        href: "/os-czasu",
-        title: "Zaplanuj urlopy rodzicielskie",
-        description:
-          "Terminy urlopów, wniosków i wypłat dla mamy i drugiego rodzica na wspólnej osi czasu.",
-        cta: "Otwórz planer",
-      },
-      {
-        href: "/dokumenty",
-        title: "Sprawdź i przygotuj dokumenty",
-        description:
-          "Przeanalizuj przykładowy formularz ZUS lub wgraj PDF. Pola zawsze wymagają potwierdzenia.",
-        cta: "Otwórz dokumenty",
-      },
-    ],
   },
-  leave: {
-    eyebrow: "Planer urlopów",
-    title: "Zobacz, jak urlopy układają się w czasie",
-    lead: "Wspólna oś czasu dla mamy i drugiego rodzica. Przełącz widok, aby zobaczyć, kto kiedy korzysta z urlopu i jak łączą się terminy.",
-    note: "Przykład: poród 10 marca 2027, jedno dziecko, 2 tygodnie urlopu przed porodem i 9 tygodni zarezerwowanych dla drugiego rodzica.",
-    cta: "Otwórz pełny planer",
+  benefits: [
+    {
+      title: "Jeden plan dla obojga rodziców",
+      text: "Uprawnienia i urlopy mamy oraz taty w jednym miejscu, bez porównywania kilku serwisów.",
+    },
+    {
+      title: "Kwoty z podstawą prawną",
+      text: "Każdy wynik pokazuje reguły, wersję przepisów i założenia, na których powstał.",
+    },
+    {
+      title: "Formalności krok po kroku",
+      text: "Lista dokumentów, terminy i gotowy plan rozmowy z pracodawcą.",
+    },
+  ],
+  paths: [
+    {
+      href: "/kalkulator",
+      tone: "default",
+      title: "Oblicz wysokość świadczeń",
+      description:
+        "Policz macierzyński, rodzicielski i ojcowski wraz z wariantami, założeniami i źródłami.",
+    },
+    {
+      href: "/os-czasu",
+      tone: "default",
+      title: "Zaplanuj urlopy rodzicielskie",
+      description:
+        "Ułóż plan dla dwojga rodziców i sprawdź, jak zmienia go inny termin porodu.",
+    },
+    {
+      href: "/dokumenty",
+      tone: "default",
+      title: "Sprawdź i przygotuj dokumenty",
+      description:
+        "Poznaj potrzebne formularze i przeanalizuj dokumenty ZUS bez zgadywania.",
+    },
+  ],
+  steps: [
+    {
+      number: "01",
+      title: "Opisz swoją sytuację",
+      text: "Termin porodu, forma zatrudnienia i dochód. Bez PESEL-u i bez danych, których nie potrzebujesz.",
+    },
+    {
+      number: "02",
+      title: "Poznaj uprawnienia",
+      text: "Zobacz, co przysługuje obojgu rodzicom. Każdy wynik ma podstawę prawną i jawne założenia.",
+    },
+    {
+      number: "03",
+      title: "Ułóż plan działania",
+      text: "Dostajesz kwoty, terminy i listę dokumentów. Możesz porównać warianty i wrócić do nich później.",
+    },
+  ],
+  principles: [
+    {
+      title: "Reguły, nie domysły",
+      text: "Kwoty liczy deterministyczny moduł na podstawie wersjonowanych przepisów. Ten sam zestaw danych zawsze daje ten sam wynik.",
+    },
+    {
+      title: "Źródło przy każdej odpowiedzi",
+      text: "Asystent cytuje bazę wiedzy, a kalkulator pokazuje reguły i ślad obliczeń. Wiesz, na czym opiera się wynik.",
+    },
+    {
+      title: "Mniej danych, więcej spokoju",
+      text: "Do wstępnej analizy nie potrzebujesz numeru PESEL. Zgody na dane zdrowotne i dokumenty są rozdzielone.",
+    },
+  ],
+  honesty: {
+    title: "Uczciwie o brakach",
+    text: "Minimalna podstawa i kwota świadczenia rodzicielskiego (Q-29) oraz polityka zaokrągleń (Q-15) czekają na zatwierdzenie. Dlatego kalkulator pokazuje status „Wymaga danych”, a nie wymyśloną kwotę.",
+    cta: "Zobacz, co jest prawdziwe",
+  },
+  finalCta: {
+    eyebrow: "Zacznij od jednego pytania",
+    title: "Nie musisz wiedzieć, od czego zacząć.",
+    text: "Opowiedz nam o swojej sytuacji, a pomożemy Ci zrozumieć dostępne możliwości i przejść przez formalności.",
+    form: "Sprawdź przez formularz",
+    chat: "Sprawdź w rozmowie",
+    note: "Obie drogi prowadzą do tego samego kalkulatora i tych samych zastrzeżeń. Wybierz tę, która jest dla Ciebie wygodniejsza.",
   },
   personas: [
     {
       name: "Anna",
       story: "Pracuję na etacie i spodziewam się dziecka.",
-      role: "Umowa o pracę · 8 000 zł brutto",
+      role: "Umowa o pracę, 8 000 zł brutto",
       scenario: "S-01 / S-10",
       note: "Poród w terminie, jedno dziecko, 2 tygodnie macierzyńskiego przed porodem.",
     },
@@ -179,111 +198,16 @@ export const home = {
       story: "Moja umowa zakończyła się przed porodem.",
       role: "Zlecenie zakończone przed porodem",
       scenario: "S-18",
-      note: "Brak ubezpieczenia chorobowego w dniu porodu — ryzyko widoczne przed decyzją.",
+      note: "Brak ubezpieczenia chorobowego w dniu porodu — ryzyko widoczne, zanim podejmiesz decyzję.",
     },
     {
       name: "Tomasz",
       story: "Chcę zaplanować urlop razem z partnerką.",
-      role: "Umowa o pracę · 6 000 zł brutto",
+      role: "Umowa o pracę, 6 000 zł brutto",
       scenario: "S-10 / S-12",
       note: "9 tygodni urlopu rodzicielskiego zarezerwowanych dla drugiego rodzica.",
     },
   ],
-  trust: {
-    eyebrow: "Zaufanie i przejrzystość",
-    title: "Dlaczego możesz nam zaufać?",
-    lead: "Nie obiecujemy decyzji ani kwot, których nie potrafimy uzasadnić. Pokazujemy, skąd pochodzi informacja i czego jeszcze brakuje.",
-    items: [
-      {
-        title: "Obliczenia oparte na przepisach",
-        text: "Uprawnienia i kwoty analizuje deterministyczny mechanizm wykorzystujący wersjonowane reguły prawne. Model językowy nie decyduje o wyniku.",
-      },
-      {
-        title: "Źródła informacji",
-        text: "Przy odpowiedziach asystenta i w śladzie obliczeń sprawdzisz podstawę prawną oraz źródło, z którego pochodzi informacja.",
-      },
-      {
-        title: "Jasne oznaczanie niepewności",
-        text: "System wskazuje brakujące informacje i sytuacje wymagające dodatkowej weryfikacji. Wynik „Wymaga danych” jest celowy.",
-      },
-    ],
-    note: "To projekt demonstracyjny, a nie oficjalny serwis ZUS. Ostateczna decyzja należy do ZUS lub płatnika składek. Nie gwarantujemy przyznania świadczenia.",
-  },
-  faq: {
-    eyebrow: "Najczęstsze pytania",
-    title: "Dobrze wiedzieć przed startem",
-    items: [
-      {
-        question: "Czy to oficjalny serwis ZUS?",
-        answer:
-          "Nie. To demonstracyjny projekt edukacyjny. Nie łączy się z ZUS, mObywatel ani innymi systemami państwowymi. Ostateczną decyzję podejmuje ZUS lub płatnik składek.",
-      },
-      {
-        question: "Czym różni się formularz od rozmowy z asystentem?",
-        answer:
-          "To dwa sposoby rozpoczęcia tej samej analizy. Formularz prowadzi krok po kroku i porządkuje dane. Rozmowa pozwala opisać sytuację własnymi słowami i od razu dopytać o przepisy. Obie ścieżki prowadzą do tego samego kalkulatora i tych samych zastrzeżeń.",
-      },
-      {
-        question: "Czy asystent decyduje o uprawnieniach?",
-        answer:
-          "Nie. Asystent odpowiada na podstawie zaindeksowanych źródeł i wskazuje dalsze kroki. Uprawnienia i kwoty wylicza deterministyczny moduł, a wynik zawsze wymaga potwierdzenia.",
-      },
-      {
-        question: "Dlaczego wynik może być oznaczony jako „Wymaga danych”?",
-        answer:
-          "Część parametrów prawnych, m.in. minimalna podstawa i kwota świadczenia rodzicielskiego, wymaga zatwierdzenia. Zamiast zgadywać, system pokazuje brak i wyjaśnia, czego potrzebuje.",
-      },
-      {
-        question: "Czy muszę podawać PESEL albo zakładać konto?",
-        answer:
-          "Nie. Do wstępnego sprawdzenia wystarczą daty, forma zatrudnienia i dochód. Wersja demo nie wymaga konta ani numeru PESEL.",
-      },
-      {
-        question: "Czy mogę skorzystać bez znajomości przepisów?",
-        answer:
-          "Tak. Formularz i asystent prowadzą Cię przez pytania. Nie musisz wiedzieć, który urlop czy dokument jest właściwy — wyjaśnimy to w trakcie.",
-      },
-    ],
-  },
-  knowledge: {
-    eyebrow: "Centrum wiedzy",
-    title: "Chcesz najpierw poczytać?",
-    lead: "Wyjaśnienia, źródła i oficjalne materiały, z których korzysta projekt.",
-    links: [
-      {
-        href: "/asystent",
-        label: "Zapytaj asystenta o przepisy",
-        description: "Odpowiedzi z cytatami i odesłaniem do dokumentów.",
-        external: false,
-      },
-      {
-        href: "/o-projekcie",
-        label: "Jak powstają wyniki",
-        description: "Co jest prawdziwe, co symulowane i gdzie pomaga AI.",
-        external: false,
-      },
-      {
-        href: "https://www.zus.pl/",
-        label: "Oficjalny serwis ZUS",
-        description: "Materiały i poradniki ZUS dla rodziców.",
-        external: true,
-      },
-      {
-        href: "https://www.gov.pl/web/rodzina/urlop-rodzicielski",
-        label: "Urlop rodzicielski na gov.pl",
-        description: "Oficjalne informacje o urlopie i świadczeniach.",
-        external: true,
-      },
-    ],
-  },
-  finalCta: {
-    eyebrow: "Zacznij od jednego pytania",
-    title: "Nie musisz wiedzieć, od czego zacząć.",
-    lead: "Wybierz formularz lub rozmowę. Opowiedz nam o swojej sytuacji, a pomożemy Ci zrozumieć dostępne możliwości i przejść przez formalności.",
-    form: "Sprawdź przez formularz",
-    chat: "Sprawdź w rozmowie",
-    note: "Obie drogi prowadzą do tego samego kalkulatora i tych samych zastrzeżeń. Wybierz tę, która jest dla Ciebie wygodniejsza.",
-  },
 } as const
 
 export const dashboard = {
@@ -294,21 +218,188 @@ export const dashboard = {
 export const calculator = {
   title: "Kalkulator zasiłków",
   lead: "Jeden kalkulator, wiele wariantów. Wynik jest deterministyczny i pokazuje założenia, braki danych oraz podstawę prawną.",
+  documentBasisLabel: "Użyj podstawy wymiaru z potwierdzonego dokumentu",
+  documentBasisHelp:
+    "To podstawa ustalona przez płatnika (Z-3/Z-3a) — nie odliczamy od niej ponownie składek. Odznacz, aby liczyć z wynagrodzenia brutto.",
+  documentPrefillTitle: "Dane z potwierdzonego dokumentu",
+  documentPrefillText:
+    "Wartości pochodzą z pól, które potwierdziłaś lub potwierdziłeś na stronie Dokumenty. Możesz je zmienić — kalkulator liczy deterministycznie.",
 } as const
 
 export const assistant = {
-  title: "Asystent wiedzy",
-  lead: "Opowiedz o swojej sytuacji własnymi słowami. Asystent pomoże ją uporządkować, wskaże przepisy i podpowie kolejne kroki. Kwoty wyliczy ten sam kalkulator, co w formularzu.",
+  title: "Asystent zasiłkowy",
+  lead: "Rozmowa po polsku o zasiłku macierzyńskim, urlopach, dokumentach i terminach. Każda informacja prawna ma źródło, a kwoty i terminy pochodzą z deterministycznego modułu.",
 } as const
 
 export const documents = {
   title: "Analiza dokumentów",
   lead: "Wybierz przykładowy formularz ZUS albo wgraj PDF. Analiza jest deterministyczna, a pola zawsze wymagają potwierdzenia.",
+  rules: [
+    {
+      title: "Deterministycznie najpierw",
+      text: "Najpierw pola formularza (AcroForm), potem układ i etykiety tekstu. OCR i propozycje AI są opcjonalne i wyłączone w demo.",
+    },
+    {
+      title: "Pola do potwierdzenia",
+      text: "Każde pole ma źródło, stronę i pewność odczytu. Nic nie trafia do obliczeń bez Twojego potwierdzenia.",
+    },
+    {
+      title: "Limit, typ i czas przechowywania",
+      text: "Maks. 10 MB, tylko PDF sprawdzany po sygnaturze. Plik nie jest wykonywany i jest usuwany po 24 godzinach.",
+    },
+    {
+      title: "Formularze po zmianach",
+      text: "ZAM zastępuje ZUR i ZAO, a Z-3b jest zniesiony od 24 października 2026 r. Stare druki oznaczamy ostrzeżeniem.",
+    },
+  ],
+  samplesTitle: "Przykładowe sprawy",
+  samplesLead:
+    "Syntetyczne dokumenty odwzorowujące zakres danych formularzy. Nie zawierają danych prawdziwych osób i nie są dokumentami ZUS.",
+  samplesLoading: "Wczytuję listę przykładów…",
+  samplesError: "Nie udało się pobrać listy przykładów.",
+  sampleChoose: "Wczytaj przykład",
+  uploadTitle: "Wgraj własny PDF",
+  uploadLead:
+    "Maks. 10 MB, tylko PDF. Plik trafia do prywatnego magazynu i jest usuwany po 24 godzinach albo od razu, gdy klikniesz „Usuń dokument”.",
+  fileLabel: "Plik PDF",
+  fileChosen: "Wybrano",
+  consentLabel: "Zgadzam się na przetwarzanie dokumentu w celu odczytu pól",
+  consentHelp:
+    "Dokument może zawierać dane o zdrowiu (ciąża). Analizujemy go lokalnie, bez wysyłania do zewnętrznego dostawcy AI. Zgoda jest wymagana do analizy (RODO art. 9 ust. 2 lit. a).",
+  aiAssistLabel:
+    "Pozwól AI zaproponować brakujące pola (dane osobowe są usuwane przed wysłaniem)",
+  analyze: "Analizuj dokument",
+  analyzing: "Analizuję…",
+  errorTitle: "Nie udało się przeanalizować",
+  errors: {
+    noFile: "Wybierz plik PDF.",
+    tooLarge: "Maksymalny rozmiar pliku to 10 MB.",
+    notPdf: "Obsługiwane są wyłącznie pliki PDF.",
+    noConsent: "Zaznacz zgodę na przetwarzanie dokumentu.",
+    generic: "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
+  },
+  emptyTitle: "Wynik analizy pojawi się tutaj",
+  emptyLead:
+    "Wybierz przykład albo wgraj PDF. Zobaczysz podgląd dokumentu, rozpoznany formularz, pola z pewnością odczytu i ostrzeżenia.",
+  previewTitle: "Podgląd dokumentu",
+  previewFallback: "Twoja przeglądarka nie wyświetla PDF w ramce.",
+  previewOpen: "Otwórz podgląd w nowej karcie",
+  pagesLabel: "Liczba stron",
+  formLabel: "Formularz",
+  methodLabel: "Metoda odczytu",
+  methods: {
+    ACROFORM: "pola formularza (AcroForm)",
+    TEMPLATE: "układ i etykiety tekstu",
+    OCR: "OCR (skan)",
+    LLM_ASSISTED: "propozycje AI do potwierdzenia",
+    DEMO: "przykład demonstracyjny",
+  },
+  sources: {
+    ACROFORM: "pole formularza",
+    TEMPLATE: "tekst dokumentu",
+    OCR: "OCR",
+    LLM: "propozycja AI",
+    USER: "wpisane przez Ciebie",
+  },
+  legacyTitle: "Formularz wycofany",
+  legacyBadge: "Formularz wycofany",
+  needsReviewBadge: "Wymaga potwierdzenia",
+  confirmedBadge: "Potwierdzono",
+  sampleBadge: "Przykład syntetyczny",
+  fieldsCaption:
+    "Pola odczytane z dokumentu. Popraw wartości i potwierdź każde pole wymagane.",
+  colField: "Pole",
+  colValue: "Wartość",
+  colSource: "Źródło",
+  colConfidence: "Pewność",
+  colConfirm: "Potwierdź",
+  requiredMark: "wymagane",
+  editedMark: "zmienione przez Ciebie",
+  reviewMark: "sprawdź",
+  page: "str.",
+  emptyValue: "nie odczytano",
+  confirmAll: "Potwierdź wszystkie wypełnione pola",
+  findingsTitle: "Ustalenia walidacji",
+  severity: { ERROR: "Błąd", WARNING: "Ostrzeżenie", INFO: "Informacja" },
+  legalBasis: "Podstawa",
+  blockersTitle: "Zanim zastosujesz dane",
+  blockerReasons: {
+    MISSING: "uzupełnij",
+    INVALID: "popraw format",
+    NOT_CONFIRMED: "potwierdź",
+  },
+  apply: "Potwierdź i oblicz",
+  applying: "Liczę…",
+  toCalculator: "Otwórz kalkulator z tymi danymi",
+  clear: "Wyczyść",
+  delete: "Usuń dokument",
+  deleted: "Dokument usunięto.",
+  localNote:
+    "Analiza jest deterministyczna i wykonywana na serwerze aplikacji. Plik nie jest wysyłany do zewnętrznego dostawcy AI.",
+  aiNote:
+    "Część pól zaproponowało AI na tekście bez danych osobowych. Sprawdź je szczególnie uważnie.",
+  resultTitle: "Wynik dla potwierdzonych danych",
+  verdict: "Uprawnienie",
+  amount: "Kwota brutto",
+  basis: "Podstawa wymiaru",
+  payer: "Kto wypłaca",
+  payers: {
+    EMPLOYER: "pracodawca (płatnik)",
+    ZUS: "ZUS",
+    UNKNOWN: "do ustalenia",
+    NONE: "—",
+  },
+  statuses: {
+    ELIGIBLE: "przysługuje",
+    CONDITIONAL: "przysługuje warunkowo",
+    NOT_ELIGIBLE: "nie przysługuje",
+    NEEDS_INPUT: "brakuje danych",
+    MANUAL_REVIEW: "wymaga oceny ZUS",
+  },
+  amountUnknown: "nie wyliczono",
+  missingTitle: "Brakuje danych do obliczenia",
+  notesTitle: "Uwagi do mapowania",
+  checklistTitle: "Wymagane dokumenty",
+  checklistLead:
+    "Lista zapisana dla tej sesji. Miejsce złożenia zależy od tego, kto wypłaca zasiłek.",
+  checklistCols: {
+    document: "Dokument",
+    who: "Kto przygotowuje",
+    where: "Gdzie złożyć",
+    when: "Termin",
+  },
+  preparedBy: {
+    YOU: "Ty",
+    OTHER_PARENT: "drugi rodzic",
+    EMPLOYER: "pracodawca",
+    PAYER: "płatnik składek",
+    DOCTOR: "lekarz",
+    HOSPITAL: "szpital",
+    COURT: "sąd",
+    CIVIL_REGISTRY: "urząd stanu cywilnego",
+    ZUS: "ZUS",
+  } as Record<string, string>,
+  submitTo: {
+    EMPLOYER: "u pracodawcy",
+    PAYER: "u płatnika",
+    ZUS: "w ZUS (eZUS lub placówka)",
+    PAYER_OR_ZUS: "u płatnika albo w ZUS — zależnie od tego, kto wypłaca",
+    NONE: "nie składasz",
+  } as Record<string, string>,
+  deadlinesTitle: "Terminy",
+  routingTitle: "Gdzie złożyć dokumenty",
+  comparisonTitle: "Porównanie z oczekiwanym wynikiem (tryb demo)",
+  comparisonOk: "Zgodne z oczekiwanym wynikiem",
+  comparisonFail: "Niezgodne z oczekiwanym wynikiem",
+  parents: { MOTHER: "matka", FATHER: "ojciec", BOTH: "oboje" } as Record<
+    string,
+    string
+  >,
 } as const
 
 export const timeline = {
-  title: "Oś czasu",
-  lead: "Terminy urlopów, wniosków i wypłat dla obojga rodziców. Zmień termin porodu, aby zobaczyć plan od nowa.",
+  title: "Wasza droga przez rodzicielstwo",
+  lead: "Zobacz, jakie urlopy i świadczenia mogą Wam przysługiwać, kiedy przypadają najważniejsze terminy i co warto przygotować na kolejnych etapach.",
 } as const
 
 export const mobywatel = {
@@ -392,4 +483,9 @@ export const mobywatel = {
   sessionText:
     "Dane osobowe zostały wstępnie uzupełnione. Sprawdź je i możesz poprawić przed zapisaniem sprawy.",
   sessionChange: "Zmień profil",
+} as const
+
+export const knowledge = {
+  title: "Centrum wiedzy",
+  lead: "Świadczenia, prawa rodziców, ubezpieczenia i formalności — po ludzku, z datą weryfikacji i odnośnikiem do oficjalnego źródła.",
 } as const

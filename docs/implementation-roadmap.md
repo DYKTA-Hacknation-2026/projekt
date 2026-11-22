@@ -150,17 +150,17 @@ The *Req* for P5 is FR-CALC-00, FR-INF-*, FR-PRD-01/05/09 and NFR-01/02/06/07.
 
 ### P6: Documents and sample cases (`@zpr/documents`)
 
-- [ ] **P6-01** Upload endpoint and storage with the validation and TTL (`architecture.md` §7.1).
-- [ ] **P6-02** Form detection (ZAM, Z-3, Z-3a, ZAS-12, ZAS-53, poświadczenie, plus the legacy ZUR/ZAO/Z-3b). The field schemas come from R1316 annexes 2 (Z-3), 3 (Z-3a) and 6 (ZAM). *Deps:* Q-20 answered, sample files available.
-- [ ] **P6-03** Extractors:
-  - AcroForm → field map
-  - template/regex for flattened PDFs
-  - OCR (tesseract `pol`) only if scans exist
-  - LLM-assisted fallback through the port
-- [ ] **P6-04** Validators (`validation_findings`): deprecated forms (LR-05), missing attachments, date consistency.
-- [ ] **P6-05** Confirmation UI (side-by-side preview of the PDF page and the fields) → facts → calculator.
-- [ ] **P6-06** Sample-case picker from a private manifest, plus the expected-outcome comparison badge in demo mode.
-- [ ] **P6-07** A golden test harness `SC-xx` over the private fixtures. It runs locally and in a private CI job.
+- [x] **P6-01** Upload endpoint and storage with the validation and TTL (`architecture.md` §7.1). `POST /documents` (consent `DOCUMENT_PROCESSING`, ≤ 10 MB, MIME + `%PDF-`), `LocalFileStorage` behind a `DocumentStorage` port (bucket-ready), `docs.uploads.delete_after` = 24 h, purge on upload and `POST /documents/cleanup`.
+- [x] **P6-02** Form detection (ZAM, Z-3, Z-3a, ZAS-12, ZAS-53, poświadczenie, plus the legacy ZUR/ZAO/Z-3b) from AcroForm fields → headings → text → file name (hint only). Field templates follow the data scope of R1316 annexes 2, 3 and 6. *Open:* Q-20 — exact ZUS print layouts; labels are matched tolerantly.
+- [x] **P6-03** Extractors:
+  - [x] AcroForm → field map (pdf.js via `unpdf`)
+  - [x] template/regex for flattened PDFs
+  - [x] OCR (tesseract `pol` via `pdftoppm`) — optional, `DOCUMENT_OCR_ENABLED`, only without a text layer; not exercised by CI (no scans available)
+  - [x] LLM-assisted fallback through the port — `DOCUMENT_LLM_FALLBACK` + per-request consent, PII scrubbed, proposals always reviewed
+- [x] **P6-04** Validators (`docs.validation_findings`): deprecated forms (LR-05, by document date and rule set), missing fields, date consistency, attachments (R1316 § 3, § 13), ambiguous amounts.
+- [x] **P6-05** Confirmation UI (side-by-side preview of the PDF page and the fields) → facts → engine → checklist/deadlines → calculator (basis as override).
+- [~] **P6-06** Sample-case picker from the API (synthetic SC-SYN + private manifest) with the ✓/✗ comparison badge in demo mode. *Open:* real ZUS sample cases (Q-19).
+- [~] **P6-07** Golden test harness: synthetic SC-SYN-01…04 run in CI; private `SC-xx` run automatically when `fixtures/private/sample-cases/manifest.json` exists. *Open:* the private cases themselves.
 
 ### P7: Knowledge base and assistant (`@zpr/rag`, `@zpr/ai`)
 
@@ -175,7 +175,8 @@ The *Req* for P5 is FR-CALC-00, FR-INF-*, FR-PRD-01/05/09 and NFR-01/02/06/07.
 
 ### P8: Admin UI
 
-- [ ] **P8-01** Rule sets: list, clone to a draft, edit parameters with per-key forms (Zod-driven), source links, diff, publish or retire, audit. *Req:* FR-ADM-01.
+- [x] **P8-01** Rule sets: list, clone to a draft, edit parameters with per-key forms (Zod-driven), source links, diff, publish or retire, audit. *Req:* FR-ADM-01.
+  - Shipped as `/admin/reguly`: per-rule immutable versions, shared field catalogue, validation through `buildRuleSet`, effective date, source URL and audit note. Draft/publish workflow is simplified to “new version from a date”.
 - [ ] **P8-02** KB sources: upload a version, set effective dates, ingest, view reports, disable chunks, re-embed. *Req:* FR-PRD-08.
 - [ ] **P8-03** Content: support organisations (with `verified_at`, charitable-only), links, info pages, checklist templates, feature flags. *Req:* FR-ADM-02.
 
