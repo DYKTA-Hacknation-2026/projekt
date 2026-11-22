@@ -49,11 +49,9 @@ zmianę parametrów można prześledzić w historii.
 
 ## Jak obejrzeć system w działaniu
 
-System można sprawdzić na kilka sposobów. Wszystkie działają na gotowych,
-syntetycznych danych — nie trzeba zakładać konta, podawać numeru PESEL ani
-konfigurować zewnętrznego modelu AI. Poniższe kroki zakładają, że aplikacja
-działa lokalnie; instrukcję uruchomienia znajdziesz w sekcji
-[Szybki start](#szybki-start).
+Najszybsze do włączenia demo znajduje się na stronie https://zpr.makonew.com/
+dla uruchomienia lokalnego: [Szybki start](#szybki-start).
+Ścieżka testowa pokazująca najwięcej funkcjonalności to logowanie symulujące na [/mobywatel](#symulacja_mObywatela_i_pobranie_danych) 
 
 ### Szybka ściąga
 
