@@ -19,6 +19,10 @@ import { Progress } from "@workspace/ui/components/progress"
 import { Select } from "@workspace/ui/components/select"
 import type { MobywatelProfile } from "@zpr/contracts/mobywatel"
 import { importPrefillStorageSchema } from "@zpr/contracts/data-import"
+import {
+  ONBOARDING_PREFILL_KEY,
+  takeCalculatorPrefillInput,
+} from "@/lib/calculator-prefill"
 
 type FormState = {
   firstName: string
@@ -161,6 +165,64 @@ export function OnboardingWizard({ mobywatelProfile }: OnboardingWizardProps) {
     } catch {
       // Ignore a stale or malformed prefill.
     }
+
+    // Data from the calculator (including the advanced mode) can start a case
+    // without retyping the same facts. Only fields the builder understands are
+    // mapped; everything else is left for the user to review.
+    const fromCalculator = takeCalculatorPrefillInput(window.sessionStorage)
+    if (fromCalculator) {
+      const employment =
+        fromCalculator.motherEmploymentType ??
+        fromCalculator.employmentType
+      setForm((current) => ({
+        ...current,
+        ...(fromCalculator.mode === "ADOPTION"
+          ? { eventType: "ADOPTION" as const }
+          : fromCalculator.mode === "FOSTER_CARE"
+            ? { eventType: "FOSTER_CARE" as const }
+            : fromCalculator.birthDate
+              ? {
+                  eventType: "BIRTH" as const,
+                  eventDate: fromCalculator.birthDate,
+                }
+              : {}),
+        ...(fromCalculator.placementDate
+          ? { eventDate: fromCalculator.placementDate }
+          : {}),
+        ...(fromCalculator.childrenCount !== undefined
+          ? { childrenCount: String(fromCalculator.childrenCount) }
+          : {}),
+        ...(fromCalculator.hasZaZyciem !== undefined
+          ? { hasZaZyciem: fromCalculator.hasZaZyciem }
+          : {}),
+        ...(employment
+          ? {
+              employmentType:
+                employment === "EMPLOYEE"
+                  ? ("EMPLOYMENT" as const)
+                  : employment === "CONTRACTOR"
+                    ? ("MANDATE" as const)
+                    : ("SELF_EMPLOYMENT" as const),
+            }
+          : {}),
+        ...(fromCalculator.motherSicknessInsurance === "VOLUNTARY"
+          ? { coverageMode: "VOLUNTARY" as const }
+          : fromCalculator.motherSicknessInsurance === "COMPULSORY"
+            ? { coverageMode: "COMPULSORY" as const }
+            : {}),
+        ...(fromCalculator.grossMonthlyIncomeGrosze !== undefined &&
+        fromCalculator.grossMonthlyIncomeGrosze > 0
+          ? {
+              grossMonthlyIncomePln: String(
+                fromCalculator.grossMonthlyIncomeGrosze / 100
+              ),
+            }
+          : {}),
+        ...(fromCalculator.motherInsuranceStartDate
+          ? { insuranceStartDate: fromCalculator.motherInsuranceStartDate }
+          : {}),
+      }))
+    }
   }, [])
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -192,6 +254,25 @@ export function OnboardingWizard({ mobywatelProfile }: OnboardingWizardProps) {
       if (!Number.isFinite(income) || income < 0) {
         setError("Podaj miesięczny dochód brutto w złotych.")
         return
+      }
+      try {
+        window.sessionStorage.setItem(
+          ONBOARDING_PREFILL_KEY,
+          JSON.stringify({
+            eventType: form.eventType,
+            expectedDueDate: form.expectedDueDate || undefined,
+            eventDate: form.eventDate || undefined,
+            childrenCount: Number(form.childrenCount),
+            hasZaZyciem: form.hasZaZyciem,
+            isPremature: form.isPremature,
+            employmentType: form.employmentType,
+            grossMonthlyIncomePln: income,
+            insuranceStartDate: form.insuranceStartDate || undefined,
+            coverageMode: form.coverageMode,
+          })
+        )
+      } catch {
+        // The calculator still works without the one-shot handoff.
       }
     }
     setStep((current) => Math.min(4, current + 1) as Step)
@@ -252,6 +333,15 @@ export function OnboardingWizard({ mobywatelProfile }: OnboardingWizardProps) {
         caseNumber: data.caseNumber ?? "—",
         nextSteps: data.nextSteps ?? [],
       })
+
+      try {
+        window.sessionStorage.setItem(
+          ONBOARDING_PREFILL_KEY,
+          JSON.stringify(payload)
+        )
+      } catch {
+        // The calculator still works without the one-shot handoff.
+      }
 
       if (fromMobywatel) {
         setFromMobywatel(false)

@@ -5,6 +5,17 @@
  * No I/O, dates from the clock or randomness is allowed in this package.
  */
 
+import type {
+  AmountStatus,
+  AssessmentStatus,
+  BenefitType,
+  Determination,
+  EligibilityStatus,
+  MissingEvidence,
+  UnsupportedScenario,
+  Warning,
+} from "./engine/types"
+
 export type PaymentOption = "STANDARD_100_70" | "FLAT_81_5"
 
 export type CalculatorMode = "BIRTH" | "ADOPTION" | "FOSTER_CARE"
@@ -14,7 +25,13 @@ export type SpecialCase =
 
 export type EmploymentType = "EMPLOYEE" | "CONTRACTOR" | "BUSINESS"
 
-export type SicknessCoverage = "COMPULSORY" | "VOLUNTARY" | "NONE"
+/**
+ * `UNKNOWN` is a deliberate answer, not a missing value: the engine then asks
+ * for the insurance title instead of assuming voluntary coverage. Employees
+ * are always covered compulsorily, so `UNKNOWN` is equivalent to `COMPULSORY`
+ * for them.
+ */
+export type SicknessCoverage = "COMPULSORY" | "VOLUNTARY" | "NONE" | "UNKNOWN"
 
 export type IncomeMode = "SIMPLE" | "DETAILED" | "KNOWN_BASIS"
 
@@ -178,6 +195,30 @@ export interface CalculationLine {
   legalReference: string
 }
 
+/**
+ * Analysis metadata of the authoritative engine, kept even where the
+ * calculator adapter returns the simplified result shape.
+ *
+ * The UI must show these values instead of deriving an "everything is fine"
+ * message from `status` alone.
+ */
+export interface CalculatorAnalysis {
+  /** Engine verdict: COMPLETE, PARTIAL or MANUAL_REVIEW. */
+  status: AssessmentStatus
+  eligibilityStatus: EligibilityStatus
+  amountStatus: AmountStatus
+  /** Total from the engine; `null` when no reliable amount exists. */
+  totalGrosze: number | null
+  missingEvidence: MissingEvidence[]
+  /** Things the engine explicitly did not decide (U-xx). */
+  unsupported: UnsupportedScenario[]
+  manualReviewReasons: string[]
+  /** Assumptions that actually affected this result (A-xx). */
+  assumptions: string[]
+  determinations: Determination[]
+  warnings: Warning[]
+}
+
 export interface CalculatorResult {
   input: CalculatorInput
   mode: CalculatorMode
@@ -215,6 +256,10 @@ export interface CalculatorResult {
   ruleSetEffectiveFrom: string
   /** True when every legal parameter was verified at calculation time. */
   ruleSetVerified: boolean
+  /** Rule codes that still need an official value (e.g. LR-115/Q-29). */
+  ruleSetUnverified: string[]
+  /** Engine analysis, including statuses COMPLETE/PARTIAL/MANUAL_REVIEW. */
+  analysis: CalculatorAnalysis
   warnings: string[]
   trace: CalculationTraceStep[]
 }

@@ -1,5 +1,8 @@
-import type { CalculationRequest } from "@zpr/contracts/calculator"
-import { calculateBenefits } from "@zpr/domain"
+import type {
+  CalculationRequest,
+  ComparisonRequest,
+} from "@zpr/contracts/calculator"
+import { calculateBenefits, compareCalculatorScenarios } from "@zpr/domain"
 import { ENGINE_VERSION as CORE_ENGINE_VERSION } from "@zpr/domain/engine"
 
 import { getContainer } from "@/server/container"
@@ -11,6 +14,12 @@ export interface CalculationResponse {
   engineVersion: string
   simulated: true
   result: ReturnType<typeof calculateBenefits>
+}
+
+export interface ComparisonResponse {
+  engineVersion: string
+  simulated: true
+  comparison: ReturnType<typeof compareCalculatorScenarios>
 }
 
 /** Version the extended calculator separately from the core assessment engine. */
@@ -45,5 +54,17 @@ export async function runCalculation(
     engineVersion: ENGINE_VERSION,
     simulated: true,
     result,
+  }
+}
+
+/** Same facts, several leave splits; every amount comes from `calculateBenefits`. */
+export async function runComparison(
+  request: ComparisonRequest
+): Promise<ComparisonResponse> {
+  const ruleSet = await getActiveRuleSet()
+  return {
+    engineVersion: ENGINE_VERSION,
+    simulated: true,
+    comparison: compareCalculatorScenarios(request.input, ruleSet),
   }
 }

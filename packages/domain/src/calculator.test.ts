@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 
 import { calculateBenefits as calculateWithRules } from "./calculator"
+import {
+  buildParentalScenarios,
+  compareCalculatorScenarios,
+} from "./scenarios"
 import { buildRuleSet } from "./rule-set"
 import { testRuleParameters, testRuleSet } from "./testing"
 import { averageMonthlyIncome, basisFromGross, minimumBasis } from "./basis"
@@ -676,5 +680,80 @@ describe("database parameters with the expanded calculator", () => {
     expect(father.reduce((sum, line) => sum + line.amountGrosze, 0)).toBe(
       1_764_000
     )
+  })
+})
+
+describe("engine analysis surfaced by the calculator adapter", () => {
+  it("keeps the COMPLETE/PARTIAL/MANUAL_REVIEW status and missing evidence", () => {
+    const complete = calculateBenefits(input())
+    expect(complete.analysis.status).toBe("COMPLETE")
+    expect(complete.analysis.amountStatus).toBe("CALCULATED_LOWER_BOUND")
+    expect(complete.analysis.totalGrosze).toBe(complete.totalGrosze)
+
+    const partial = calculateBenefits(
+      input({ grossMonthlyIncomeGrosze: 0, motherEnabled: true, fatherEnabled: false })
+    )
+    expect(partial.analysis.status).toBe("PARTIAL")
+    expect(partial.analysis.totalGrosze).toBeNull()
+    expect(partial.analysis.missingEvidence.length).toBeGreaterThan(0)
+  })
+
+  it("does not assume voluntary coverage when the answer is UNKNOWN", () => {
+    const result = calculateBenefits(
+      input({
+        grossMonthlyIncomeGrosze: 800_000,
+        motherEmploymentType: "CONTRACTOR",
+        motherSicknessInsurance: "UNKNOWN",
+        fatherEnabled: false,
+      })
+    )
+    expect(result.analysis.status).toBe("PARTIAL")
+    expect(result.analysis.missingEvidence.some((item) => /coverage|ubezpieczenie/i.test(item.key + item.question))).toBe(true)
+    expect(result.warnings.join(" ")).toContain("ubezpieczeniu chorobow")
+  })
+})
+
+describe("parental-leave scenario comparison", () => {
+  it("builds variants from the rule set and verifies every one with the engine", () => {
+    const scenarios = buildParentalScenarios(
+      input({
+        grossMonthlyIncomeGrosze: 800_000,
+        secondParentMonthlyIncomeGrosze: 800_000,
+        paternityDays: 14,
+      }),
+      ruleSet
+    )
+    expect(scenarios.map((scenario) => scenario.id)).toEqual([
+      "MOTHER_MOST",
+      "FATHER_NINE",
+      "SHARED",
+    ])
+
+    const comparison = compareCalculatorScenarios(
+      input({
+        grossMonthlyIncomeGrosze: 800_000,
+        secondParentMonthlyIncomeGrosze: 800_000,
+        paternityDays: 14,
+      }),
+      ruleSet
+    )
+    expect(comparison.outcomes).toHaveLength(3)
+    expect(comparison.outcomes[0]?.differenceGrosze).toBe(0)
+    expect(
+      comparison.outcomes[1]?.result.analysis.totalGrosze
+    ).toBeGreaterThan(comparison.outcomes[0]?.result.analysis.totalGrosze ?? 0)
+    expect(comparison.outcomes[2]?.result.analysis.status).toBe("COMPLETE")
+  })
+
+  it("keeps unknown amounts as null in every variant", () => {
+    const comparison = compareCalculatorScenarios(
+      input({ grossMonthlyIncomeGrosze: 0 }),
+      ruleSet
+    )
+    for (const outcome of comparison.outcomes) {
+      expect(outcome.result.analysis.totalGrosze).toBeNull()
+      expect(outcome.differenceGrosze).toBeNull()
+      expect(outcome.result.analysis.status).toBe("PARTIAL")
+    }
   })
 })

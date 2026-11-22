@@ -113,10 +113,10 @@ export const calculatorInputSchema = z.object({
     .enum(["EMPLOYEE", "CONTRACTOR", "BUSINESS"])
     .optional(),
   motherSicknessInsurance: z
-    .enum(["COMPULSORY", "VOLUNTARY", "NONE"])
+    .enum(["COMPULSORY", "VOLUNTARY", "NONE", "UNKNOWN"])
     .optional(),
   fatherSicknessInsurance: z
-    .enum(["COMPULSORY", "VOLUNTARY", "NONE"])
+    .enum(["COMPULSORY", "VOLUNTARY", "NONE", "UNKNOWN"])
     .optional(),
   motherInsuranceStartDate: z.iso.date().optional(),
   fatherInsuranceStartDate: z.iso.date().optional(),
@@ -134,4 +134,10 @@ export const calculationRequestSchema = z.object({
   save: z.boolean().default(true),
 })
 
+/** Same household facts and leave plan, compared across the engine's variants. */
+export const comparisonRequestSchema = z.object({
+  input: calculatorInputSchema,
+})
+
 export type CalculationRequest = z.infer<typeof calculationRequestSchema>
+export type ComparisonRequest = z.infer<typeof comparisonRequestSchema>

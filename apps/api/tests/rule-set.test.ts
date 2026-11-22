@@ -19,7 +19,9 @@ vi.mock("@/server/container", () => {
   }
 })
 const { GET } = await import("@/app/internal/rule-set/route")
-const { runCalculation } = await import("@/server/services/calculations")
+const { runCalculation, runComparison } = await import(
+  "@/server/services/calculations"
+)
 
 beforeEach(() => {
   store.rows = testRuleParameters()
@@ -74,5 +76,33 @@ describe("rules after the API split", () => {
       "01900000-0000-7000-8000-000000001403"
     )
     expect(store.saved.result.ruleSetVersion).toBe("2026.11-Z1")
+  })
+  it("compares parental-leave variants through the same calculator engine", async () => {
+    const response = await runComparison({
+      input: {
+        grossMonthlyIncomeGrosze: 800_000,
+        secondParentMonthlyIncomeGrosze: 800_000,
+        motherEnabled: true,
+        fatherEnabled: true,
+        mode: "BIRTH",
+        specialCase: "STANDARD",
+        incomeMode: "SIMPLE",
+        childrenCount: 1,
+        hasZaZyciem: false,
+        paymentOption: "STANDARD_100_70",
+        maternityWeeksBeforeBirth: 2,
+        secondParentParentalWeeks: 9,
+        parentalWorkFraction: 0,
+        paternityDays: 14,
+      },
+    })
+    expect(response.simulated).toBe(true)
+    expect(response.comparison.outcomes).toHaveLength(3)
+    expect(response.comparison.outcomes[0]?.differenceGrosze).toBe(0)
+    expect(
+      response.comparison.outcomes.every(
+        (outcome) => outcome.result.analysis.status !== "MANUAL_REVIEW"
+      )
+    ).toBe(true)
   })
 })
