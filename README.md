@@ -14,7 +14,7 @@ planer urlopów, analizę dokumentów, centrum wiedzy i asystenta rozmownego.
 
 ## Spis treści
 
-###- [Instrukcja uruchomienia demo](#jak-obejrzeć-system-w-działaniu)
+- ###[Instrukcja uruchomienia demo](#jak-obejrzeć-system-w-działaniu)
 - [Czym jest ten projekt](#czym-jest-ten-projekt)
 - [Co jest prawdziwe, a co symulowane](#co-jest-prawdziwe-a-co-symulowane)
 - [Najważniejsze funkcje](#najważniejsze-funkcje)
