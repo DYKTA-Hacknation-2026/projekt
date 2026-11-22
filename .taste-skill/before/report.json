@@ -1,0 +1,1861 @@
+{
+ "url": "http://127.0.0.1:3020",
+ "at": "2026-11-22T01:24:41.231Z",
+ "allow": [],
+ "viewports": [
+  {
+   "width": 1440,
+   "height": 900,
+   "load": "load",
+   "screens": 7,
+   "filled": [
+    0.86,
+    0.55,
+    0.65,
+    0.7,
+    0.62,
+    0.34,
+    0.83
+   ],
+   "motion": {
+    "elements": 40,
+    "css": 39,
+    "transitions": 0,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "page": {
+     "height": 6078,
+     "screens": 6.8,
+     "words": 656,
+     "img": 4,
+     "video": 0,
+     "canvas": 0,
+     "svg": 35,
+     "sections": 8,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 1,
+     "uiAbuse": false,
+     "realPictures": 4,
+     "videoCount": 0,
+     "uiPictures": 1,
+     "pictureSamples": [
+      "image?url=%2Fimages%2Fhero-rodzice-z-noworodkiem",
+      "image?url=%2Fimages%2Foczekiwanie-na-dziecko.jpg",
+      "image?url=%2Fimages%2Fbliskosc-z-dzieckiem.webp&",
+      "image?url=%2Fimages%2Frodzina-z-dzieckiem.jpg&w="
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Więcej czasu dla rodziny.",
+     "words": 4,
+     "chars": 25,
+     "lines": 2,
+     "size": 74.9,
+     "vw": 5.2,
+     "font": "Source Sans 3",
+     "weight": 600,
+     "tracking": -0.035,
+     "leading": 1.02,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "left",
+     "widthRatio": 0.26,
+     "top": 194,
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "Więcej czasu dla rodziny.",
+     "words": 4,
+     "lines": 2,
+     "size": 74.9,
+     "font": "Source Sans 3"
+    },
+    "headings": [
+     {
+      "text": "Więcej czasu dla rodziny.",
+      "words": 4,
+      "chars": 25,
+      "lines": 2,
+      "size": 74.9,
+      "vw": 5.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.02,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.26,
+      "top": 194,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "Wybierz sposób, który Ci odpowiada.",
+      "words": 5,
+      "chars": 35,
+      "lines": 2,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.41,
+      "top": 1006,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Pozostałe narzędzia.",
+      "words": 2,
+      "chars": 20,
+      "lines": 1,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.35,
+      "top": 1829,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Wasz urlop. Wasz podział.",
+      "words": 4,
+      "chars": 25,
+      "lines": 2,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.41,
+      "top": 2565,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Różne rodziny. Różne potrzeby.",
+      "words": 4,
+      "chars": 30,
+      "lines": 2,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.39,
+      "top": 3323,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Pytania i odpowiedzi.",
+      "words": 3,
+      "chars": 21,
+      "lines": 2,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.41,
+      "top": 4308,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Centrum wiedzy.",
+      "words": 2,
+      "chars": 15,
+      "lines": 1,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.41,
+      "top": 4989,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Nie musisz wiedzieć, od czego zacząć.",
+      "words": 6,
+      "chars": 37,
+      "lines": 2,
+      "size": 48,
+      "vw": 3.3,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.44,
+      "top": 5430,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 8,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 4,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Source Sans 3",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      13,
+      14,
+      15,
+      16,
+      18,
+      20,
+      24,
+      48,
+      75
+     ],
+     "sizeCount": 9,
+     "notLoaded": [],
+     "body": {
+      "font": "Source Sans 3",
+      "size": 18,
+      "leading": 1.55,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 12.7
+     },
+     "measureChars": 58,
+     "max": {
+      "size": 74.9,
+      "vw": 5.2,
+      "font": "Source Sans 3",
+      "text": "Więcej czasudla rodziny."
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.01,
+     "centerShare": 0.02,
+     "smallText": 0
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#ffffff",
+     "bodyBgHsl": {
+      "h": 0,
+      "s": 0,
+      "l": 1
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 122,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#007834",
+       "top": 122,
+       "hsl": {
+        "h": 146,
+        "s": 1,
+        "l": 0.24
+       }
+      },
+      {
+       "color": "#edf5ee",
+       "top": 2432,
+       "hsl": {
+        "h": 127,
+        "s": 0.29,
+        "l": 0.95
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#22372b",
+       "share": 0.69
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.11
+      },
+      {
+       "color": "#007834",
+       "share": 0.11
+      },
+      {
+       "color": "#405347",
+       "share": 0.07
+      },
+      {
+       "color": "#025a28",
+       "share": 0.01
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#025a28"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 6,
+     "inHero": 3,
+     "radius": "pill",
+     "height": 44,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Sprawdź świadczenia",
+      "Sprawdź przez formularz",
+      "Sprawdź w rozmowie"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 3,
+     "boxRadius": 99,
+     "squareMedia": 4,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [
+     {
+      "type": "img",
+      "ratio": 0.38
+     }
+    ],
+    "nav": {
+     "links": 8,
+     "fixed": true,
+     "height": 68,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "source sans 3"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 1440,
+     "h": 900
+    },
+    "pageH": 6078,
+    "margins": {
+     "left": 84,
+     "right": 116
+    },
+    "sections": [
+     {
+      "sel": "main#tresc.outline-none",
+      "tag": "main",
+      "top": 122,
+      "height": 5560,
+      "words": 728,
+      "media": 3,
+      "middle": 0,
+      "heading": {
+       "text": "Więcej czasu",
+       "size": 75,
+       "tag": "h1"
+      },
+      "left": 84,
+      "right": 84,
+      "textLeft": 84,
+      "textRight": 84,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.bg-secondary/50.text-sm",
+      "tag": "footer",
+      "top": 5682,
+      "height": 396,
+      "words": 77,
+      "media": 0,
+      "middle": 187,
+      "heading": {
+       "text": "Przewodnik",
+       "size": 18,
+       "tag": "h2"
+      },
+      "left": 84,
+      "right": 240,
+      "textLeft": 84,
+      "textRight": 240,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Więcej czasu dla rodziny.",
+      "size": 75,
+      "top": 194,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 84,
+      "n": 12
+     },
+     {
+      "x": 108,
+      "n": 6
+     },
+     {
+      "x": 760,
+      "n": 5
+     },
+     {
+      "x": 142,
+      "n": 4
+     },
+     {
+      "x": 790,
+      "n": 3
+     }
+    ],
+    "leftBlocks": 30,
+    "bodySize": 18,
+    "stage": false,
+    "explains": true,
+    "slivers": [],
+    "voidShare": 0.07,
+    "voidBox": {
+     "x": 0,
+     "y": 120,
+     "w": 120,
+     "h": 780
+    }
+   },
+   "app": null,
+   "consoleErrors": []
+  },
+  {
+   "width": 768,
+   "height": 1024,
+   "load": "load",
+   "screens": 7,
+   "filled": [
+    0.76,
+    0.59,
+    0.57,
+    0.62,
+    0.65,
+    0.6,
+    0.78
+   ],
+   "motion": {
+    "elements": 40,
+    "css": 39,
+    "transitions": 0,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "page": {
+     "height": 6387,
+     "screens": 6.2,
+     "words": 651,
+     "img": 4,
+     "video": 0,
+     "canvas": 0,
+     "svg": 35,
+     "sections": 8,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 1,
+     "uiAbuse": false,
+     "realPictures": 4,
+     "videoCount": 0,
+     "uiPictures": 1,
+     "pictureSamples": [
+      "image?url=%2Fimages%2Fhero-rodzice-z-noworodkiem",
+      "image?url=%2Fimages%2Foczekiwanie-na-dziecko.jpg",
+      "image?url=%2Fimages%2Fbliskosc-z-dzieckiem.webp&",
+      "image?url=%2Fimages%2Frodzina-z-dzieckiem.jpg&w="
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Więcej czasu dla rodziny.",
+     "words": 4,
+     "chars": 25,
+     "lines": 2,
+     "size": 49,
+     "vw": 6.4,
+     "font": "Source Sans 3",
+     "weight": 600,
+     "tracking": -0.035,
+     "leading": 1.02,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "left",
+     "widthRatio": 0.32,
+     "top": 154,
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "Więcej czasu dla rodziny.",
+     "words": 4,
+     "lines": 2,
+     "size": 49,
+     "font": "Source Sans 3"
+    },
+    "headings": [
+     {
+      "text": "Więcej czasu dla rodziny.",
+      "words": 4,
+      "chars": 25,
+      "lines": 2,
+      "size": 49,
+      "vw": 6.4,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.02,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.32,
+      "top": 154,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "Wybierz sposób, który Ci odpowiada.",
+      "words": 5,
+      "chars": 35,
+      "lines": 2,
+      "size": 36,
+      "vw": 4.7,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.44,
+      "top": 919,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Pozostałe narzędzia.",
+      "words": 2,
+      "chars": 20,
+      "lines": 2,
+      "size": 36,
+      "vw": 4.7,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.36,
+      "top": 1929,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Wasz urlop. Wasz podział.",
+      "words": 4,
+      "chars": 25,
+      "lines": 2,
+      "size": 36,
+      "vw": 4.7,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.36,
+      "top": 2668,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Różne rodziny. Różne potrzeby.",
+      "words": 4,
+      "chars": 30,
+      "lines": 2,
+      "size": 36,
+      "vw": 4.7,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "right",
+      "widthRatio": 0.43,
+      "top": 3386,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Pytania i odpowiedzi.",
+      "words": 3,
+      "chars": 21,
+      "lines": 2,
+      "size": 36,
+      "vw": 4.7,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.41,
+      "top": 4493,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Centrum wiedzy.",
+      "words": 2,
+      "chars": 15,
+      "lines": 1,
+      "size": 36,
+      "vw": 4.7,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.41,
+      "top": 5192,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Nie musisz wiedzieć, od czego zacząć.",
+      "words": 6,
+      "chars": 37,
+      "lines": 3,
+      "size": 36,
+      "vw": 4.7,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.32,
+      "top": 5651,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 8,
+     "maxLines": 3,
+     "over2Lines": 1,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 4,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Source Sans 3",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      13,
+      14,
+      15,
+      16,
+      18,
+      20,
+      23,
+      36,
+      49
+     ],
+     "sizeCount": 9,
+     "notLoaded": [],
+     "body": {
+      "font": "Source Sans 3",
+      "size": 18,
+      "leading": 1.55,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 5.6
+     },
+     "measureChars": 58,
+     "max": {
+      "size": 49,
+      "vw": 6.4,
+      "font": "Source Sans 3",
+      "text": "Więcej czasudla rodziny."
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.01,
+     "centerShare": 0.02,
+     "smallText": 0
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#ffffff",
+     "bodyBgHsl": {
+      "h": 0,
+      "s": 0,
+      "l": 1
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 122,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#edf5ee",
+       "top": 2512,
+       "hsl": {
+        "h": 127,
+        "s": 0.29,
+        "l": 0.95
+       }
+      },
+      {
+       "color": "#007834",
+       "top": 5581,
+       "hsl": {
+        "h": 146,
+        "s": 1,
+        "l": 0.24
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#22372b",
+       "share": 0.7
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.12
+      },
+      {
+       "color": "#007834",
+       "share": 0.11
+      },
+      {
+       "color": "#405347",
+       "share": 0.06
+      },
+      {
+       "color": "#025a28",
+       "share": 0.02
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#025a28"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 6,
+     "inHero": 3,
+     "radius": "pill",
+     "height": 44,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Sprawdź świadczenia",
+      "Sprawdź przez formularz",
+      "Sprawdź w rozmowie"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 1,
+     "boxRadius": 12,
+     "squareMedia": 3,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [
+     {
+      "type": "img",
+      "ratio": 0.31
+     }
+    ],
+    "nav": {
+     "links": 2,
+     "fixed": true,
+     "height": 68,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "source sans 3"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 768,
+     "h": 1024
+    },
+    "pageH": 6387,
+    "margins": {
+     "left": 24,
+     "right": 30
+    },
+    "sections": [
+     {
+      "sel": "main#tresc.outline-none",
+      "tag": "main",
+      "top": 122,
+      "height": 5850,
+      "words": 728,
+      "media": 3,
+      "middle": 0,
+      "heading": {
+       "text": "Więcej czasu",
+       "size": 49,
+       "tag": "h1"
+      },
+      "left": 24,
+      "right": 24,
+      "textLeft": 24,
+      "textRight": 24,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.bg-secondary/50.text-sm",
+      "tag": "footer",
+      "top": 5971,
+      "height": 416,
+      "words": 77,
+      "media": 0,
+      "middle": 82,
+      "heading": {
+       "text": "Przewodnik",
+       "size": 18,
+       "tag": "h2"
+      },
+      "left": 24,
+      "right": 52,
+      "textLeft": 24,
+      "textRight": 52,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Więcej czasu dla rodziny.",
+      "size": 49,
+      "top": 154,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 24,
+      "n": 12
+     },
+     {
+      "x": 48,
+      "n": 10
+     },
+     {
+      "x": 407,
+      "n": 4
+     },
+     {
+      "x": 424,
+      "n": 4
+     }
+    ],
+    "leftBlocks": 30,
+    "bodySize": 18,
+    "stage": false,
+    "explains": true,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": null,
+   "consoleErrors": []
+  },
+  {
+   "width": 390,
+   "height": 844,
+   "load": "load",
+   "screens": 11,
+   "filled": [
+    0.8,
+    0.76,
+    0.88,
+    0.69,
+    0.88,
+    0.53,
+    0.63,
+    0.62,
+    0.67,
+    0.85,
+    0.97
+   ],
+   "motion": {
+    "elements": 40,
+    "css": 39,
+    "transitions": 0,
+    "scripted": 1,
+    "videos": 0,
+    "playingVideos": 0
+   },
+   "metrics": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "page": {
+     "height": 8949,
+     "screens": 10.6,
+     "words": 649,
+     "img": 4,
+     "video": 0,
+     "canvas": 0,
+     "svg": 35,
+     "sections": 8,
+     "horizontalOverflow": 0,
+     "overflowCulprits": [],
+     "uiFragments": 1,
+     "uiAbuse": false,
+     "realPictures": 4,
+     "videoCount": 0,
+     "uiPictures": 1,
+     "pictureSamples": [
+      "image?url=%2Fimages%2Fhero-rodzice-z-noworodkiem",
+      "image?url=%2Fimages%2Foczekiwanie-na-dziecko.jpg",
+      "image?url=%2Fimages%2Fbliskosc-z-dzieckiem.webp&",
+      "image?url=%2Fimages%2Frodzina-z-dzieckiem.jpg&w="
+     ],
+     "blendText": 0,
+     "sideScrollers": 0,
+     "brokenImages": [],
+     "emoji": [],
+     "videosNoPoster": 0
+    },
+    "hero": {
+     "text": "Więcej czasu dla rodziny.",
+     "words": 4,
+     "chars": 25,
+     "lines": 2,
+     "size": 43,
+     "vw": 11,
+     "font": "Source Sans 3",
+     "weight": 600,
+     "tracking": -0.035,
+     "leading": 1.02,
+     "upper": false,
+     "italic": false,
+     "mono": false,
+     "align": "left",
+     "position": "left",
+     "widthRatio": 0.55,
+     "top": 165,
+     "tag": "h1",
+     "kind": "heading"
+    },
+    "h1": {
+     "text": "Więcej czasu dla rodziny.",
+     "words": 4,
+     "lines": 2,
+     "size": 43,
+     "font": "Source Sans 3"
+    },
+    "headings": [
+     {
+      "text": "Więcej czasu dla rodziny.",
+      "words": 4,
+      "chars": 25,
+      "lines": 2,
+      "size": 43,
+      "vw": 11,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.02,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "left",
+      "widthRatio": 0.55,
+      "top": 165,
+      "tag": "h1",
+      "kind": "heading"
+     },
+     {
+      "text": "Wybierz sposób, który Ci odpowiada.",
+      "words": 5,
+      "chars": 35,
+      "lines": 2,
+      "size": 36,
+      "vw": 9.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 1220,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Sprawdź przez formularz",
+      "words": 3,
+      "chars": 23,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.78,
+      "top": 1559,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "Sprawdź w rozmowie",
+      "words": 3,
+      "chars": 18,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.78,
+      "top": 2026,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "Pozostałe narzędzia.",
+      "words": 2,
+      "chars": 20,
+      "lines": 1,
+      "size": 36,
+      "vw": 9.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 2647,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Oblicz wysokość świadczeń",
+      "words": 3,
+      "chars": 25,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.7,
+      "top": 3088,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "Zaplanuj urlopy rodzicielskie",
+      "words": 3,
+      "chars": 29,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.7,
+      "top": 3263,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "Sprawdź i przygotuj dokumenty",
+      "words": 4,
+      "chars": 29,
+      "lines": 2,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.7,
+      "top": 3467,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "Wasz urlop. Wasz podział.",
+      "words": 4,
+      "chars": 25,
+      "lines": 2,
+      "size": 36,
+      "vw": 9.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 3763,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Wasz czas z dzieckiem",
+      "words": 4,
+      "chars": 21,
+      "lines": 1,
+      "size": 23,
+      "vw": 5.9,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.025,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.52,
+      "top": 4290,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Różne rodziny. Różne potrzeby.",
+      "words": 4,
+      "chars": 30,
+      "lines": 2,
+      "size": 36,
+      "vw": 9.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 5467,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Anna",
+      "words": 1,
+      "chars": 4,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.78,
+      "top": 5687,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "Kasia",
+      "words": 1,
+      "chars": 5,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.78,
+      "top": 5898,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "Tomasz",
+      "words": 1,
+      "chars": 6,
+      "lines": 1,
+      "size": 24,
+      "vw": 6.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.2,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.78,
+      "top": 6133,
+      "tag": "h3",
+      "kind": "heading"
+     },
+     {
+      "text": "Pytania i odpowiedzi.",
+      "words": 3,
+      "chars": 21,
+      "lines": 2,
+      "size": 36,
+      "vw": 9.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 6492,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Centrum wiedzy.",
+      "words": 2,
+      "chars": 15,
+      "lines": 1,
+      "size": 36,
+      "vw": 9.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 7253,
+      "tag": "h2",
+      "kind": "heading"
+     },
+     {
+      "text": "Nie musisz wiedzieć, od czego zacząć.",
+      "words": 6,
+      "chars": 37,
+      "lines": 2,
+      "size": 36,
+      "vw": 9.2,
+      "font": "Source Sans 3",
+      "weight": 600,
+      "tracking": -0.035,
+      "leading": 1.08,
+      "upper": false,
+      "italic": false,
+      "mono": false,
+      "align": "left",
+      "position": "center",
+      "widthRatio": 0.9,
+      "top": 7700,
+      "tag": "h2",
+      "kind": "heading"
+     }
+    ],
+    "headingSummary": {
+     "count": 17,
+     "maxLines": 2,
+     "over2Lines": 0,
+     "statements": 0,
+     "centered": 0,
+     "medianWords": 3,
+     "mixedFontHeadings": 0
+    },
+    "type": {
+     "families": [
+      {
+       "family": "Source Sans 3",
+       "share": 1,
+       "mono": false
+      }
+     ],
+     "familyCount": 1,
+     "sizes": [
+      13,
+      14,
+      15,
+      16,
+      18,
+      20,
+      24,
+      36,
+      43
+     ],
+     "sizeCount": 9,
+     "notLoaded": [],
+     "body": {
+      "font": "Source Sans 3",
+      "size": 18,
+      "leading": 1.55,
+      "weight": 400,
+      "tracking": 0,
+      "contrast": 5.6
+     },
+     "measureChars": 34,
+     "max": {
+      "size": 43,
+      "vw": 11,
+      "font": "Source Sans 3",
+      "text": "Więcej czasudla rodziny."
+     },
+     "monoShare": 0,
+     "monoProseShare": 0,
+     "monoFamilies": [],
+     "monoSamples": [],
+     "microLabels": 0,
+     "microLabelShare": 0,
+     "microSamples": [],
+     "upperShare": 0.01,
+     "centerShare": 0.02,
+     "smallText": 0
+    },
+    "eyebrows": [],
+    "numbered": [],
+    "color": {
+     "bodyBg": "#ffffff",
+     "bodyBgHsl": {
+      "h": 0,
+      "s": 0,
+      "l": 1
+     },
+     "dark": false,
+     "sectionBgs": [
+      {
+       "color": "#ffffff",
+       "top": 131,
+       "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 1
+       }
+      },
+      {
+       "color": "#007834",
+       "top": 131,
+       "hsl": {
+        "h": 146,
+        "s": 1,
+        "l": 0.24
+       }
+      },
+      {
+       "color": "#edf5ee",
+       "top": 1493,
+       "hsl": {
+        "h": 127,
+        "s": 0.29,
+        "l": 0.95
+       }
+      }
+     ],
+     "textColors": [
+      {
+       "color": "#22372b",
+       "share": 0.7
+      },
+      {
+       "color": "#ffffff",
+       "share": 0.11
+      },
+      {
+       "color": "#007834",
+       "share": 0.11
+      },
+      {
+       "color": "#405347",
+       "share": 0.06
+      },
+      {
+       "color": "#025a28",
+       "share": 0.02
+      }
+     ],
+     "button": {
+      "bg": "#ffffff",
+      "hsl": {
+       "h": 0,
+       "s": 0,
+       "l": 1
+      },
+      "fg": "#025a28"
+     },
+     "lowContrast": []
+    },
+    "buttons": {
+     "count": 5,
+     "inHero": 2,
+     "radius": "pill",
+     "height": 54,
+     "withShadow": 0,
+     "withGradient": 0,
+     "mono": 0,
+     "upper": 0,
+     "heroLabels": [
+      "Sprawdź przez formularz",
+      "Sprawdź w rozmowie"
+     ]
+    },
+    "surfaces": {
+     "shadowStatic": 0,
+     "shadowOverlay": 0,
+     "shadowSamples": [],
+     "gradients": 0,
+     "scrims": 0,
+     "gradientSamples": [],
+     "gradientText": 0,
+     "hairlines": 0,
+     "hairlineSamples": [],
+     "outlinedBoxes": 0,
+     "dashed": 0,
+     "blurred": 0,
+     "roundedBoxes": 1,
+     "boxRadius": 12,
+     "squareMedia": 4,
+     "roundedMedia": 0,
+     "mediaRadius": 0,
+     "textShadow": 0,
+     "cardRows": []
+    },
+    "heroMedia": [
+     {
+      "type": "img",
+      "ratio": 0.15
+     }
+    ],
+    "nav": {
+     "links": 1,
+     "fixed": true,
+     "height": 68,
+     "floatingPill": false,
+     "blur": false
+    },
+    "fontsLoaded": [
+     "source sans 3"
+    ]
+   },
+   "layout": {
+    "viewport": {
+     "w": 390,
+     "h": 844
+    },
+    "pageH": 8949,
+    "margins": {
+     "left": 20,
+     "right": 20
+    },
+    "sections": [
+     {
+      "sel": "main#tresc.outline-none",
+      "tag": "main",
+      "top": 131,
+      "height": 8032,
+      "words": 728,
+      "media": 4,
+      "middle": 0,
+      "heading": {
+       "text": "Więcej czasu",
+       "size": 43,
+       "tag": "h1"
+      },
+      "left": 14,
+      "right": 14,
+      "textLeft": 20,
+      "textRight": 25,
+      "fullBleed": false,
+      "footer": false,
+      "hero": true,
+      "continues": false,
+      "pinned": false
+     },
+     {
+      "sel": "footer.bg-secondary/50.text-sm",
+      "tag": "footer",
+      "top": 8163,
+      "height": 786,
+      "words": 74,
+      "media": 0,
+      "middle": 0,
+      "heading": {
+       "text": "Przewodnik",
+       "size": 18,
+       "tag": "h2"
+      },
+      "left": 20,
+      "right": 32,
+      "textLeft": 20,
+      "textRight": 32,
+      "fullBleed": false,
+      "footer": true,
+      "hero": false,
+      "continues": false,
+      "pinned": false
+     }
+    ],
+    "gaps": [],
+    "h1s": [
+     {
+      "text": "Więcej czasu dla rodziny.",
+      "size": 43,
+      "top": 165,
+      "firstScreen": true
+     }
+    ],
+    "edgeText": [],
+    "edges": [
+     {
+      "x": 20,
+      "n": 19
+     },
+     {
+      "x": 40,
+      "n": 12
+     }
+    ],
+    "leftBlocks": 31,
+    "bodySize": 18,
+    "stage": false,
+    "explains": true,
+    "slivers": [],
+    "voidShare": 0,
+    "voidBox": null
+   },
+   "app": null,
+   "consoleErrors": []
+  }
+ ],
+ "findings": [
+  {
+   "level": "WARN",
+   "id": "no-footage",
+   "width": 1440,
+   "message": "No video anywhere on the page.",
+   "fix": "Look for one honest clip with scripts/assets.mjs --video (the place, the material, the process) and use it as a muted loop with a poster frame. Defend its absence only if no clip fits the subject."
+  },
+  {
+   "level": "WARN",
+   "id": "off-centre",
+   "width": 1440,
+   "message": "The margins differ: 84px on the left, 116px on the right, at 1440px.",
+   "fix": "Put the navigation and the content on one pair of margins; check for padding on one side only, a scrollbar gutter, or a header on another inset than the page."
+  },
+  {
+   "level": "FAIL",
+   "id": "headline-lines",
+   "width": 768,
+   "message": "1 headline(s) wrap past two lines at 768px: \"Nie musisz wiedzieć, od czego zacząć.\" → 3 lines (6 words, 36px)",
+   "fix": "Cut words first (a headline is a title, not a sentence). Then give it a wider measure. Lower the size only as a last resort and never below the scale you chose. A real statement paragraph belongs in a <p> or <blockquote> at 32px or less."
+  },
+  {
+   "level": "WARN",
+   "id": "grey-body",
+   "width": 768,
+   "message": "The running text is a soft grey on its ground (5.6:1).",
+   "fix": "Set body copy in the full ink (7:1 or more). Keep the muted ink for secondary notes; pages read thin and unfinished when everything is grey.",
+   "alsoAt": [
+    390
+   ]
+  }
+ ],
+ "images": [
+  {
+   "viewport": "desktop",
+   "width": 1440,
+   "fold": "/home/t3code/.t3/worktrees/projekt/feature-c8449d45-bc4448778b6c7a34/.taste-skill/before/desktop-fold.jpg",
+   "pages": [
+    "/home/t3code/.t3/worktrees/projekt/feature-c8449d45-bc4448778b6c7a34/.taste-skill/before/desktop-page-01.jpg",
+    "/home/t3code/.t3/worktrees/projekt/feature-c8449d45-bc4448778b6c7a34/.taste-skill/before/desktop-page-02.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "tablet",
+   "width": 768,
+   "fold": "/home/t3code/.t3/worktrees/projekt/feature-c8449d45-bc4448778b6c7a34/.taste-skill/before/tablet-fold.jpg",
+   "pages": [
+    "/home/t3code/.t3/worktrees/projekt/feature-c8449d45-bc4448778b6c7a34/.taste-skill/before/tablet-page-01.jpg",
+    "/home/t3code/.t3/worktrees/projekt/feature-c8449d45-bc4448778b6c7a34/.taste-skill/before/tablet-page-02.jpg"
+   ],
+   "film": []
+  },
+  {
+   "viewport": "mobile",
+   "width": 390,
+   "fold": "/home/t3code/.t3/worktrees/projekt/feature-c8449d45-bc4448778b6c7a34/.taste-skill/before/mobile-fold.jpg",
+   "pages": [
+    "/home/t3code/.t3/worktrees/projekt/feature-c8449d45-bc4448778b6c7a34/.taste-skill/before/mobile-page-01.jpg",
+    "/home/t3code/.t3/worktrees/projekt/feature-c8449d45-bc4448778b6c7a34/.taste-skill/before/mobile-page-02.jpg"
+   ],
+   "film": []
+  }
+ ]
+}
