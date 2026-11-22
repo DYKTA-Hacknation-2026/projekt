@@ -66,15 +66,15 @@ export const home = {
   secondaryCta: "Sprawdź w rozmowie",
   trust: ["Bez logowania", "Bez numeru PESEL", "Źródła przy każdym wyniku"],
   methods: {
-    title: "Wybierz sposób.",
-    lead: "Odpowiedz na pytania w formularzu lub opisz swoją sytuację asystentowi. Wybierz, jak wolisz zacząć.",
+    title: "Wybierz sposób, który Ci odpowiada",
+    lead: "Nie musisz znać przepisów ani wiedzieć, od czego zacząć. Obie ścieżki prowadzą do konkretnych kolejnych kroków. Formularz porządkuje Twoje dane, a rozmowa pomaga zrozumieć przepisy i źródła.",
     equalityNote:
       "Obie metody pomagają przeanalizować Twoją sytuację i potencjalne uprawnienia. Różni się forma: uporządkowane pytania albo swobodna rozmowa.",
     form: {
       label: "Formularz",
       title: "Sprawdź przez formularz",
       description:
-        "Przejdź przez pytania o rodzinę, pracę i ubezpieczenie. Otrzymasz podsumowanie i listę kolejnych kroków.",
+        "Odpowiedz na kilka uporządkowanych pytań i poznaj swoją sytuację. Na końcu powstaje sprawa demo z listą kolejnych kroków.",
       bullets: [
         "Pytania o sytuację rodzinną, pracę i ubezpieczenie.",
         "Podsumowanie danych przed zapisaniem sprawy.",
@@ -88,7 +88,7 @@ export const home = {
       label: "Rozmowa",
       title: "Sprawdź w rozmowie",
       description:
-        "Opisz swoją sytuację własnymi słowami. Dopytaj o urlopy, świadczenia i przepisy, na których opiera się odpowiedź.",
+        "Opowiedz asystentowi o swojej sytuacji i przejdź przez analizę w formie rozmowy. Asystent korzysta ze źródeł i podpowiada kolejne kroki.",
       bullets: [
         "Opisujesz sytuację tak, jak jest Ci wygodnie.",
         "Każda odpowiedź ma źródło i zastrzeżenie AI.",

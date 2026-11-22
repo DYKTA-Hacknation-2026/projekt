@@ -12,10 +12,10 @@ const photos = [
     licenseUrl: "https://www.pexels.com/license/",
   },
   {
-    title: "Father and Mother Holding Baby Son",
-    author: "Gisele Seidel",
+    title: "Couple Holding Baby in Arms",
+    author: "Dasha Halepova",
     source:
-      "https://www.pexels.com/photo/father-and-mother-holding-baby-son-20729677/",
+      "https://www.pexels.com/photo/couple-holding-baby-in-arms-16852510/",
     license: "Pexels",
     licenseUrl: "https://www.pexels.com/license/",
   },
@@ -27,12 +27,12 @@ const photos = [
     licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
   },
   {
-    title: "Father Baby Child",
-    author: "rawpixel",
+    title: "Baby Holding Its Father's Finger",
+    author: "Prestige by Nature",
     source:
-      "https://www.rawpixel.com/image/5917055/image-public-domain-hand-people",
-    license: "CC0",
-    licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+      "https://www.pexels.com/photo/baby-holding-its-fathers-finger-21050251/",
+    license: "Pexels",
+    licenseUrl: "https://www.pexels.com/license/",
   },
 ]
 

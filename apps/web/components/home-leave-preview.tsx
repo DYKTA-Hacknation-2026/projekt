@@ -70,24 +70,52 @@ export function HomeLeavePreview({ items }: { items: HomePlanItem[] }) {
               <div className="leave-preview__track">
                 {periods
                   .filter((item) => item.owner === owner)
-                  .map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`leave-preview__period leave-preview__period--${item.kind}`}
-                      style={{
-                        left: `${left(item.start)}%`,
-                        width: `${((item.days ?? 0) / duration) * 100}%`,
-                      }}
-                      aria-pressed={selectedId === item.id}
-                      aria-controls="home-plan-detail"
-                      aria-label={`${item.title} ${item.days! / 7} tyg. ${ownerLabel[owner]}. Pokaż szczegóły`}
-                      onClick={() => setSelectedId(item.id)}
-                    >
-                      <span>{item.title}</span>{" "}
-                      <span>{item.days! / 7} tyg.</span>
-                    </button>
-                  ))}
+                  .map((item) => {
+                    const weeks = (item.days ?? 0) / 7
+                    const offset = left(item.start)
+                    const width = ((item.days ?? 0) / duration) * 100
+                    // Very short periods keep their true width; the label moves
+                    // outside the bar so the title never has to be truncated.
+                    const isCompact = width < 16
+                    const labelBefore = offset + width > 76
+
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className={[
+                          "leave-preview__period",
+                          `leave-preview__period--${item.kind}`,
+                          isCompact
+                            ? "leave-preview__period--compact"
+                            : undefined,
+                          labelBefore
+                            ? "leave-preview__period--label-start"
+                            : undefined,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                        style={{
+                          left: `${offset}%`,
+                          width: `calc(${width}% - var(--leave-period-gap))`,
+                        }}
+                        aria-pressed={selectedId === item.id}
+                        aria-controls="home-plan-detail"
+                        onClick={() => setSelectedId(item.id)}
+                      >
+                        <span className="sr-only">{ownerLabel[owner]}: </span>
+                        <span className="leave-preview__period-label">
+                          <span className="leave-preview__period-title">
+                            {item.title}
+                          </span>
+                          <span className="leave-preview__period-days">
+                            {weeks} tyg.
+                          </span>
+                        </span>
+                        <span className="sr-only"> Pokaż szczegóły</span>
+                      </button>
+                    )
+                  })}
               </div>
             </div>
           ))}
@@ -100,12 +128,14 @@ export function HomeLeavePreview({ items }: { items: HomePlanItem[] }) {
                   <button
                     key={item.id}
                     type="button"
+                    className="leave-preview__deadline"
                     aria-pressed={selectedId === item.id}
                     aria-controls="home-plan-detail"
                     onClick={() => setSelectedId(item.id)}
                   >
                     <span>{dateLabel(item.start)}</span>
                     {item.title}
+                    <span className="sr-only"> Pokaż szczegóły</span>
                   </button>
                 ))}
             </div>
