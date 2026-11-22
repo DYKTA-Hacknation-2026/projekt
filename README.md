@@ -16,6 +16,7 @@ planer urlopów, analizę dokumentów, centrum wiedzy i asystenta rozmownego.
 
 - **[Instrukcja uruchomienia demo](#jak-obejrzeć-system-w-działaniu)**
 - [Czym jest ten projekt](#czym-jest-ten-projekt)
+- [Wykorzsyatnie AI](#wykorzystani-ai)
 - [Co jest prawdziwe, a co symulowane](#co-jest-prawdziwe-a-co-symulowane)
 - [Najważniejsze funkcje](#najważniejsze-funkcje)
 - [Bezpieczeństwo i prywatność](#bezpieczeństwo-i-prywatność)
@@ -46,6 +47,10 @@ Aplikacja składa się z dwóch projektów Next.js (web i REST API) oraz wspóln
 pakietów domenowych. Reguły prawne są kodem, a ich parametry — wersjonowanymi
 danymi. Dzięki temu ten sam zestaw danych zawsze daje ten sam wynik, a każdą
 zmianę parametrów można prześledzić w historii.
+
+## Wykorzystanie AI
+
+AI zostało wykorzystane przy tworzeniu kodu aplikacji oraz jest używane w funkcjonalności [Asystent AI](#4-rozmowa-z-asystentem).
 
 ## Jak obejrzeć system w działaniu
 
