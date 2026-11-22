@@ -17,9 +17,9 @@ export const LEGAL_DISCLOSURE =
   "Materiał informacyjny. Ostateczna decyzja należy do ZUS lub płatnika składek. Przed złożeniem wniosku sprawdź aktualne przepisy."
 
 export const navItems = [
-  { href: "/panel", label: "Moja sytuacja" },
-  { href: "/kalkulator", label: "Świadczenia" },
-  { href: "/wiedza", label: "Wiedza" },
+  { href: "/panel", label: "Panel sprawy" },
+  { href: "/kalkulator", label: "Kalkulator" },
+  { href: "/wiedza", label: "Centrum wiedzy" },
   { href: "/asystent", label: "Asystent" },
   { href: "/dokumenty", label: "Dokumenty" },
   { href: "/os-czasu", label: "Plan rodzicielstwa" },
