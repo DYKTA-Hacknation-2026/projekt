@@ -60,11 +60,50 @@ export const statusLabels = {
 
 export const home = {
   eyebrow: "Przewodnik dla rodziców",
-  title: "Spokojnie zaplanuj czas po narodzinach dziecka.",
-  lead: "Sprawdź świadczenia, poznaj swoje prawa i uporządkuj formalności związane z rodzicielstwem w jednym miejscu.",
-  primaryCta: "Rozpocznij analizę",
-  secondaryCta: "Zobacz przykładowe sprawy",
+  title: "Więcej czasu dla rodziny.",
+  lead: "Sprawdź, jakie świadczenia i urlopy mogą Ci przysługiwać. Przeanalizuj swoją sytuację krok po kroku lub porozmawiaj z naszym asystentem.",
+  primaryCta: "Sprawdź przez formularz",
+  secondaryCta: "Sprawdź w rozmowie",
   trust: ["Bez logowania", "Bez numeru PESEL", "Źródła przy każdym wyniku"],
+  methods: {
+    title: "Wybierz sposób, który Ci odpowiada.",
+    lead: "Nie musisz znać przepisów ani wiedzieć, od czego zacząć. Obie ścieżki prowadzą do konkretnych kolejnych kroków. Formularz porządkuje Twoje dane, a rozmowa pomaga zrozumieć przepisy i źródła.",
+    equalityNote:
+      "Obie metody pomagają przeanalizować Twoją sytuację i potencjalne uprawnienia. Różni się forma: uporządkowane pytania albo swobodna rozmowa.",
+    form: {
+      label: "Formularz",
+      title: "Sprawdź przez formularz",
+      description:
+        "Odpowiedz na kilka uporządkowanych pytań i poznaj swoją sytuację. Na końcu powstaje sprawa demo z listą kolejnych kroków.",
+      bullets: [
+        "Pytania o sytuację rodzinną, pracę i ubezpieczenie.",
+        "Podsumowanie danych przed zapisaniem sprawy.",
+        "Przejście do kalkulatora i planera urlopów.",
+      ],
+      cta: "Sprawdź przez formularz",
+      href: "/start",
+      meta: "4 kroki · bez PESEL-u · bez konta",
+    },
+    chat: {
+      label: "Rozmowa",
+      title: "Sprawdź w rozmowie",
+      description:
+        "Opowiedz asystentowi o swojej sytuacji i przejdź przez analizę w formie rozmowy. Asystent korzysta ze źródeł i podpowiada kolejne kroki.",
+      bullets: [
+        "Opisujesz sytuację tak, jak jest Ci wygodnie.",
+        "Każda odpowiedź ma źródło i zastrzeżenie AI.",
+        "Asystent wskazuje, czego jeszcze brakuje i co zrobić dalej.",
+      ],
+      cta: "Sprawdź w rozmowie",
+      href: "/asystent",
+      meta: "Rozmowa po polsku · źródła przy odpowiedzi",
+    },
+    note: "Asystent nie wydaje decyzji o uprawnieniach i nie wylicza kwot samodzielnie. Konkretne wyliczenie powstaje w kalkulatorze, który korzysta z wersjonowanych reguł.",
+  },
+  tools: {
+    title: "Pozostałe narzędzia.",
+    lead: "Masz już ogólny obraz? Przejdź do konkretów — bez tworzenia nowego konta i bez powtarzania tych samych danych.",
+  },
   benefits: [
     {
       title: "Jeden plan dla obojga rodziców",
@@ -81,39 +120,25 @@ export const home = {
   ],
   paths: [
     {
-      href: "/panel",
-      tone: "featured",
-      title: "Sprawdź swoje prawa",
-      description:
-        "Zobacz, do jakich świadczeń i urlopów wstępnie kwalifikujesz się — dla obojga rodziców.",
-    },
-    {
       href: "/kalkulator",
       tone: "default",
-      title: "Oblicz świadczenia",
+      title: "Oblicz wysokość świadczeń",
       description:
         "Policz macierzyński, rodzicielski i ojcowski wraz z wariantami, założeniami i źródłami.",
     },
     {
       href: "/os-czasu",
       tone: "default",
-      title: "Zaplanuj urlopy",
+      title: "Zaplanuj urlopy rodzicielskie",
       description:
         "Ułóż plan dla dwojga rodziców i sprawdź, jak zmienia go inny termin porodu.",
     },
     {
       href: "/dokumenty",
       tone: "default",
-      title: "Przygotuj dokumenty",
+      title: "Sprawdź i przygotuj dokumenty",
       description:
         "Poznaj potrzebne formularze i przeanalizuj dokumenty ZUS bez zgadywania.",
-    },
-    {
-      href: "/asystent",
-      tone: "dark",
-      title: "Zapytaj asystenta",
-      description:
-        "Zadaj pytanie po polsku. Każda odpowiedź wskazuje źródło i jasno mówi, gdy brakuje danych.",
     },
   ],
   steps: [
@@ -153,27 +178,31 @@ export const home = {
     cta: "Zobacz, co jest prawdziwe",
   },
   finalCta: {
-    eyebrow: "Start w 3 minuty",
-    title: "Zobacz, jak wygląda twoja sprawa po wpisaniu kilku danych.",
-    text: "Bez konta i bez PESEL-u. W każdej chwili możesz wrócić do kalkulatora i porównać warianty.",
-    primary: "Rozpocznij analizę",
-    secondary: "O projekcie",
+    eyebrow: "Zacznij od jednego pytania",
+    title: "Nie musisz wiedzieć, od czego zacząć.",
+    text: "Opowiedz nam o swojej sytuacji, a pomożemy Ci zrozumieć dostępne możliwości i przejść przez formalności.",
+    form: "Sprawdź przez formularz",
+    chat: "Sprawdź w rozmowie",
+    note: "Obie drogi prowadzą do tego samego kalkulatora i tych samych zastrzeżeń. Wybierz tę, która jest dla Ciebie wygodniejsza.",
   },
   personas: [
     {
       name: "Anna",
+      story: "Pracuję na etacie i spodziewam się dziecka.",
       role: "Umowa o pracę, 8 000 zł brutto",
       scenario: "S-01 / S-10",
       note: "Poród w terminie, jedno dziecko, 2 tygodnie macierzyńskiego przed porodem.",
     },
     {
       name: "Kasia",
+      story: "Moja umowa zakończyła się przed porodem.",
       role: "Zlecenie zakończone przed porodem",
       scenario: "S-18",
       note: "Brak ubezpieczenia chorobowego w dniu porodu — ryzyko widoczne, zanim podejmiesz decyzję.",
     },
     {
       name: "Tomasz",
+      story: "Chcę zaplanować urlop razem z partnerką.",
       role: "Umowa o pracę, 6 000 zł brutto",
       scenario: "S-10 / S-12",
       note: "9 tygodni urlopu rodzicielskiego zarezerwowanych dla drugiego rodzica.",
@@ -237,7 +266,8 @@ export const documents = {
   consentLabel: "Zgadzam się na przetwarzanie dokumentu w celu odczytu pól",
   consentHelp:
     "Dokument może zawierać dane o zdrowiu (ciąża). Analizujemy go lokalnie, bez wysyłania do zewnętrznego dostawcy AI. Zgoda jest wymagana do analizy (RODO art. 9 ust. 2 lit. a).",
-  aiAssistLabel: "Pozwól AI zaproponować brakujące pola (dane osobowe są usuwane przed wysłaniem)",
+  aiAssistLabel:
+    "Pozwól AI zaproponować brakujące pola (dane osobowe są usuwane przed wysłaniem)",
   analyze: "Analizuj dokument",
   analyzing: "Analizuję…",
   errorTitle: "Nie udało się przeanalizować",
@@ -276,7 +306,8 @@ export const documents = {
   needsReviewBadge: "Wymaga potwierdzenia",
   confirmedBadge: "Potwierdzono",
   sampleBadge: "Przykład syntetyczny",
-  fieldsCaption: "Pola odczytane z dokumentu. Popraw wartości i potwierdź każde pole wymagane.",
+  fieldsCaption:
+    "Pola odczytane z dokumentu. Popraw wartości i potwierdź każde pole wymagane.",
   colField: "Pole",
   colValue: "Wartość",
   colSource: "Źródło",
@@ -305,13 +336,19 @@ export const documents = {
   deleted: "Dokument usunięto.",
   localNote:
     "Analiza jest deterministyczna i wykonywana na serwerze aplikacji. Plik nie jest wysyłany do zewnętrznego dostawcy AI.",
-  aiNote: "Część pól zaproponowało AI na tekście bez danych osobowych. Sprawdź je szczególnie uważnie.",
+  aiNote:
+    "Część pól zaproponowało AI na tekście bez danych osobowych. Sprawdź je szczególnie uważnie.",
   resultTitle: "Wynik dla potwierdzonych danych",
   verdict: "Uprawnienie",
   amount: "Kwota brutto",
   basis: "Podstawa wymiaru",
   payer: "Kto wypłaca",
-  payers: { EMPLOYER: "pracodawca (płatnik)", ZUS: "ZUS", UNKNOWN: "do ustalenia", NONE: "—" },
+  payers: {
+    EMPLOYER: "pracodawca (płatnik)",
+    ZUS: "ZUS",
+    UNKNOWN: "do ustalenia",
+    NONE: "—",
+  },
   statuses: {
     ELIGIBLE: "przysługuje",
     CONDITIONAL: "przysługuje warunkowo",
@@ -323,8 +360,14 @@ export const documents = {
   missingTitle: "Brakuje danych do obliczenia",
   notesTitle: "Uwagi do mapowania",
   checklistTitle: "Wymagane dokumenty",
-  checklistLead: "Lista zapisana dla tej sesji. Miejsce złożenia zależy od tego, kto wypłaca zasiłek.",
-  checklistCols: { document: "Dokument", who: "Kto przygotowuje", where: "Gdzie złożyć", when: "Termin" },
+  checklistLead:
+    "Lista zapisana dla tej sesji. Miejsce złożenia zależy od tego, kto wypłaca zasiłek.",
+  checklistCols: {
+    document: "Dokument",
+    who: "Kto przygotowuje",
+    where: "Gdzie złożyć",
+    when: "Termin",
+  },
   preparedBy: {
     YOU: "Ty",
     OTHER_PARENT: "drugi rodzic",
@@ -348,7 +391,10 @@ export const documents = {
   comparisonTitle: "Porównanie z oczekiwanym wynikiem (tryb demo)",
   comparisonOk: "Zgodne z oczekiwanym wynikiem",
   comparisonFail: "Niezgodne z oczekiwanym wynikiem",
-  parents: { MOTHER: "matka", FATHER: "ojciec", BOTH: "oboje" } as Record<string, string>,
+  parents: { MOTHER: "matka", FATHER: "ojciec", BOTH: "oboje" } as Record<
+    string,
+    string
+  >,
 } as const
 
 export const timeline = {

@@ -399,7 +399,7 @@ function MobilePeriodItem({
             {periodStatusLabel(period, today)}
           </span>
         </span>
-        <span className="mt-0.5 block text-xs opacity-90">
+        <span className="mt-0.5 block text-xs">
           {formatDateRange(period.start, period.end)}
         </span>
         <span className="mt-0.5 block text-xs">
