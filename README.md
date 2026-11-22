@@ -53,11 +53,6 @@ required for the standard local setup. To override values, create:
 - `packages/db/.env` for migration/seed/smoke scripts.
 - `packages/rag/.env` for knowledge-base scripts (`kb:*`).
 
-To disable dark mode, set `NEXT_PUBLIC_DISABLE_DARK_MODE=true` in
-`apps/web/.env.local`. This forces light mode even with a saved dark preference,
-hides the theme toggle, and disables the `D` shortcut. The default is `false`.
-Restart development or rebuild production after changing this flag.
-
 `.env.example` lists every supported variable. Never commit a real `.env` or
 production secret. The two apps must share the same `SESSION_SECRET` and
 `ADMIN_GATE_ENABLED` values. The API defaults to `http://127.0.0.1:3001` locally.
@@ -104,6 +99,7 @@ DATABASE_URL=postgresql://zpr:zpr_local_password@localhost:5540/zpr pnpm --filte
 | `/wiedza/slownik` | Glossary with alphabetical filter                                       |
 | `/wiedza/zrodla` | Registry of official sources and verification dates                      |
 | `/admin/wiedza`  | Knowledge content inventory, status control and review dates             |
+| `/admin/reguly`  | Legal parameter editor: new immutable versions, validation and history    |
 | `/o-projekcie`   | What is real, what is simulated, legal caveats, and architecture          |
 | `/admin`         | Admin skeleton: counts, rules, sources, ingestion jobs                    |
 | `/admin/login`   | Demo admin login (only enforced when `ADMIN_GATE_ENABLED=true`)           |
@@ -478,10 +474,16 @@ stable rule codes (`LR-123`, `LR-127`, `LR-130`, `LR-112`, `LR-133`, `LR-100`,
 `LR-132`, `LR-134`, `LR-101`, `LR-102`) and validated before use. A missing or malformed parameter
 returns a `503` problem response instead of silently using an old value.
 
-Until the admin editing UI lands (FR-ADM-01), change a value directly in the
-active rule version and re-run the app; `pnpm --filter @zpr/db db:seed` upserts
-the seeded versions and also adds `LR-134`. Results store the rule set version
-and pin `rule_version_id` of the amount rule (`LR-130`).
+Change a value in `/admin/reguly` (FR-ADM-01). Pick a rule, edit its fields, add
+the effective date and source, and save: the panel appends a new immutable
+version and closes the previous one the day before. The API validates every
+value against the shared field catalogue
+(`packages/contracts/src/rules-admin.ts`) and runs the candidate through
+`buildRuleSet` before writing, so a save cannot publish an inconsistent set.
+Calculations pin the rule version and still read old values for old dates.
+Re-running `pnpm --filter @zpr/db db:seed` no longer overwrites existing
+versions, so admin edits survive a seed. Results store the rule set version and
+pin `rule_version_id` of the amount rule (`LR-130`).
 
 ## Scripts
 
@@ -612,7 +614,8 @@ the same `evaluate`. See [docs/calculation-engine.md](docs/calculation-engine.md
   available: extraction is verified on synthetic PDFs only. OCR needs
   `pdftoppm` + `tesseract -l pol` and is off by default; parsing runs in-process
   with a timeout (no separate worker yet).
-- The admin area is a read-only skeleton with a demo login.
+- The admin area has a demo login, the legal parameter editor and the knowledge
+  inventory; edits are audited by the version history, not by user accounts.
 - Government integrations, applications, and PZ/eZUS flows are not implemented.
   `/dane` simulates them locally; no request leaves the application.
 - The data-retrieval session is demo-grade: consent and provenance are recorded,

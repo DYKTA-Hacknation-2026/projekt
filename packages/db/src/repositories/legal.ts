@@ -1,11 +1,13 @@
-import { and, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm"
+import { and, asc, desc, eq, gte, isNull, lte, or, sql } from "drizzle-orm"
 
 import type { Database } from "../client"
 import { legalRuleVersions, legalRules } from "../schema"
 import type {
+  CreateLegalRuleVersionInput,
   LegalRepository,
   LegalRuleParameterRecord,
   LegalRuleSummary,
+  LegalRuleVersionDetail,
 } from "./interfaces"
 
 export class DrizzleLegalRepository implements LegalRepository {
@@ -76,4 +78,125 @@ export class DrizzleLegalRepository implements LegalRepository {
       parameters: row.parameters,
     }))
   }
+
+  async listRuleVersionsDetailed(): Promise<LegalRuleVersionDetail[]> {
+    const rows = await this.db
+      .select({
+        id: legalRuleVersions.id,
+        ruleId: legalRules.id,
+        code: legalRules.code,
+        title: legalRules.title,
+        description: legalRules.description,
+        category: legalRules.category,
+        legalReference: legalRules.legalReference,
+        version: legalRuleVersions.version,
+        effectiveFrom: legalRuleVersions.effectiveFrom,
+        effectiveTo: legalRuleVersions.effectiveTo,
+        verificationStatus: legalRuleVersions.verificationStatus,
+        parameters: legalRuleVersions.parameters,
+        sourceUrl: legalRuleVersions.sourceUrl,
+        notes: legalRuleVersions.notes,
+        createdAt: legalRuleVersions.createdAt,
+      })
+      .from(legalRuleVersions)
+      .innerJoin(legalRules, eq(legalRules.id, legalRuleVersions.ruleId))
+      .where(eq(legalRules.isActive, true))
+      .orderBy(
+        asc(legalRules.code),
+        desc(legalRuleVersions.effectiveFrom),
+        desc(legalRuleVersions.version)
+      )
+
+    return rows.map(toDetail)
+  }
+
+  async createRuleVersion(
+    input: CreateLegalRuleVersionInput
+  ): Promise<LegalRuleVersionDetail> {
+    return this.db.transaction(async (tx) => {
+      const [latest] = await tx
+        .select()
+        .from(legalRuleVersions)
+        .where(eq(legalRuleVersions.ruleId, input.ruleId))
+        .orderBy(desc(legalRuleVersions.effectiveFrom))
+        .limit(1)
+        .for("update")
+
+      if (
+        latest &&
+        input.closePreviousTo &&
+        (!latest.effectiveTo || latest.effectiveTo >= input.closePreviousTo)
+      ) {
+        await tx
+          .update(legalRuleVersions)
+          .set({ effectiveTo: input.closePreviousTo })
+          .where(eq(legalRuleVersions.id, latest.id))
+      }
+
+      const [inserted] = await tx
+        .insert(legalRuleVersions)
+        .values({
+          ruleId: input.ruleId,
+          version: input.version,
+          effectiveFrom: input.effectiveFrom,
+          parameters: input.parameters,
+          verificationStatus: input.verificationStatus,
+          sourceUrl: input.sourceUrl,
+          notes: input.notes,
+        })
+        .returning()
+
+      if (!inserted) {
+        throw new Error("Nie udało się zapisać nowej wersji reguły.")
+      }
+
+      const [rule] = await tx
+        .select()
+        .from(legalRules)
+        .where(eq(legalRules.id, input.ruleId))
+        .limit(1)
+
+      if (!rule) {
+        throw new Error("Nie znaleziono reguły dla zapisanej wersji.")
+      }
+
+      return {
+        id: inserted.id,
+        ruleId: rule.id,
+        code: rule.code,
+        title: rule.title,
+        description: rule.description,
+        category: rule.category,
+        legalReference: rule.legalReference,
+        version: inserted.version,
+        effectiveFrom: inserted.effectiveFrom,
+        effectiveTo: inserted.effectiveTo,
+        verificationStatus: inserted.verificationStatus,
+        parameters: inserted.parameters,
+        sourceUrl: inserted.sourceUrl,
+        notes: inserted.notes,
+        createdAt: inserted.createdAt,
+      }
+    })
+  }
+}
+
+function toDetail(row: {
+  id: string
+  ruleId: string
+  code: string
+  title: string
+  description: string
+  category: string
+  legalReference: string
+  version: string
+  effectiveFrom: string
+  effectiveTo: string | null
+  verificationStatus: "VERIFIED" | "UNVERIFIED" | "PROPOSED"
+  parameters: Record<string, unknown>
+  sourceUrl: string | null
+  notes: string | null
+  createdAt: Date
+}): LegalRuleVersionDetail {
+  return { ...row }
 }

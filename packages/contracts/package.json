@@ -20,7 +20,8 @@
     "./assistant-tools": "./src/assistant-tools.ts",
     "./engine": "./src/engine.ts",
     "./case-profile": "./src/case-profile.ts",
-    "./content": "./src/content.ts"
+    "./content": "./src/content.ts",
+    "./rules-admin": "./src/rules-admin.ts"
   },
   "scripts": {
     "lint": "eslint",

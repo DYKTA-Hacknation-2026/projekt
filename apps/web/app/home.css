@@ -689,6 +689,61 @@
     font-size: 16px;
   }
 }
+@keyframes home-heading {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(12px);
+  }
+  to {
+    clip-path: inset(0);
+    transform: translateY(0);
+  }
+}
+@keyframes home-copy {
+  from {
+    opacity: 1;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes home-photo {
+  from {
+    opacity: 0.6;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes home-drift {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.045);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home-arrived[data-reveal="heading"] {
+    animation: home-heading 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .home-arrived[data-reveal="copy"] {
+    animation: home-copy 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .home-arrived[data-reveal="item"] {
+    animation: home-copy 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .home-arrived[data-reveal="photo"] {
+    animation: home-photo 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .home-hero__photo img {
+    animation: home-drift 16s ease-in-out alternate infinite;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .home *,
   .home *::before,

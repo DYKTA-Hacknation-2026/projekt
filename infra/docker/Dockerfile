@@ -33,8 +33,6 @@ COPY --from=deps /app/packages/domain/node_modules ./packages/domain/node_module
 COPY --from=deps /app/packages/data-sources/node_modules ./packages/data-sources/node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-ARG NEXT_PUBLIC_DISABLE_DARK_MODE=false
-ENV NEXT_PUBLIC_DISABLE_DARK_MODE=$NEXT_PUBLIC_DISABLE_DARK_MODE
 RUN pnpm build
 
 FROM base AS runner

@@ -565,17 +565,7 @@ async function seed(): Promise<void> {
               : null,
         }))
       )
-      .onConflictDoUpdate({
-        target: legalRuleVersions.id,
-        set: {
-          version: sql`excluded.version`,
-          effectiveFrom: sql`excluded.effective_from`,
-          parameters: sql`excluded.parameters`,
-          verificationStatus: sql`excluded.verification_status`,
-          sourceUrl: sql`excluded.source_url`,
-          notes: sql`excluded.notes`,
-        },
-      })
+      .onConflictDoNothing()
 
     // A seeded conversation demonstrates the assistant trail. Knowledge
     // sources, chunks and embeddings are produced by the real ingestion

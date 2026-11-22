@@ -6,7 +6,6 @@
       "dependsOn": [
         "^build"
       ],
-      "env": ["NEXT_PUBLIC_DISABLE_DARK_MODE"],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env*"
@@ -36,7 +35,6 @@
       "cache": false,
       "persistent": true,
       "passThroughEnv": [
-        "NEXT_PUBLIC_DISABLE_DARK_MODE",
         "APP_*",
         "API_URL",
         "DATABASE_*",
@@ -63,7 +61,6 @@
       ],
       "cache": false,
       "passThroughEnv": [
-        "NEXT_PUBLIC_DISABLE_DARK_MODE",
         "APP_*",
         "API_URL",
         "DATABASE_*",
