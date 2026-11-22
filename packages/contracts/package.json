@@ -19,6 +19,7 @@
     "./problem": "./src/problem.ts",
     "./assistant-tools": "./src/assistant-tools.ts",
     "./engine": "./src/engine.ts",
+    "./case-profile": "./src/case-profile.ts",
     "./content": "./src/content.ts"
   },
   "scripts": {

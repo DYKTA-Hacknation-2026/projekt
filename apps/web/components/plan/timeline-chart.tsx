@@ -157,7 +157,7 @@ function PeriodBarButton({
         <span className="truncate text-[11px] leading-tight font-semibold">
           {compact ? "" : period.title}
         </span>
-        <span className="truncate text-[10px] leading-tight opacity-80">
+        <span className="truncate text-[10px] leading-tight">
           {compact ? "" : formatDateRange(period.start, period.end)}
         </span>
       </span>
@@ -395,14 +395,14 @@ function MobilePeriodItem({
       >
         <span className="flex flex-wrap items-center gap-1.5">
           <span className="text-sm font-semibold">{period.title}</span>
-          <span className="text-[10px] opacity-80">
+          <span className="text-[10px]">
             {periodStatusLabel(period, today)}
           </span>
         </span>
         <span className="mt-0.5 block text-xs opacity-90">
           {formatDateRange(period.start, period.end)}
         </span>
-        <span className="mt-0.5 block text-xs opacity-75">
+        <span className="mt-0.5 block text-xs">
           {durationLabel(period.days)} · zasiłek {period.ratePercent}
         </span>
       </button>
@@ -507,13 +507,13 @@ function MobileTimeline({
                       "ring-2 ring-ring ring-offset-2 ring-offset-background"
                   )}
                 >
-                  <span className="block text-[11px] font-semibold tracking-wide uppercase opacity-80">
+                  <span className="block text-[11px] font-semibold tracking-wide uppercase">
                     {formatDate(milestone.date)}
                   </span>
                   <span className="mt-0.5 block text-sm font-semibold">
                     {milestone.title}
                   </span>
-                  <span className="mt-0.5 block text-xs opacity-80">
+                  <span className="mt-0.5 block text-xs">
                     {categoryLabel[milestone.category]} ·{" "}
                     {milestone.actionOwner ?? ownerLabel[milestone.owner]}
                   </span>

@@ -26,7 +26,10 @@ test("hero primary action opens the analysis wizard", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/start$/, { timeout: 30_000 })
   await expect(
-    page.getByRole("heading", { level: 1, name: /Opisz swoją sytuację/i })
+    page.getByRole("heading", {
+      level: 1,
+      name: /Sprawdź swoje uprawnienia i przygotuj się do formalności/i,
+    })
   ).toBeVisible({ timeout: 30_000 })
 })
 

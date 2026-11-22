@@ -60,6 +60,7 @@ import type {
   TimelinePlan,
 } from "@/lib/timeline"
 import { DEMO_DUE_DATE, type TimelineSeed } from "@/lib/plan-seed"
+import { readCaseProfile } from "@/lib/situation-profile"
 import {
   buildTimelineView,
   daysUntilLabel,
@@ -86,7 +87,7 @@ import {
 import { timeline as copy } from "@/messages/pl"
 
 type ViewMode = "timeline" | "table"
-type DataOrigin = "DEMO" | "IMPORT" | "EDITED"
+type DataOrigin = "DEMO" | "IMPORT" | "PROFILE" | "EDITED"
 
 function isIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
@@ -635,6 +636,34 @@ export function TimelinePlanner({
   const panelRef = useRef<HTMLDivElement>(null)
   const detailsRef = useRef<HTMLDivElement>(null)
 
+  // The planner follows the situation analysed in `/start`, so moving from the
+  // results to the timeline does not ask for the same dates again.
+  useEffect(() => {
+    const profile = readCaseProfile(window.sessionStorage)
+    if (!profile) return
+    const event = profile.request.event
+    const due = event.expectedDueDate ?? event.birthDate
+    if (due) {
+      setDueDateState(due)
+    } else {
+      setDueDateState("")
+    }
+    if (event.birthDate) {
+      setBirthDateState(event.birthDate)
+      setKnowsBirthDateState(true)
+    } else {
+      setBirthDateState("")
+      setKnowsBirthDateState(false)
+    }
+    if (event.childrenCount !== undefined) {
+      setChildrenState(String(event.childrenCount))
+    }
+    if (event.zaZyciem !== undefined) setZaZyciemState(event.zaZyciem)
+    const preBirth = profile.request.plan?.maternityWeeksBeforeBirth
+    if (preBirth !== undefined) setPreBirthWeeksState(String(preBirth))
+    setOrigin("PROFILE")
+  }, [])
+
   const validDueDate = isIsoDate(dueDate)
   const actualBirthDate =
     knowsBirthDate && isIsoDate(birthDate) ? birthDate : undefined
@@ -773,9 +802,11 @@ export function TimelinePlanner({
   const originNote =
     origin === "DEMO"
       ? "Przykładowy scenariusz demonstracyjny — pokazuje, jak działa plan. Zmień założenia, aby zobaczyć własną sytuację."
-      : origin === "IMPORT"
-        ? `Dane wstępne z ostatniego pobrania danych${initial?.scenarioLabel ? `: ${initial.scenarioLabel}` : ""}. Możesz je poprawić.`
-        : "Plan na podstawie Twoich założeń. Każda zmiana przelicza daty od razu."
+      : origin === "PROFILE"
+        ? "Dane wstępne z Twojej sprawy w kreatorze sytuacji. Możesz je poprawić — każda zmiana przelicza daty."
+        : origin === "IMPORT"
+          ? `Dane wstępne z ostatniego pobrania danych${initial?.scenarioLabel ? `: ${initial.scenarioLabel}` : ""}. Możesz je poprawić.`
+          : "Plan na podstawie Twoich założeń. Każda zmiana przelicza daty od razu."
 
   const employmentMismatch =
     origin !== "DEMO" &&
