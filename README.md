@@ -16,7 +16,7 @@ planer urlopów, analizę dokumentów, centrum wiedzy i asystenta rozmownego.
 
 - **[Instrukcja uruchomienia demo](#jak-obejrzeć-system-w-działaniu)**
 - [Czym jest ten projekt](#czym-jest-ten-projekt)
-- [Wykorzsyatnie AI](#wykorzystani-ai)
+- [Wykorzstatnie AI](#wykorzystanie-ai)
 - [Co jest prawdziwe, a co symulowane](#co-jest-prawdziwe-a-co-symulowane)
 - [Najważniejsze funkcje](#najważniejsze-funkcje)
 - [Bezpieczeństwo i prywatność](#bezpieczeństwo-i-prywatność)
