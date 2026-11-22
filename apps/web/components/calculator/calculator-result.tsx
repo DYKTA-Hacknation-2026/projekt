@@ -212,7 +212,7 @@ export function CalculatorResultView({
               </p>
             ) : (
               <>
-                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                <p className="text-sm font-medium text-muted-foreground">
                   {historical
                     ? "Kwota w symulacji obecnych przepisów"
                     : result.verified

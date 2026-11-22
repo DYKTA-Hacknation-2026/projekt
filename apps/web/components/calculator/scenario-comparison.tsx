@@ -85,7 +85,7 @@ export function ScenarioComparisonView({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 px-0">
-        <div className="grid gap-3 px-4 sm:grid-cols-3">
+        <div className="grid gap-4 px-6 xl:grid-cols-3">
           {comparison.outcomes.map((outcome, index) => {
             const status = statusLabel(outcome.result.analysis.status)
             return (
