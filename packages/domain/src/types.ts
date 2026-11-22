@@ -35,6 +35,20 @@ export type SicknessCoverage = "COMPULSORY" | "VOLUNTARY" | "NONE" | "UNKNOWN"
 
 export type IncomeMode = "SIMPLE" | "DETAILED" | "KNOWN_BASIS"
 
+/** Why the insurance title ended; mirrors the engine's `TitleEndReason`. */
+export type CalculatorEndReason =
+  | "EMPLOYER_DEATH"
+  | "EMPLOYER_BANKRUPTCY"
+  | "EMPLOYER_LIQUIDATION"
+  | "UNLAWFUL_TERMINATION_FINAL_JUDGMENT"
+  | "FIXED_TERM_CONTRACT_END"
+  | "TERMINATION_BY_EMPLOYER"
+  | "RESIGNATION_OR_AGREEMENT"
+  | "MANDATE_CONTRACT_END"
+  | "BUSINESS_CLOSED"
+  | "VOLUNTARY_INSURANCE_WITHDRAWN"
+  | "OTHER"
+
 export type TakeoverReason =
   | "MOTHER_RESIGNS_AFTER_14_WEEKS"
   | "MOTHER_INCAPACITY"
@@ -167,6 +181,8 @@ export interface CalculatorInput {
   fatherInsuranceStartDate?: string
   motherInsuranceEndDate?: string
   fatherInsuranceEndDate?: string
+  motherEndReason?: CalculatorEndReason
+  fatherEndReason?: CalculatorEndReason
   motherPayerSize?: "OVER_20" | "UP_TO_20"
   fatherPayerSize?: "OVER_20" | "UP_TO_20"
   motherContributionDebt?: boolean
@@ -258,6 +274,17 @@ export interface CalculatorResult {
   ruleSetVerified: boolean
   /** Rule codes that still need an official value (e.g. LR-115/Q-29). */
   ruleSetUnverified: string[]
+  /**
+   * True when the birth/placement date precedes the earliest rule set the
+   * application has. The result is then a simulation under the rule set named
+   * in `historicalRuleSetVersion`, not an assessment under the law in force at
+   * the event. Never present it as the user's outcome.
+   */
+  historicalSimulation: boolean
+  /** Rule set used for the simulation when `historicalSimulation` is true. */
+  historicalRuleSetVersion: string | null
+  /** First date covered by the available rule sets. */
+  earliestSupportedDate: string
   /** Engine analysis, including statuses COMPLETE/PARTIAL/MANUAL_REVIEW. */
   analysis: CalculatorAnalysis
   warnings: string[]

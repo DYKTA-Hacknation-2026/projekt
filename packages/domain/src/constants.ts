@@ -59,12 +59,10 @@ export const LOSS_MIN_DAYS_AFTER_DEATH = 7
 export const LATE_DEATH_BENEFIT_DAYS = 7
 
 /**
- * Minimum wage used for the minimum basis (grosze). Value for 2026 (PLN 4 806);
- * flagged as an externally managed parameter (Q-29) and therefore the result
- * is still reported as unverified.
+ * External values (Q-29: minimum wage, minimum contribution basis, parental
+ * benefit floor, average wage) are NOT constants in this file. They belong to
+ * the active rule set or to a per-request override with an official source.
+ * Missing values must surface as a bound or an unknown, never as a guess.
  */
-export const MINIMUM_WAGE_GROSZE = 480_600
-/** Świadczenie rodzicielskie — lower bound of the monthly benefit (U art. 31 ust. 3a). */
-export const PARENTAL_BENEFIT_FLOOR_GROSZE = 100_000
 
 export const DAYS_PER_YEAR = 365.2425

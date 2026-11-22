@@ -38,7 +38,7 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table"
-import { formatPln, formatPercent } from "@/lib/format"
+import { formatDate, formatPln, formatPercent } from "@/lib/format"
 import { storeCalculatorPrefill } from "@/lib/calculator-prefill"
 
 import type { CalculationResponseBody } from "./types"
@@ -113,7 +113,16 @@ export function CalculatorResultView({
 }) {
   const result = data.result
   const analysis = result.analysis
-  const status = ANALYSIS_STATUS[analysis.status]
+  const eventDate = result.input.birthDate ?? result.input.placementDate
+  const historical = result.historicalSimulation
+  const historicalMessage = `Twoja data (${formatDate(eventDate)}) jest sprzed ${formatDate(result.earliestSupportedDate)}. Aplikacja nie ma przepisów obowiązujących wtedy, więc nie oceniamy tej sprawy według prawa, które obowiązywało w dniu zdarzenia. To nie jest decyzja ZUS, przyznanie ani odmowa świadczenia. Sprawdź uprawnienia bezpośrednio w ZUS.`
+  const status = historical
+    ? {
+        label: "Symulacja obecnych przepisów",
+        variant: "warning" as const,
+        text: "To nie jest analiza prawa obowiązującego w dniu Twojego zdarzenia.",
+      }
+    : ANALYSIS_STATUS[analysis.status]
   const total = analysis.totalGrosze
   const missing = analysis.missingEvidence
   const unverifiedParams =
@@ -123,6 +132,33 @@ export function CalculatorResultView({
   const visibleWarnings = result.warnings.filter(
     (warning) => !warning.startsWith("Brakuje:")
   )
+
+  if (historical) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle
+              aria-hidden="true"
+              className="size-4 text-destructive"
+            />
+            Nie oceniamy spraw sprzed 1.07.2026
+          </CardTitle>
+          <CardDescription>
+            Dla tego okresu nie mamy przepisów, więc nie pokazujemy kwoty ani
+            werdyktu. Nie zgadujemy wyniku.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert variant="destructive">
+            <AlertTriangle aria-hidden="true" />
+            <AlertTitle>Brak danych prawnych dla tego okresu</AlertTitle>
+            <AlertDescription>{historicalMessage}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <>
@@ -143,10 +179,24 @@ export function CalculatorResultView({
             </div>
             <div className="flex flex-wrap gap-2">
               <Badge variant={status.variant}>{status.label}</Badge>
-              <Badge variant={result.eligible ? "info" : "destructive"}>
-                {result.eligible ? "Uprawnienie wstępne" : "Brak uprawnienia"}
+              <Badge
+                variant={
+                  historical
+                    ? "warning"
+                    : result.eligible
+                      ? "info"
+                      : "destructive"
+                }
+              >
+                {historical
+                  ? result.eligible
+                    ? "W symulacji: uprawnienie"
+                    : "W symulacji: brak uprawnienia"
+                  : result.eligible
+                    ? "Uprawnienie wstępne"
+                    : "Brak uprawnienia"}
               </Badge>
-              {!result.verified && (
+              {!result.verified && !historical && (
                 <Badge variant="warning">
                   Szacunek — parametry Q-15/Q-29
                 </Badge>
@@ -163,7 +213,11 @@ export function CalculatorResultView({
             ) : (
               <>
                 <p className="text-sm font-medium text-muted-foreground">
-                  {result.verified ? "Kwota brutto" : "Kwota szacunkowa"}
+                  {historical
+                    ? "Kwota w symulacji obecnych przepisów"
+                    : result.verified
+                      ? "Kwota brutto"
+                      : "Kwota szacunkowa"}
                 </p>
                 <p className="text-4xl font-semibold tracking-tight tabular-nums">
                   {formatPln(total)}
@@ -173,10 +227,13 @@ export function CalculatorResultView({
             <p className="mt-1 text-xs text-pretty text-muted-foreground">
               {total === null
                 ? "Silnik nie ma podstawy wymiaru albo kompletnych danych. Nie podstawiamy wartości zastępczej."
-                : "Kwota brutto, przed zaliczką PIT. "}
-              {result.verified
-                ? "Parametry prawne są zweryfikowane."
-                : "To szacunek — parametry Q-15/Q-29 nie są jeszcze w pełni zatwierdzone."}
+                : historical
+                  ? "To nie jest kwota należna za Twoją sprawę — to wynik przeliczenia obecnych zasad na Twoje dane."
+                  : "Kwota brutto, przed zaliczką PIT. "}
+              {!historical &&
+                (result.verified
+                  ? "Parametry prawne są zweryfikowane."
+                  : "To szacunek — parametry Q-15/Q-29 nie są jeszcze w pełni zatwierdzone.")}
             </p>
             {AMOUNT_STATUS_NOTE[analysis.amountStatus] && (
               <p className="mt-1 text-xs text-pretty text-warning-foreground">
@@ -185,17 +242,21 @@ export function CalculatorResultView({
             )}
           </div>
 
-          <Alert variant={status.variant === "success" ? "info" : status.variant}>
-            <Info aria-hidden="true" />
-            <AlertTitle>{status.label}</AlertTitle>
-            <AlertDescription>
-              {status.text}
-              <span className="text-xs">
-                Kod statusu silnika:{" "}
-                <span className="font-mono">{analysis.status}</span>
-              </span>
-            </AlertDescription>
-          </Alert>
+          {!historical && (
+            <Alert
+              variant={status.variant === "success" ? "info" : status.variant}
+            >
+              <Info aria-hidden="true" />
+              <AlertTitle>{status.label}</AlertTitle>
+              <AlertDescription>
+                {status.text}
+                <span className="text-xs">
+                  Kod statusu silnika:{" "}
+                  <span className="font-mono">{analysis.status}</span>
+                </span>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {total !== null && (
             <div className="grid gap-3 sm:grid-cols-2">
@@ -294,7 +355,7 @@ export function CalculatorResultView({
         </CardContent>
       </Card>
 
-      {unverifiedParams && (
+      {unverifiedParams && !historical && (
         <Alert variant="warning">
           <ShieldAlert aria-hidden="true" />
           <AlertTitle>Parametry prawne wymagają potwierdzenia</AlertTitle>

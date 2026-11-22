@@ -11,7 +11,7 @@ import {
   getUserInsuranceProfileInputSchema,
   searchKnowledgeBaseInputSchema,
 } from "@zpr/contracts/assistant-tools"
-import { addDays, calculatorToLeavePlan, type CalculatorInput } from "@zpr/domain"
+import { addDays, calculatorToLeavePlan, FACT_QUESTIONS, type CalculatorInput } from "@zpr/domain"
 import { latestRuleSet, type AssessmentInput, type ParentInput } from "@zpr/domain/engine"
 
 import type { EvidenceSource } from "@zpr/contracts/assistant"
@@ -201,9 +201,16 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
         const resolved = await resolveFacts(input.facts, services, turn)
         const household = householdInput(resolved.facts, { asOf: turn.asOf })
         const report = services.engine.evaluateEligibility(household.input)
+        const assessment = eligibilityView(report, household.role, input.benefits, household.roleKnown)
         return {
           status: "OK" as const,
-          assessment: eligibilityView(report, household.role, input.benefits, household.roleKnown),
+          assessment,
+          ...(assessment.periodUnsupported
+            ? {
+                notice:
+                  "Nie mamy przepisów obowiązujących w dniu tego zdarzenia. Nie przedstawiaj wyniku jako oceny prawa z tego okresu — powiedz wprost, że to poza zakresem, i odeślij do ZUS.",
+              }
+            : {}),
           engine: {
             assessmentStatus: report.status,
             ruleSetVersion: report.ruleSet.version,
@@ -224,10 +231,10 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
 
     calculateBenefit: tool({
       description:
-        "Deterministic benefit calculator (amounts and week counts, exact decimal arithmetic). Use for every question about amounts. Never compute amounts yourself. Requires gross monthly income — from the user or the confirmed profile.",
+        "Deterministic benefit calculator (amounts and week counts, exact decimal arithmetic). Use for every question about amounts. Never compute amounts yourself. Requires gross monthly income and the insurance title (pass only facts the user stated; do not assume an employment type).",
       inputSchema: calculateBenefitInputSchema,
       execute: guarded("calculateBenefit", calculateBenefitInputSchema, turn, async (input) => {
-        const resolved = await resolveFacts(undefined, services, turn)
+        const resolved = await resolveFacts(input.facts, services, turn)
         const income = input.grossMonthlyIncomePln ?? resolved.grossMonthlyIncomePln
         if (income === null || income === undefined) {
           return {
@@ -248,9 +255,15 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
           grossMonthlyIncomePln: income,
           plan: calculatorToLeavePlan(calc),
           secondParentLikeFirst: withFather,
-          assumeEmployeeIfUnknown: true,
           nominalDueDate: nominalDate(turn.asOf),
         })
+        if (household.input.parents.some((parent) => !parent.insurance?.title)) {
+          return {
+            status: "NEEDS_INPUT" as const,
+            missing: [FACT_QUESTIONS.employmentType],
+            profileStatus: resolved.profileStatus,
+          }
+        }
         const assessment = services.engine.calculateParentalBenefits(household.input)
         const lines = assessment.breakdown.filter((line) => line.amountGrosze !== null || line.period)
         const basis = assessment.basis.find((item) => item.parent === household.role)
@@ -303,7 +316,7 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
         "Compare up to 3 leave plans (who takes which weeks, 100%/70% vs 81.5%, part-time work, paternity) with the deterministic engine. Use for questions about splitting leave between parents or choosing a variant. Week counts are always returned; amounts only when income is known.",
       inputSchema: compareLeaveScenariosInputSchema,
       execute: guarded("compareLeaveScenarios", compareLeaveScenariosInputSchema, turn, async (input) => {
-        const resolved = await resolveFacts(undefined, services, turn)
+        const resolved = await resolveFacts(input.facts, services, turn)
         const income = input.grossMonthlyIncomePln ?? resolved.grossMonthlyIncomePln
         const dueDate = input.dueDate ?? resolved.facts.eventDate ?? resolved.facts.expectedDueDate
         const childrenCount = input.childrenCount ?? resolved.facts.childrenCount ?? 1
@@ -314,10 +327,10 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
             asOf: turn.asOf,
             grossMonthlyIncomePln: income,
             secondParentLikeFirst: true,
-            assumeEmployeeIfUnknown: true,
             nominalDueDate: nominalDate(turn.asOf),
           }
         )
+        const hasTitle = household.input.parents.every((parent) => Boolean(parent.insurance?.title))
         const { plan: _plan, ...base } = household.input
         const comparison = services.engine.compareBenefitScenarios(
           base,
@@ -333,11 +346,14 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
             ),
           }))
         )
-        const withAmounts = income !== null && income !== undefined && comparison.outcomes.every((outcome) => outcome.totalGrosze !== null)
+        const withAmounts = hasTitle && income !== null && income !== undefined && comparison.outcomes.every((outcome) => outcome.totalGrosze !== null)
         return {
           status: withAmounts ? ("OK" as const) : ("PARTIAL" as const),
           amountsAvailable: withAmounts,
-          missing: withAmounts ? [] : [{ key: "grossMonthlyIncomePln", question: INCOME_QUESTION }],
+          missing: [
+            ...(!hasTitle ? [FACT_QUESTIONS.employmentType] : []),
+            ...(income === null || income === undefined ? [{ key: "grossMonthlyIncomePln", question: INCOME_QUESTION }] : []),
+          ],
           dueDate: dueDate ?? null,
           outcomes: comparison.outcomes.map((outcome, index) => {
             const mother = outcome.allocation.find((entry) => entry.parent === "MOTHER")
@@ -482,3 +498,6 @@ export function createAssistantTools(services: AssistantServices, turn: TurnStat
 }
 
 export type AssistantTools = ReturnType<typeof createAssistantTools>
+
+/** Exposed for tests that exercise the chatbot's deterministic path. */
+export { householdInput } from "./household"

@@ -118,13 +118,21 @@ describe("tool selection policy", () => {
     expect(result.status).toBe("completed")
   })
 
-  it("routes amount questions to the calculator", async () => {
-    const result = await runAssistantTurn(turnInput("Ile wyniesie mój zasiłek, zarabiam 8000 zł brutto?"))
+  it("routes amount questions to the calculator only when the title is stated", async () => {
+    const result = await runAssistantTurn(turnInput("Ile wyniesie mój zasiłek, pracuję na umowę o pracę, zarabiam 8000 zł brutto?"))
     const calc = result.toolCalls.find((call) => call.toolName === "calculateBenefit")
     expect(calc?.status).toBe("SUCCEEDED")
     expect((calc?.input as { grossMonthlyIncomePln: number }).grossMonthlyIncomePln).toBe(8000)
+    expect((calc?.input as { facts: { employmentType: string } }).facts.employmentType).toBe("EMPLOYMENT")
     const output = calc?.output as { totalFormatted: string }
     expect(result.text).toContain(output.totalFormatted)
+  })
+
+  it("asks for the insurance title instead of assuming an employee", async () => {
+    const result = await runAssistantTurn(turnInput("Ile wyniesie mój zasiłek, zarabiam 8000 zł brutto?"))
+    const calc = result.toolCalls.find((call) => call.toolName === "calculateBenefit")
+    expect((calc?.input as { facts?: { employmentType?: string } }).facts?.employmentType).toBeUndefined()
+    expect(result.text).toMatch(/umow|tytuł|podstaw/i)
   })
 
   it("routes plan questions to compareLeaveScenarios", async () => {

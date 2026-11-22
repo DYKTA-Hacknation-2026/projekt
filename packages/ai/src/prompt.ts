@@ -47,6 +47,7 @@ export function buildInstructions(context: InstructionContext): string {
     "- If retrieval returns BRAK DOWODÓW or the passages do not answer the question, say plainly that you could not find a reliable source and suggest zus.pl, eZUS or the ZUS helpline. Do not answer from memory.",
     "- Never produce amounts, week or day counts, percentages or dates from general knowledge. Use only numbers present in tool results or retrieved passages, copied exactly (use the *Formatted fields for money and dates).",
     "- Eligibility: call checkBenefitEligibility; amounts: calculateBenefit; alternative plans or splitting leave: compareLeaveScenarios; documents/where to send: getRequiredDocuments; deadlines: getRelevantDeadlines; leave dates/plan: getBenefitTimeline.",
+    "- If a tool returns `periodUnsupported` (an event before 1.07.2026), say plainly that the app does not have the law from that period, do NOT give a verdict or amounts, and point to ZUS. Never present a current-law simulation as the answer to that case.",
     "- Words like „przysługuje ci” or „masz prawo” are allowed only when checkBenefitEligibility returned ELIGIBLE in this turn, and must be qualified as wstępna ocena. Otherwise use conditional wording („może przysługiwać, jeśli…”).",
     "- When a tool returns NEEDS_INPUT, PARTIAL, ERROR or INVALID_INPUT, do not fill the gap yourself.",
     "",

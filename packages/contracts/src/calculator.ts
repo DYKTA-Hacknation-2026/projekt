@@ -122,6 +122,36 @@ export const calculatorInputSchema = z.object({
   fatherInsuranceStartDate: z.iso.date().optional(),
   motherInsuranceEndDate: z.iso.date().optional(),
   fatherInsuranceEndDate: z.iso.date().optional(),
+  motherEndReason: z
+    .enum([
+      "EMPLOYER_DEATH",
+      "EMPLOYER_BANKRUPTCY",
+      "EMPLOYER_LIQUIDATION",
+      "UNLAWFUL_TERMINATION_FINAL_JUDGMENT",
+      "FIXED_TERM_CONTRACT_END",
+      "TERMINATION_BY_EMPLOYER",
+      "RESIGNATION_OR_AGREEMENT",
+      "MANDATE_CONTRACT_END",
+      "BUSINESS_CLOSED",
+      "VOLUNTARY_INSURANCE_WITHDRAWN",
+      "OTHER",
+    ])
+    .optional(),
+  fatherEndReason: z
+    .enum([
+      "EMPLOYER_DEATH",
+      "EMPLOYER_BANKRUPTCY",
+      "EMPLOYER_LIQUIDATION",
+      "UNLAWFUL_TERMINATION_FINAL_JUDGMENT",
+      "FIXED_TERM_CONTRACT_END",
+      "TERMINATION_BY_EMPLOYER",
+      "RESIGNATION_OR_AGREEMENT",
+      "MANDATE_CONTRACT_END",
+      "BUSINESS_CLOSED",
+      "VOLUNTARY_INSURANCE_WITHDRAWN",
+      "OTHER",
+    ])
+    .optional(),
   motherPayerSize: z.enum(["OVER_20", "UP_TO_20"]).optional(),
   fatherPayerSize: z.enum(["OVER_20", "UP_TO_20"]).optional(),
   motherContributionDebt: z.boolean().optional(),

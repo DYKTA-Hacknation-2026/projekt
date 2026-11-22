@@ -1,6 +1,6 @@
 "use client"
 
-import { GitCompareArrows, Info } from "lucide-react"
+import { AlertTriangle, GitCompareArrows, Info } from "lucide-react"
 
 import type { CalculatorComparison } from "@zpr/domain"
 import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
@@ -37,6 +37,41 @@ export function ScenarioComparisonView({
 }: {
   comparison: CalculatorComparison
 }) {
+  const historical = comparison.outcomes.some(
+    (outcome) => outcome.result.historicalSimulation
+  )
+  const earliest = comparison.outcomes[0]?.result.earliestSupportedDate
+
+  if (historical) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle
+              aria-hidden="true"
+              className="size-4 text-destructive"
+            />
+            Nie porównujemy wariantów dla tego okresu
+          </CardTitle>
+          <CardDescription>
+            Dla sprawy sprzed {earliest ?? "1.07.2026"} nie mamy przepisów,
+            więc nie pokazujemy kwot ani różnic między wariantami.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertTriangle aria-hidden="true" />
+            <AlertTitle>Brak danych prawnych dla tego okresu</AlertTitle>
+            <AlertDescription>
+              To nie jest odmowa ani przyznanie świadczenia. Sprawdź
+              uprawnienia bezpośrednio w ZUS.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
