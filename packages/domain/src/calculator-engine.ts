@@ -40,7 +40,7 @@ import type {
  */
 
 const EXTERNAL_NOTE =
-  "Parametry aplikacji: minimalne wynagrodzenie 2026 i świadczenie rodzicielskie 1000 zł (Q-29 — do potwierdzenia oficjalnym źródłem)."
+  "Parametry aplikacji: minimalne wynagrodzenie 2026; kwota świadczenia rodzicielskiego pozostaje niezatwierdzona (Q-29 — do potwierdzenia oficjalnym źródłem)."
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
@@ -216,7 +216,9 @@ function mapParents(input: CalculatorInput, rightDate: string): ParentInput[] {
       role: "MOTHER",
       insurance: {
         title,
-        sicknessInsurance: coverage,
+        ...(coverage === "UNKNOWN"
+          ? {}
+          : { sicknessInsurance: coverage }),
         ...(input.motherInsuranceStartDate
           ? { startDate: input.motherInsuranceStartDate }
           : {}),
@@ -242,7 +244,9 @@ function mapParents(input: CalculatorInput, rightDate: string): ParentInput[] {
       role: "FATHER",
       insurance: {
         title,
-        sicknessInsurance: coverage,
+        ...(coverage === "UNKNOWN"
+          ? {}
+          : { sicknessInsurance: coverage }),
         ...(input.fatherInsuranceStartDate
           ? { startDate: input.fatherInsuranceStartDate }
           : {}),
@@ -655,6 +659,26 @@ function emptyResult(input: CalculatorInput): CalculatorResult {
     ruleSetVersion: latestRuleSet().version,
     ruleSetEffectiveFrom: latestRuleSet().effectiveFrom,
     ruleSetVerified: false,
+    ruleSetUnverified: [],
+    analysis: {
+      status: "PARTIAL",
+      eligibilityStatus: "NEEDS_INPUT",
+      amountStatus: "NOT_CALCULATED",
+      totalGrosze: null,
+      missingEvidence: [
+        {
+          key: "parent",
+          question: "Uwzględnij co najmniej jednego rodzica.",
+          why: "Bez rodzica nie można ustalić uprawnień ani podstawy wymiaru.",
+          affects: ["MATERNITY", "PARENTAL"],
+        },
+      ],
+      unsupported: [],
+      manualReviewReasons: [],
+      assumptions: [],
+      determinations: [],
+      warnings: [],
+    },
     warnings: ["Uwzględnij co najmniej jednego rodzica."],
     trace: [],
   }
@@ -676,6 +700,7 @@ export function calculateBenefits(
       ruleSetVersion: rules.version,
       ruleSetEffectiveFrom: rules.effectiveFrom,
       ruleSetVerified: ruleSet?.verified ?? false,
+      ruleSetUnverified: ruleSet?.unverifiedRules ?? [],
     }
   const event = mapEvent(input, latestRuleSet().effectiveFrom)
   const rightDate =
@@ -775,12 +800,30 @@ export function calculateBenefits(
     ...assessment.missingEvidence.map(
       (missing) => `Brakuje: ${missing.question}`
     ),
-    "Parametry Q-29 (minimalne wynagrodzenie i kwota świadczenia rodzicielskiego) przyjęto jako stałe aplikacji — wynik nadal wymaga potwierdzenia.",
+    "Parametry Q-29 (minimalne wynagrodzenie i kwota świadczenia rodzicielskiego) nie są w pełni zatwierdzone — wynik nadal wymaga potwierdzenia.",
+    "Zasady zaokrąglania kwot (Q-15) przyjęto jako założenie A-20 — źródła nie wskazują reguły dla zasiłków.",
   ]
   if (ruleSet?.verified) {
     for (let i = warnings.length - 1; i >= 0; i--) {
       if (/Q-29|Q-15/.test(warnings[i]!)) warnings.splice(i, 1)
     }
+  }
+  if (
+    input.motherEmploymentType !== "EMPLOYEE" &&
+    input.motherSicknessInsurance === "UNKNOWN"
+  ) {
+    warnings.push(
+      "Nie wiesz, czy mama podlega ubezpieczeniu chorobowemu. Dla umowy zlecenia i działalności jest ono dobrowolne — bez tej informacji część kwot pozostaje niepewna."
+    )
+  }
+  if (
+    input.fatherEnabled !== false &&
+    input.fatherEmploymentType !== "EMPLOYEE" &&
+    input.fatherSicknessInsurance === "UNKNOWN"
+  ) {
+    warnings.push(
+      "Nie wiesz, czy drugi rodzic podlega ubezpieczeniu chorobowemu. Dla umowy zlecenia i działalności jest ono dobrowolne — bez tej informacji część kwot pozostaje niepewna."
+    )
   }
   if (input.monthlyBasisOverrideGrosze !== undefined) {
     warnings.push(
@@ -849,6 +892,19 @@ export function calculateBenefits(
     })
   }
 
+  const analysis: CalculatorResult["analysis"] = {
+    status: assessment.status,
+    eligibilityStatus: assessment.eligibility.status,
+    amountStatus: assessment.totals.amountStatus,
+    totalGrosze: assessment.totals.totalGrosze,
+    missingEvidence: assessment.missingEvidence,
+    unsupported: assessment.unsupported,
+    manualReviewReasons: assessment.manualReviewReasons,
+    assumptions: assessment.assumptions,
+    determinations: assessment.eligibility.determinations,
+    warnings: assessment.warnings,
+  }
+
   return {
     input,
     mode: input.mode ?? "BIRTH",
@@ -892,6 +948,8 @@ export function calculateBenefits(
     ruleSetVersion: rules.version,
     ruleSetEffectiveFrom: rules.effectiveFrom,
     ruleSetVerified: ruleSet?.verified ?? false,
+    ruleSetUnverified: ruleSet?.unverifiedRules ?? [],
+    analysis,
     verified: ruleSet?.verified ?? false,
     status: eligible
       ? ruleSet?.verified

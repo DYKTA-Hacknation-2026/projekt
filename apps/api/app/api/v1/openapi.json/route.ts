@@ -5,6 +5,7 @@ import {
   assistantReplySchema,
   assistantStreamRequestSchema,
 } from "@zpr/contracts/assistant"
+import { comparisonRequestSchema } from "@zpr/contracts/calculator"
 import { confirmFieldsRequestSchema, extractRequestSchema } from "@zpr/contracts/documents"
 import {
   assessmentInputSchema,
@@ -72,6 +73,23 @@ const document = {
         },
         responses: {
           "201": { description: "Wynik obliczenia z pełnym śladem" },
+          "422": { description: "Błąd walidacji" },
+        },
+      },
+    },
+    "/calculations/compare": {
+      post: {
+        summary: "Porównanie wariantów podziału urlopu dla tych samych danych",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: z.toJSONSchema(comparisonRequestSchema, { io: "input" }),
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Warianty z kwotami i różnicami z tego samego silnika" },
           "422": { description: "Błąd walidacji" },
         },
       },

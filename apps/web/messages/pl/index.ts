@@ -211,7 +211,7 @@ export const dashboard = {
 
 export const calculator = {
   title: "Kalkulator zasiłków",
-  lead: "Jeden kalkulator, wiele wariantów. Wynik jest deterministyczny i pokazuje założenia, braki danych oraz podstawę prawną.",
+  lead: "Sprawdź świadczenia w czterech prostych krokach albo przejdź do pełnego trybu zaawansowanego. Wynik jest deterministyczny i pokazuje założenia, braki danych oraz podstawę prawną.",
   documentBasisLabel: "Użyj podstawy wymiaru z potwierdzonego dokumentu",
   documentBasisHelp:
     "To podstawa ustalona przez płatnika (Z-3/Z-3a) — nie odliczamy od niej ponownie składek. Odznacz, aby liczyć z wynagrodzenia brutto.",
