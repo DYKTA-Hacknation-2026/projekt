@@ -50,8 +50,8 @@ zmianę parametrów można prześledzić w historii.
 ## Jak obejrzeć system w działaniu
 
 Najszybsze do włączenia demo znajduje się na stronie https://zpr.makonew.com/
-dla uruchomienia lokalnego: [Szybki start](#szybki-start).
-Ścieżka testowa pokazująca najwięcej funkcjonalności to logowanie symulujące na [/mobywatel](#2_symulacja_mObywatela_i_pobranie_danych).
+Dla uruchomienia lokalnego: [Szybki start](#szybki-start).
+Ścieżka testowa pokazująca najwięcej funkcjonalności to logowanie symulujące na [/mobywatel](#2-symulacja-mobywatela-i-pobranie-danych).
 
 ### Szybka ściąga
 
