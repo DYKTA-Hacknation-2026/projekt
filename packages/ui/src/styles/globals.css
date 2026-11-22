@@ -237,4 +237,49 @@
   .text-pretty {
     text-wrap: pretty;
   }
+
+  /* Slender, tinted scrollbar for panes that scroll inside their own frame. */
+  .scrollbar-chat {
+    scrollbar-gutter: stable;
+  }
+
+  /* Firefox (and anything without the WebKit pseudo-elements) gets the native thin bar. */
+  @supports not selector(::-webkit-scrollbar) {
+    .scrollbar-chat {
+      scrollbar-width: thin;
+      scrollbar-color: color-mix(in oklch, var(--primary) 40%, transparent) transparent;
+    }
+  }
+
+  .scrollbar-chat::-webkit-scrollbar {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .scrollbar-chat::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-chat::-webkit-scrollbar-thumb {
+    border: 0.25rem solid transparent;
+    border-radius: 9999px;
+    background-clip: content-box;
+    background-color: color-mix(in oklch, var(--primary) 35%, transparent);
+  }
+
+  .scrollbar-chat:hover::-webkit-scrollbar-thumb {
+    background-color: color-mix(in oklch, var(--primary) 55%, transparent);
+  }
+
+  .scrollbar-chat::-webkit-scrollbar-thumb:hover {
+    background-color: var(--primary);
+  }
+
+  .scrollbar-chat::-webkit-scrollbar-button,
+  .scrollbar-chat::-webkit-scrollbar-corner {
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
+  }
 }
