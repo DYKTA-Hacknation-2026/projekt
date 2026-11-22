@@ -7,11 +7,11 @@ import {
   Check,
   ListChecks,
   MessagesSquare,
-  type LucideIcon,
 } from "lucide-react"
 import { home } from "@/messages/pl"
 import { HomeLeavePreview } from "@/components/home-leave-preview"
 import { HomeMotion } from "@/components/home-motion"
+import { homePlanExample } from "@/lib/home-plan-preview"
 import "./home.css"
 
 export const metadata: Metadata = {
@@ -22,11 +22,9 @@ type HomeMethod = (typeof home.methods)["form"] | (typeof home.methods)["chat"]
 
 function MethodCard({
   method,
-  icon: Icon,
   tone,
 }: {
   method: HomeMethod
-  icon: LucideIcon
   tone: "form" | "chat"
 }) {
   return (
@@ -35,28 +33,11 @@ function MethodCard({
       className={`home-method home-method--${tone}`}
       data-reveal="item"
     >
-      <span className="home-method__label">
-        <Icon size={19} aria-hidden="true" />
-        {method.label}
-      </span>
-      <h3>{method.title}</h3>
+      <h3>{method.label}</h3>
       <p>{method.description}</p>
-
-      <ul className="home-method__list">
-        {method.bullets.map((bullet) => (
-          <li key={bullet}>
-            <Check size={17} aria-hidden="true" />
-            {bullet}
-          </li>
-        ))}
-      </ul>
-
-      <span className="home-method__footer">
-        <span className="home-method__cta">
-          {method.cta}
-          <ArrowRight size={18} aria-hidden="true" />
-        </span>
-        <span className="home-method__meta">{method.meta}</span>
+      <span className="home-method__cta">
+        {method.cta}
+        <ArrowRight size={18} aria-hidden="true" />
       </span>
     </Link>
   )
@@ -87,19 +68,12 @@ export default function HomePage() {
             </Link>
             <Link
               href={home.methods.chat.href}
-              className="home-button home-button--white"
+              className="home-button home-button--quiet"
             >
               {home.methods.chat.cta}
               <MessagesSquare size={20} aria-hidden="true" />
             </Link>
           </div>
-          <p className="home-hero__choice-note" data-reveal="copy">
-            {home.methods.equalityNote}
-          </p>
-
-          <Link href="#sposob" className="home-hero__secondary">
-            Poznaj oba sposoby
-          </Link>
         </div>
         <div className="home-hero__photo" data-reveal="photo">
           <Image
@@ -136,21 +110,9 @@ export default function HomePage() {
           </div>
 
           <div className="home-methods">
-            <MethodCard
-              method={home.methods.form}
-              icon={ListChecks}
-              tone="form"
-            />
-            <MethodCard
-              method={home.methods.chat}
-              icon={MessagesSquare}
-              tone="chat"
-            />
+            <MethodCard method={home.methods.form} tone="form" />
+            <MethodCard method={home.methods.chat} tone="chat" />
           </div>
-
-          <p className="home-small" data-reveal="copy">
-            {home.methods.note}
-          </p>
         </div>
       </section>
 
@@ -195,32 +157,23 @@ export default function HomePage() {
         id="jak-to-dziala"
         aria-labelledby="plan-title"
       >
-        <div className="home-shell home-plan__grid">
-          <div className="home-plan__copy">
-            <h2 id="plan-title" data-reveal="heading">
-              Wasz urlop.
-              <br />
-              Wasz podział.
-            </h2>
-            <p data-reveal="copy">
-              Pierwsze miesiące to wspólny czas. Zobacz przykładowy podział
-              urlopów między rodzicami, a potem ułóż plan dopasowany do swojej
-              sytuacji.
-            </p>
-            <Link href="/os-czasu" className="home-text-link">
-              Otwórz planer urlopów <ArrowRight size={19} aria-hidden="true" />
-            </Link>
-            <div className="home-plan__photo" data-reveal="photo">
-              <Image
-                src="/images/bliskosc-z-dzieckiem.webp"
-                alt="Mała dłoń dziecka trzyma palec rodzica."
-                fill
-                sizes="(max-width: 760px) 100vw, 40vw"
-              />
+        <div className="home-shell">
+          <div className="home-plan__intro">
+            <div>
+              <h2 id="plan-title" data-reveal="heading">
+                Wasz plan rodzicielstwa.
+              </h2>
+              <p data-reveal="copy">
+                Urlopy obojga rodziców i ważne formalności na jednej osi czasu.
+                Zobacz przykład, a potem dopasuj plan do siebie.
+              </p>
             </div>
+            <Link href="/os-czasu" className="home-button">
+              Ułóż swój plan <ArrowRight size={19} aria-hidden="true" />
+            </Link>
           </div>
           <div data-reveal="copy">
-            <HomeLeavePreview />
+            <HomeLeavePreview items={homePlanExample()} />
           </div>
         </div>
       </section>
@@ -245,18 +198,13 @@ export default function HomePage() {
               <br />
               Różne potrzeby.
             </h2>
-            <p data-reveal="copy">
-              Etat czy własna działalność? Poznaj przykładowe sytuacje i zobacz,
-              jak korzystać z przewodnika.
-            </p>
+            <p data-reveal="copy">Zobacz, od czego zacząć w Twojej sytuacji.</p>
             <ul className="home-personas">
               {home.personas.map((persona) => (
-                <li key={persona.name} data-reveal="item">
-                  <Link href="/panel">
+                <li key={persona.title} data-reveal="item">
+                  <Link href={persona.href}>
                     <div>
-                      <h3>{persona.name}</h3>
-                      <p className="home-persona-story">„{persona.story}”</p>
-                      <span>{persona.role}</span>
+                      <h3>{persona.title}</h3>
                       <p>{persona.note}</p>
                     </div>
                     <ArrowUpRight size={22} aria-hidden="true" />
@@ -265,7 +213,7 @@ export default function HomePage() {
               ))}
             </ul>
             <p className="home-small">
-              Przykłady demonstracyjne. Dane osób są syntetyczne.
+              Każdą sytuację sprawdzisz na własnych danych.
             </p>
           </div>
         </div>
@@ -275,16 +223,11 @@ export default function HomePage() {
         <div className="home-shell home-questions__grid">
           <div>
             <h2 id="questions-title" data-reveal="heading">
-              Pytania
-              <br />i odpowiedzi.
+              Warto wiedzieć.
             </h2>
-            <p data-reveal="copy">
-              Jasne zasady i źródła. Zanim podasz informacje o swojej sytuacji,
-              sprawdź, jak działa przewodnik.
-            </p>
+            <p data-reveal="copy">Kilka odpowiedzi, zanim zaczniesz.</p>
             <Link href="/o-projekcie" className="home-text-link">
-              O projekcie i jego ograniczeniach{" "}
-              <ArrowUpRight size={19} aria-hidden="true" />
+              O projekcie <ArrowUpRight size={19} aria-hidden="true" />
             </Link>
           </div>
           <div className="home-faq">
@@ -295,7 +238,7 @@ export default function HomePage() {
               },
               {
                 q: "Czym różni się formularz od rozmowy z asystentem?",
-                a: "To dwa sposoby rozpoczęcia tej samej analizy. Formularz prowadzi krok po kroku i porządkuje dane. Rozmowa pozwala opisać sytuację własnymi słowami i od razu dopytać o przepisy. Obie ścieżki prowadzą do tego samego kalkulatora i tych samych zastrzeżeń.",
+                a: "Formularz prowadzi przez pytania o rodzinę i pracę. W rozmowie opisujesz sytuację własnymi słowami i dopytujesz o przepisy. Kwoty w obu przypadkach wylicza kalkulator.",
               },
               {
                 q: "Czy muszę się logować?",
@@ -319,24 +262,31 @@ export default function HomePage() {
       </section>
 
       <section className="home-section" aria-labelledby="knowledge-title">
-        <div className="home-shell home-questions__grid">
-          <div>
+        <div className="home-shell home-knowledge">
+          <div className="home-knowledge__photo" data-reveal="photo">
+            <Image
+              src="/images/bliskosc-z-dzieckiem.webp"
+              alt="Mała dłoń dziecka trzyma palec rodzica."
+              fill
+              sizes="(max-width: 760px) 100vw, 40vw"
+            />
+          </div>
+          <div className="home-knowledge__copy">
             <h2 id="knowledge-title" data-reveal="heading">
               Centrum wiedzy.
             </h2>
             <p data-reveal="copy">
-              Artykuły, najczęstsze pytania, karty dokumentów, przewodniki i
-              słownik pojęć. Wszystko prostym językiem, z datą weryfikacji i
-              odnośnikiem do oficjalnego źródła.
+              Urlopy, świadczenia i dokumenty wyjaśnione prostym językiem. Z
+              odnośnikami do przepisów i oficjalnych źródeł.
             </p>
-          </div>
-          <div className="flex flex-col items-start gap-4" data-reveal="copy">
-            <Link href="/wiedza" className="home-text-link">
-              Przeglądaj wiedzę <ArrowUpRight size={19} aria-hidden="true" />
-            </Link>
-            <Link href="/wiedza/faq" className="home-text-link">
-              Najczęstsze pytania <ArrowUpRight size={19} aria-hidden="true" />
-            </Link>
+            <div className="home-knowledge__links" data-reveal="copy">
+              <Link href="/wiedza" className="home-text-link">
+                Przeglądaj wiedzę <ArrowRight size={19} aria-hidden="true" />
+              </Link>
+              <Link href="/wiedza/faq" className="home-text-link">
+                Najczęstsze pytania <ArrowRight size={19} aria-hidden="true" />
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -359,12 +309,11 @@ export default function HomePage() {
             </Link>
             <Link
               href={home.methods.chat.href}
-              className="home-button home-button--white"
+              className="home-button home-button--quiet"
             >
               {home.finalCta.chat}
               <MessagesSquare size={20} aria-hidden="true" />
             </Link>
-            <p className="home-close__note">{home.finalCta.note}</p>
           </div>
         </div>
       </section>

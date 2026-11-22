@@ -43,33 +43,34 @@ test("remaining tools lead to real features", async ({ page }) => {
   }
 })
 
-test("leave preview switches between the parents without changing the example", async ({
+test("leave preview shows dated periods and opens the planner", async ({
   page,
 }) => {
   await page.goto("/")
   const preview = page.locator(".leave-preview")
+  const detail = preview.locator("#home-plan-detail")
+  await expect(detail).toContainText("24 lut 2027")
+  await expect(detail).toContainText("13 lip 2027")
 
-  await expect(preview.locator(".is-muted")).toHaveCount(0)
-
-  await preview
-    .getByRole("button", { name: "Drugi rodzic", exact: true })
-    .click()
+  const father = preview.getByRole("button", { name: /Tata: Rodzicielski/ })
+  await father.click()
+  await expect(father).toHaveAttribute("aria-pressed", "true")
+  await expect(detail).toContainText("9 tygodni")
+  await expect(detail).toContainText("Tata")
   await expect(
-    preview.getByRole("button", { name: "Drugi rodzic", exact: true })
-  ).toHaveAttribute("aria-pressed", "true")
-  await expect(preview.locator(".leave-preview__explanation")).toContainText(
-    "drugi rodzic wykorzystuje"
-  )
-  await expect(preview.locator(".is-muted")).toHaveCount(2)
-
-  await preview.getByRole("button", { name: "Mama", exact: true }).click()
-  await expect(preview.locator(".is-muted")).toHaveCount(1)
-
-  await preview.getByRole("button", { name: "Razem", exact: true }).click()
-  await expect(preview.locator(".is-muted")).toHaveCount(0)
-  await expect(
-    preview.getByRole("link", { name: "Otwórz planer urlopów" })
+    detail.getByRole("link", { name: "Dopasuj w swoim planie" })
   ).toHaveAttribute("href", "/os-czasu")
+
+  const deadline = preview.getByRole("button", {
+    name: /Wniosek o urlop ojcowski/,
+  })
+  await deadline.focus()
+  await page.keyboard.press("Enter")
+  await expect(deadline).toHaveAttribute("aria-pressed", "true")
+  await expect(detail).toContainText("3 mar 2027")
+  await expect(
+    detail.getByRole("link", { name: "Sprawdź dokumenty" })
+  ).toHaveAttribute("href", "/dokumenty")
 })
 
 test("FAQ explains the demo and opens with the keyboard", async ({ page }) => {

@@ -61,20 +61,20 @@ export const statusLabels = {
 export const home = {
   eyebrow: "Przewodnik dla rodziców",
   title: "Więcej czasu dla rodziny.",
-  lead: "Sprawdź, jakie świadczenia i urlopy mogą Ci przysługiwać. Przeanalizuj swoją sytuację krok po kroku lub porozmawiaj z naszym asystentem.",
+  lead: "Sprawdź świadczenia, zaplanuj urlopy i przygotuj dokumenty na narodziny dziecka.",
   primaryCta: "Sprawdź przez formularz",
   secondaryCta: "Sprawdź w rozmowie",
   trust: ["Bez logowania", "Bez numeru PESEL", "Źródła przy każdym wyniku"],
   methods: {
-    title: "Wybierz sposób, który Ci odpowiada.",
-    lead: "Nie musisz znać przepisów ani wiedzieć, od czego zacząć. Obie ścieżki prowadzą do konkretnych kolejnych kroków. Formularz porządkuje Twoje dane, a rozmowa pomaga zrozumieć przepisy i źródła.",
+    title: "Wybierz sposób.",
+    lead: "Odpowiedz na pytania w formularzu lub opisz swoją sytuację asystentowi. Wybierz, jak wolisz zacząć.",
     equalityNote:
       "Obie metody pomagają przeanalizować Twoją sytuację i potencjalne uprawnienia. Różni się forma: uporządkowane pytania albo swobodna rozmowa.",
     form: {
       label: "Formularz",
       title: "Sprawdź przez formularz",
       description:
-        "Odpowiedz na kilka uporządkowanych pytań i poznaj swoją sytuację. Na końcu powstaje sprawa demo z listą kolejnych kroków.",
+        "Przejdź przez pytania o rodzinę, pracę i ubezpieczenie. Otrzymasz podsumowanie i listę kolejnych kroków.",
       bullets: [
         "Pytania o sytuację rodzinną, pracę i ubezpieczenie.",
         "Podsumowanie danych przed zapisaniem sprawy.",
@@ -88,7 +88,7 @@ export const home = {
       label: "Rozmowa",
       title: "Sprawdź w rozmowie",
       description:
-        "Opowiedz asystentowi o swojej sytuacji i przejdź przez analizę w formie rozmowy. Asystent korzysta ze źródeł i podpowiada kolejne kroki.",
+        "Opisz swoją sytuację własnymi słowami. Dopytaj o urlopy, świadczenia i przepisy, na których opiera się odpowiedź.",
       bullets: [
         "Opisujesz sytuację tak, jak jest Ci wygodnie.",
         "Każda odpowiedź ma źródło i zastrzeżenie AI.",
@@ -101,8 +101,8 @@ export const home = {
     note: "Asystent nie wydaje decyzji o uprawnieniach i nie wylicza kwot samodzielnie. Konkretne wyliczenie powstaje w kalkulatorze, który korzysta z wersjonowanych reguł.",
   },
   tools: {
-    title: "Pozostałe narzędzia.",
-    lead: "Masz już ogólny obraz? Przejdź do konkretów — bez tworzenia nowego konta i bez powtarzania tych samych danych.",
+    title: "Od pytań do konkretów.",
+    lead: "Policz świadczenia, rozplanuj opiekę i sprawdź dokumenty. Możesz zacząć od tego, czego teraz potrzebujesz.",
   },
   benefits: [
     {
@@ -179,33 +179,27 @@ export const home = {
   },
   finalCta: {
     eyebrow: "Zacznij od jednego pytania",
-    title: "Nie musisz wiedzieć, od czego zacząć.",
-    text: "Opowiedz nam o swojej sytuacji, a pomożemy Ci zrozumieć dostępne możliwości i przejść przez formalności.",
+    title: "Zacznij od swojej sytuacji.",
+    text: "Kilka informacji o rodzinie i pracy wystarczy, by zrobić pierwszy krok.",
     form: "Sprawdź przez formularz",
     chat: "Sprawdź w rozmowie",
     note: "Obie drogi prowadzą do tego samego kalkulatora i tych samych zastrzeżeń. Wybierz tę, która jest dla Ciebie wygodniejsza.",
   },
   personas: [
     {
-      name: "Anna",
-      story: "Pracuję na etacie i spodziewam się dziecka.",
-      role: "Umowa o pracę, 8 000 zł brutto",
-      scenario: "S-01 / S-10",
-      note: "Poród w terminie, jedno dziecko, 2 tygodnie macierzyńskiego przed porodem.",
+      title: "Spodziewamy się dziecka",
+      note: "Uporządkuj informacje o pracy i ubezpieczeniu przed narodzinami.",
+      href: "/start",
     },
     {
-      name: "Kasia",
-      story: "Moja umowa zakończyła się przed porodem.",
-      role: "Zlecenie zakończone przed porodem",
-      scenario: "S-18",
-      note: "Brak ubezpieczenia chorobowego w dniu porodu — ryzyko widoczne, zanim podejmiesz decyzję.",
+      title: "Kończy mi się umowa",
+      note: "Sprawdź, co ustanie zatrudnienia może zmienić w prawie do świadczeń.",
+      href: "/asystent",
     },
     {
-      name: "Tomasz",
-      story: "Chcę zaplanować urlop razem z partnerką.",
-      role: "Umowa o pracę, 6 000 zł brutto",
-      scenario: "S-10 / S-12",
-      note: "9 tygodni urlopu rodzicielskiego zarezerwowanych dla drugiego rodzica.",
+      title: "Dzielimy się opieką",
+      note: "Zaplanujcie urlopy obojga rodziców na wspólnej osi czasu.",
+      href: "/os-czasu",
     },
   ],
 } as const
