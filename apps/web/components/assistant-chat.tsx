@@ -128,7 +128,8 @@ export function AssistantChat() {
   const [announcement, setAnnouncement] = useState("")
   const dialogRef = useRef<HTMLDialogElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const endRef = useRef<HTMLDivElement>(null)
+  const logRef = useRef<HTMLDivElement>(null)
+  const atBottomRef = useRef(true)
 
   const transport = useMemo(
     () =>
@@ -180,6 +181,10 @@ export function AssistantChat() {
   })
 
   const busy = status === "submitted" || status === "streaming"
+  const tailTextLength = (() => {
+    const last = messages[messages.length - 1]
+    return last ? last.parts.reduce((sum, part) => sum + (part.type === "text" ? part.text.length : 0), 0) : 0
+  })()
 
   useEffect(() => {
     void refreshConversations()
@@ -189,9 +194,22 @@ export function AssistantChat() {
       .catch(() => undefined)
   }, [refreshConversations])
 
+  // Keep the conversation scrolling inside its own frame: follow new messages
+  // only while the reader stays near the bottom of the log.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
-  }, [messages.length, status])
+    const log = logRef.current
+    if (!log) return
+    if (messages.length === 0) {
+      atBottomRef.current = true
+      log.scrollTo({ top: 0 })
+      return
+    }
+    if (!atBottomRef.current) return
+    log.scrollTo({
+      top: log.scrollHeight,
+      behavior: status === "streaming" ? "auto" : "smooth",
+    })
+  }, [messages.length, status, tailTextLength])
 
   const send = useCallback(
     (text: string) => {
@@ -199,6 +217,7 @@ export function AssistantChat() {
       if (trimmed.length < 2 || busy) return
       clearError()
       setSelection(null)
+      atBottomRef.current = true
       setAnnouncement("Asystent analizuje pytanie i przeszukuje źródła.")
       void sendMessage({ text: trimmed })
       setInput("")
@@ -217,6 +236,7 @@ export function AssistantChat() {
     setChat({ id: crypto.randomUUID(), messages: [] })
     setSelection(null)
     setHistoryOpen(false)
+    atBottomRef.current = true
     textareaRef.current?.focus()
   }
 
@@ -229,6 +249,7 @@ export function AssistantChat() {
       setChat({ id: data.id, messages: data.messages })
       setSelection(null)
       setHistoryOpen(false)
+      atBottomRef.current = true
     } catch {
       setHistoryError("Nie udało się otworzyć rozmowy.")
     }
@@ -327,10 +348,13 @@ export function AssistantChat() {
   return (
     <div className="grid gap-4 xl:grid-cols-[15rem_minmax(0,1fr)_20rem] xl:items-start">
       {/* History: sidebar on wide screens, disclosure on small ones */}
-      <aside className="hidden xl:sticky xl:top-20 xl:block">{historyPanel}</aside>
+      <aside className="scrollbar-chat hidden xl:sticky xl:top-20 xl:block xl:max-h-[calc(100dvh_-_6rem)] xl:overflow-y-auto xl:pr-1">{historyPanel}</aside>
 
-      <section className="flex min-h-[70vh] flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs" aria-label="Rozmowa z asystentem">
-        <header className="flex flex-wrap items-center gap-2 border-b border-border/70 px-4 py-3">
+      <section
+        className="flex h-[clamp(30rem,calc(100dvh_-_7.75rem),42.25rem)] flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs"
+        aria-label="Rozmowa z asystentem"
+      >
+        <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/70 px-4 py-3">
           <Bot aria-hidden="true" className="size-4 text-primary" />
           <h2 className="font-heading text-lg font-semibold">Asystent zasiłkowy</h2>
           <Badge variant="warning">Symulacja</Badge>
@@ -354,17 +378,27 @@ export function AssistantChat() {
         </header>
 
         {historyOpen && (
-          <div id="assistant-history-mobile" className="border-b border-border/70 bg-muted/40 p-4 xl:hidden">
+          <div
+            id="assistant-history-mobile"
+            className="scrollbar-chat max-h-[45%] shrink-0 overflow-y-auto border-b border-border/70 bg-muted/40 p-4 xl:hidden"
+          >
             {historyPanel}
           </div>
         )}
 
         <div
+          ref={logRef}
           role="log"
+          tabIndex={0}
           aria-label="Wiadomości"
           aria-live="off"
           aria-busy={busy}
-          className="flex-1 space-y-5 overflow-y-auto px-3 py-5 sm:px-5"
+          onScroll={() => {
+            const log = logRef.current
+            if (!log) return
+            atBottomRef.current = log.scrollHeight - log.scrollTop - log.clientHeight < 72
+          }}
+          className="scrollbar-chat min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-5 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-inset focus-visible:outline-none sm:px-5"
         >
           {messages.length === 0 && (
             <div className="space-y-5">
@@ -437,10 +471,12 @@ export function AssistantChat() {
               </AlertDescription>
             </Alert>
           )}
-          <div ref={endRef} />
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-3 border-t border-border/70 bg-background/60 px-3 py-3 sm:px-5">
+        <form
+          onSubmit={onSubmit}
+          className="shrink-0 space-y-3 border-t border-border/70 bg-background/60 px-3 py-3 sm:px-5"
+        >
           <label htmlFor="assistant-message" className="sr-only">Twoje pytanie</label>
           <Textarea
             id="assistant-message"
@@ -450,6 +486,7 @@ export function AssistantChat() {
             placeholder="Np. Jestem na zleceniu od dwóch miesięcy. Czy dostanę zasiłek?"
             rows={2}
             maxLength={4000}
+            className="scrollbar-chat max-h-36"
             aria-describedby="assistant-input-help"
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
@@ -542,7 +579,7 @@ export function AssistantChat() {
             <X aria-hidden="true" className="size-4" />
           </button>
         </div>
-        <div className="max-h-[70vh] space-y-4 overflow-y-auto p-4">
+        <div className="scrollbar-chat max-h-[70vh] space-y-4 overflow-y-auto overscroll-contain p-4">
           {selectedSource && <SourceDetail source={selectedSource} />}
           {selectedSources.length > 1 && (
             <SourceList sources={selectedSources} selected={selection?.ref ?? null} onSelect={(ref) => setSelection((current) => current && { ...current, ref })} />
