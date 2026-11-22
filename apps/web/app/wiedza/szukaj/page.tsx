@@ -32,7 +32,7 @@ export default async function KnowledgeSearchPage({
     data = await searchKnowledgeContent(query)
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Centrum wiedzy"
           title="Szukaj w Centrum wiedzy"
@@ -44,7 +44,7 @@ export default async function KnowledgeSearchPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs items={[{ label: "Wyszukiwanie" }]} />
 
       <PageHeader
@@ -56,7 +56,7 @@ export default async function KnowledgeSearchPage({
       <KnowledgeSearchForm defaultQuery={query} size="large" />
 
       {query.length < 2 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+        <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center">
           <Sparkles
             aria-hidden="true"
             className="mx-auto size-7 text-primary"
@@ -78,7 +78,7 @@ export default async function KnowledgeSearchPage({
           </div>
         </div>
       ) : data.hits.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+        <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center">
           <SearchX
             aria-hidden="true"
             className="mx-auto size-8 text-muted-foreground"
@@ -134,7 +134,7 @@ export default async function KnowledgeSearchPage({
                   <li key={`${hit.type}-${hit.slug}`}>
                     <Link
                       href={hit.href}
-                      className="group flex h-full flex-col rounded-xl border border-border/70 bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/[0.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      className="group flex h-full flex-col rounded-lg border border-border/70 bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/[0.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                     >
                       <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
                         <Badge variant="outline">

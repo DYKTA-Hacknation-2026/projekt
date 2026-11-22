@@ -101,7 +101,7 @@ function AdminContent({ data }: { data: AdminData }) {
         </div>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr] lg:items-start">
         <Card>
           <CardHeader className="border-b border-border/70">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -225,7 +225,7 @@ function AdminContent({ data }: { data: AdminData }) {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -369,7 +369,7 @@ export default async function AdminPage() {
     data = await getAdminData()
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Administracja"
           title="Panel administratora"
@@ -381,7 +381,7 @@ export default async function AdminPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <PageHeader
         eyebrow="Administracja"
         title="Panel administratora"

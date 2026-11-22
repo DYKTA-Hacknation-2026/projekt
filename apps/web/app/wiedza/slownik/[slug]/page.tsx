@@ -47,7 +47,7 @@ export default async function GlossaryTermPage({
     data = await getGlossaryView(slug)
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <p className="text-sm text-muted-foreground">Pojęcie</p>
         <DbOffline error={error} />
       </div>
@@ -59,7 +59,7 @@ export default async function GlossaryTermPage({
   const { term } = data
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell page-shell--reading space-y-8 py-10">
       <KnowledgeBreadcrumbs
         items={[
           { href: "/wiedza/slownik", label: "Słownik pojęć" },
@@ -83,7 +83,9 @@ export default async function GlossaryTermPage({
         {term.explanation && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Dokładniejsze wyjaśnienie</CardTitle>
+              <CardTitle className="text-base">
+                Dokładniejsze wyjaśnienie
+              </CardTitle>
             </CardHeader>
             <CardContent className="text-sm leading-7 text-pretty text-foreground/90">
               {term.explanation}
@@ -108,11 +110,14 @@ export default async function GlossaryTermPage({
 
       <KnowledgeRelatedLinks items={data.related} title="Powiązane artykuły" />
 
-      <div className="rounded-xl border border-border/70 bg-secondary/40 p-4 text-sm">
+      <div className="rounded-lg border border-border/70 bg-secondary/40 p-4 text-sm">
         <p className="font-medium">Szukasz więcej?</p>
         <p className="mt-1 text-muted-foreground">
           Zobacz pełny{" "}
-          <Link href="/wiedza/slownik" className="font-medium text-primary hover:underline">
+          <Link
+            href="/wiedza/slownik"
+            className="font-medium text-primary hover:underline"
+          >
             słownik pojęć
           </Link>{" "}
           lub zapytaj asystenta o wyjaśnienie prostymi słowami.

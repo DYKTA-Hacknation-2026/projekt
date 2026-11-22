@@ -31,7 +31,7 @@ export default async function KnowledgeFaqPage({
     data = await getFaqPage({ category: params.kategoria, query: params.q })
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Centrum wiedzy"
           title="Najczęściej zadawane pytania"
@@ -43,7 +43,7 @@ export default async function KnowledgeFaqPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs items={[{ label: "FAQ" }]} />
 
       <PageHeader
@@ -103,7 +103,7 @@ export default async function KnowledgeFaqPage({
       </div>
 
       {data.items.length === 0 && data.query ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+        <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center">
           <CircleHelp
             aria-hidden="true"
             className="mx-auto size-8 text-muted-foreground"
@@ -128,7 +128,10 @@ export default async function KnowledgeFaqPage({
           </div>
         </div>
       ) : (
-        <KnowledgeFaqList items={data.items} showCategory={!data.selectedCategory} />
+        <KnowledgeFaqList
+          items={data.items}
+          showCategory={!data.selectedCategory}
+        />
       )}
     </div>
   )

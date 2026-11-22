@@ -16,7 +16,7 @@ export function KnowledgeArticleCard({
   return (
     <Link
       href={`/wiedza/artykul/${article.slug}`}
-      className="group flex h-full flex-col rounded-xl border border-border/70 bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/[0.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+      className="group flex h-full flex-col rounded-lg border border-border/70 bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/[0.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
     >
       <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">

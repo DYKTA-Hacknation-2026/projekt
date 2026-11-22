@@ -31,7 +31,7 @@ export function KnowledgeCategoryGrid({
           <Link
             key={category.id}
             href={`/wiedza/kategoria/${category.slug}`}
-            className="group relative flex gap-3 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/[0.03] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="group relative flex gap-3 rounded-lg border border-border/70 bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/[0.03] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
               <KnowledgeIcon name={category.icon} className="size-5" />

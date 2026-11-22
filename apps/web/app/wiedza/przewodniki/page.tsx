@@ -30,7 +30,7 @@ export default async function KnowledgeGuidesPage({
     data = await getGuidesPage(params.kategoria)
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Centrum wiedzy"
           title="Przewodniki krok po kroku"
@@ -42,7 +42,7 @@ export default async function KnowledgeGuidesPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs items={[{ label: "Przewodniki" }]} />
 
       <PageHeader
@@ -71,7 +71,7 @@ export default async function KnowledgeGuidesPage({
       </div>
 
       {data.guides.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
           Brak przewodników w tej kategorii.
         </div>
       ) : (

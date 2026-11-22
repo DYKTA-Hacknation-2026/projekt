@@ -53,7 +53,7 @@ export function KnowledgeSearchForm({
             autoComplete="off"
             className={
               size === "large"
-                ? "h-12 rounded-xl pl-10 text-base"
+                ? "h-12 rounded-md pl-10 text-base"
                 : "h-10 pl-10"
             }
           />

@@ -351,7 +351,7 @@ export function AssistantChat() {
       <aside className="scrollbar-chat hidden xl:sticky xl:top-20 xl:block xl:max-h-[calc(100dvh_-_6rem)] xl:overflow-y-auto xl:pr-1">{historyPanel}</aside>
 
       <section
-        className="flex h-[clamp(30rem,calc(100dvh_-_7.75rem),42.25rem)] flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs"
+        className="flex h-[clamp(30rem,calc(100dvh_-_7.75rem),42.25rem)] flex-col overflow-hidden rounded-lg border border-border/80 bg-card"
         aria-label="Rozmowa z asystentem"
       >
         <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border/70 px-4 py-3">
@@ -540,14 +540,14 @@ export function AssistantChat() {
       {/* Citation panel: sticky on wide screens, dialog on smaller ones */}
       <aside className="hidden space-y-4 xl:sticky xl:top-20 xl:block" aria-label="Źródło odpowiedzi">
         {selectedSource ? (
-          <div className="space-y-4 rounded-2xl border border-border/80 bg-card p-4">
+          <div className="space-y-4 rounded-lg border border-border/80 bg-card p-4">
             <SourceDetail source={selectedSource} />
             {selectedSources.length > 1 && (
               <SourceList sources={selectedSources} selected={selection?.ref ?? null} onSelect={(ref) => setSelection((current) => current && { ...current, ref })} />
             )}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-border p-4 text-xs text-muted-foreground">
+          <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">
             Kliknij oznaczenie źródła (np. <span className="font-mono text-primary">S1</span>) w odpowiedzi, aby zobaczyć
             fragment, miejsce w dokumencie i okres obowiązywania.
           </div>
@@ -565,7 +565,7 @@ export function AssistantChat() {
       <dialog
         ref={dialogRef}
         aria-label="Źródło odpowiedzi"
-        className="m-auto w-[min(100vw-2rem,32rem)] rounded-2xl border border-border bg-card p-0 text-foreground backdrop:bg-black/40"
+        className="m-auto w-[min(100vw-2rem,32rem)] rounded-lg border border-border bg-card p-0 text-foreground backdrop:bg-black/40"
         onClose={() => textareaRef.current?.focus({ preventScroll: true })}
       >
         <div className="flex items-center justify-between border-b border-border/70 px-4 py-2.5">

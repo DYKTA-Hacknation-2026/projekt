@@ -12,7 +12,11 @@ import {
   Sparkles,
 } from "lucide-react"
 
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Button } from "@workspace/ui/components/button"
 import {
   Card,
@@ -65,7 +69,7 @@ export default async function KnowledgeHomePage() {
     data = await getKnowledgeHome()
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Centrum wiedzy"
           title="Centrum wiedzy"
@@ -77,7 +81,7 @@ export default async function KnowledgeHomePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-10 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <PageHeader
         eyebrow="Centrum wiedzy"
         title="Centrum wiedzy"
@@ -101,8 +105,9 @@ export default async function KnowledgeHomePage() {
             Od czego zaczynasz?
           </h2>
           <p className="text-sm text-pretty text-muted-foreground">
-            Wpisz pytanie tak, jak powiedziałbyś je bliskiej osobie. Wyszukiwarka
-            przeszuka artykuły, FAQ, dokumenty, przewodniki i słownik.
+            Wpisz pytanie tak, jak powiedziałbyś je bliskiej osobie.
+            Wyszukiwarka przeszuka artykuły, FAQ, dokumenty, przewodniki i
+            słownik.
           </p>
         </div>
         <KnowledgeSearchForm size="large" />
@@ -268,8 +273,8 @@ export default async function KnowledgeHomePage() {
               Policz, nie zgaduj
             </CardTitle>
             <CardDescription>
-              Kalkulator pokazuje założenia, braki danych i ślad reguł. Wynik nie
-              zastępuje decyzji ZUS.
+              Kalkulator pokazuje założenia, braki danych i ślad reguł. Wynik
+              nie zastępuje decyzji ZUS.
             </CardDescription>
           </CardHeader>
           <CardContent>

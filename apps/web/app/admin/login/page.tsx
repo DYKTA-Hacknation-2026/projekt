@@ -2,7 +2,11 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { Info, ShieldCheck } from "lucide-react"
 
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Button } from "@workspace/ui/components/button"
 import {
   Card,
@@ -30,7 +34,7 @@ export default async function AdminLoginPage({
   const env = getEnv()
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-10 sm:px-6">
+    <div className="page-shell page-shell--form space-y-6 py-10">
       <PageHeader
         eyebrow="Administracja"
         title="Dostęp do konfiguracji"
@@ -67,8 +71,8 @@ export default async function AdminLoginPage({
               <AdminLoginForm next={params.next} />
               <p className="text-xs text-pretty text-muted-foreground">
                 Konto administratora jest konfigurowane zmiennymi{" "}
-                <code>ADMIN_EMAIL</code> i <code>ADMIN_DEMO_PASSWORD</code>.
-                Nie używaj domyślnego hasła poza środowiskiem lokalnym.
+                <code>ADMIN_EMAIL</code> i <code>ADMIN_DEMO_PASSWORD</code>. Nie
+                używaj domyślnego hasła poza środowiskiem lokalnym.
               </p>
             </>
           ) : (

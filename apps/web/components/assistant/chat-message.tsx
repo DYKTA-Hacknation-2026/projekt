@@ -96,7 +96,7 @@ export function ChatMessage({
 
       <div className={cn("min-w-0 space-y-3", isUser ? "max-w-[85%]" : "w-full max-w-[44rem]")}>
         {isUser ? (
-          <div className="rounded-2xl rounded-tr-sm border border-border bg-secondary px-3.5 py-2.5 text-sm whitespace-pre-line text-secondary-foreground">
+          <div className="rounded-lg rounded-tr-sm border border-border bg-secondary px-3.5 py-2.5 text-sm whitespace-pre-line text-secondary-foreground">
             {text}
           </div>
         ) : (
@@ -115,7 +115,7 @@ export function ChatMessage({
               return null
             })}
             {text && (
-              <div className="rounded-2xl rounded-tl-sm border border-border/70 bg-card px-4 py-3">
+              <div className="rounded-lg rounded-tl-sm border border-border/70 bg-card px-4 py-3">
                 <RichText text={text} handlers={handlers} />
               </div>
             )}

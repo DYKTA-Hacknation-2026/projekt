@@ -1,14 +1,30 @@
 /* The family guide's palette and type continue into its working screens. */
 #tresc:not(:has(.home)) {
-  background: var(--secondary);
+  background: var(--background);
   min-height: 65svh;
   padding-bottom: 32px;
 }
-#tresc > .max-w-6xl {
-  max-width: 1320px;
-}
 #tresc :where(.grid, .flex) > * {
   min-width: 0;
+}
+/* One page frame for every module, aligned with the header, footer and home. */
+.page-shell {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+@media (min-width: 640px) {
+  .page-shell {
+    padding-inline: 24px;
+  }
+}
+/* Narrower frames are a deliberate reading measure, not a different layout. */
+.page-shell--reading {
+  max-width: 896px;
+}
+.page-shell--form {
+  max-width: 768px;
 }
 .page-heading {
   display: flex;
@@ -22,10 +38,10 @@
 }
 .page-heading h1 {
   color: var(--heading);
-  font-size: clamp(26px, 2.3vw, 32px);
+  font-size: clamp(28px, 2.5vw, 36px);
   font-weight: 600;
-  letter-spacing: -0.035em;
-  line-height: 1.15;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
   text-wrap: balance;
 }
 .page-heading p {
@@ -61,16 +77,40 @@
   outline: 3px solid var(--ring);
   outline-offset: 4px;
 }
+/* The same plus/minus affordance as the home FAQ, reused by every disclosure. */
+.disclosure-mark {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.disclosure-mark::before,
+.disclosure-mark::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 2px;
+  width: 16px;
+  height: 2px;
+  background: var(--primary);
+  transition: transform 160ms;
+}
+.disclosure-mark::after {
+  transform: rotate(90deg);
+}
+details[open] > summary .disclosure-mark::after {
+  transform: rotate(0);
+}
 .calculator-modes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px;
+  gap: 6px;
+  padding: 6px;
   background: var(--zpr-green-soft);
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
 }
 .calculator-mode {
-  border-radius: 18px;
+  border-radius: var(--radius-md);
   padding: 20px 24px;
   text-align: left;
   transition: background 160ms;
@@ -112,7 +152,7 @@
   flex-wrap: wrap;
   gap: 4px;
   padding: 6px;
-  border-radius: 20px;
+  border-radius: var(--radius-md);
   background: var(--muted);
 }
 .advanced-fields > fieldset {
@@ -155,7 +195,7 @@
   padding: 16px 20px;
   background: var(--secondary);
   border: 0;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
 }
 .calculator-results {
   min-width: 0;
@@ -202,12 +242,12 @@
   }
   .calculator-modes {
     gap: 4px;
-    padding: 6px;
-    border-radius: 20px;
+    padding: 4px;
+    border-radius: var(--radius-lg);
   }
   .calculator-mode {
     padding: 14px 12px;
-    border-radius: 15px;
+    border-radius: var(--radius-md);
   }
   .calculator-mode > span:first-child {
     font-size: 16px;
@@ -252,12 +292,21 @@
   outline-offset: 4px;
 }
 .calculator-notice {
-  color: var(--muted-foreground);
-  font-size: 14px;
+  font-size: 15px;
 }
 .calculator-notice summary {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 16px;
+  color: var(--foreground);
   cursor: pointer;
   font-weight: 600;
+  list-style: none;
+}
+.calculator-notice summary::-webkit-details-marker {
+  display: none;
 }
 .calculator-notice [data-slot="alert"] {
   margin-top: 8px;
@@ -275,7 +324,7 @@
     font-size: 14px;
   }
   .page-heading h1 {
-    font-size: 24px;
+    font-size: 26px;
   }
 }
 

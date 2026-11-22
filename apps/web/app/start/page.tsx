@@ -75,7 +75,7 @@ export default async function StartPage({
   const importAccepted = params.import === "accepted"
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6">
+    <div className="page-shell py-10">
       <PageHeader
         eyebrow="Kreator sytuacji"
         title="Sprawdź swoje uprawnienia i przygotuj się do formalności"
@@ -116,7 +116,7 @@ export default async function StartPage({
           <CardContent className="space-y-4">
             {outcomes.map((item) => (
               <div key={item.title} className="flex gap-3">
-                <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-background text-primary">
+                <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                   <item.icon aria-hidden="true" className="size-4" />
                 </span>
                 <div>

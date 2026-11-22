@@ -41,7 +41,7 @@ export function KnowledgeBlocks({ blocks }: { blocks: KnowledgeBlock[] }) {
           return (
             <p
               key={index}
-              className="text-[0.95rem] leading-7 text-pretty text-foreground/90"
+              className="text-base leading-7 text-pretty text-foreground/90"
             >
               {block.text}
             </p>
@@ -54,7 +54,7 @@ export function KnowledgeBlocks({ blocks }: { blocks: KnowledgeBlock[] }) {
             <ListTag
               key={index}
               className={cn(
-                "space-y-2 pl-5 text-[0.95rem] leading-7 text-foreground/90",
+                "space-y-2 pl-5 text-base leading-7 text-foreground/90",
                 block.ordered ? "list-decimal" : "list-disc"
               )}
             >
@@ -72,7 +72,7 @@ export function KnowledgeBlocks({ blocks }: { blocks: KnowledgeBlock[] }) {
             <aside
               key={index}
               className={cn(
-                "rounded-xl border px-4 py-3.5",
+                "rounded-md border px-4 py-3.5",
                 CALLOUT_STYLES[block.tone]
               )}
             >
@@ -92,7 +92,7 @@ export function KnowledgeBlocks({ blocks }: { blocks: KnowledgeBlock[] }) {
             role="region"
             aria-label={block.caption ?? "Tabela informacyjna"}
             tabIndex={0}
-            className="overflow-x-auto rounded-xl border border-border/70 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="overflow-x-auto rounded-md border border-border/70 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             <table className="w-full min-w-[34rem] border-collapse text-sm">
               {block.caption && (

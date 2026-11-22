@@ -1,5 +1,12 @@
 import Link from "next/link"
-import { ArrowRight, Calculator, CircleHelp, ExternalLink, ListChecks, Star } from "lucide-react"
+import {
+  ArrowRight,
+  Calculator,
+  CircleHelp,
+  ExternalLink,
+  ListChecks,
+  Star,
+} from "lucide-react"
 
 import type { FaqSummary } from "@zpr/db/repositories"
 import { Badge } from "@workspace/ui/components/badge"
@@ -17,7 +24,7 @@ export function KnowledgeFaqList({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center">
+      <div className="rounded-lg border border-dashed border-border bg-card p-6 text-center">
         <CircleHelp className="mx-auto size-6 text-muted-foreground" />
         <p className="mt-2 text-sm text-muted-foreground">
           Brak pytań spełniających kryteria. Spróbuj innej frazy lub kategorii.
@@ -27,7 +34,7 @@ export function KnowledgeFaqList({
   }
 
   return (
-    <div className="divide-y divide-border/70 overflow-hidden rounded-xl border border-border/70 bg-card">
+    <div className="divide-y divide-border/70 overflow-hidden rounded-lg border border-border/70 bg-card">
       {items.map((item) => (
         <details
           key={item.id}
@@ -55,15 +62,10 @@ export function KnowledgeFaqList({
                 {item.shortAnswer}
               </span>
             </span>
-            <span
-              aria-hidden="true"
-              className="mt-1 text-lg leading-none text-muted-foreground transition-transform group-open:rotate-45"
-            >
-              +
-            </span>
+            <span aria-hidden="true" className="disclosure-mark mt-1.5" />
           </summary>
           <div className="space-y-4 border-t border-border/50 px-4 py-4 pl-14">
-            <p className="text-sm leading-6 text-pretty text-foreground/90">
+            <p className="text-[0.95rem] leading-6 text-pretty text-foreground/90">
               {item.explanation}
             </p>
             {!compact && item.conditions && (

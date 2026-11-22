@@ -21,9 +21,9 @@ export function KnowledgeSubnav() {
   return (
     <nav
       aria-label="Sekcje Centrum wiedzy"
-      className="border-b border-border/70 bg-background/70"
+      className="border-b border-border bg-background"
     >
-      <div className="mx-auto w-full max-w-6xl overflow-x-auto px-4 sm:px-6">
+      <div className="page-shell overflow-x-auto">
         <ul className="flex min-w-max items-center gap-1 py-2">
           {links.map((link) => {
             const active =
@@ -40,8 +40,8 @@ export function KnowledgeSubnav() {
                   href={link.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "inline-flex h-9 items-center rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-                    active && "bg-secondary text-foreground shadow-sm"
+                    "inline-flex h-10 items-center rounded-md px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    active && "bg-accent text-accent-foreground"
                   )}
                 >
                   {link.label}

@@ -75,7 +75,7 @@ function CardShell({
   footer?: ReactNode
 }) {
   return (
-    <section className="rounded-xl border border-border/80 bg-background/60 text-sm" aria-label={title}>
+    <section className="rounded-lg border border-border/80 bg-background/60 text-sm" aria-label={title}>
       <header className="flex flex-wrap items-center gap-2 border-b border-border/70 px-3.5 py-2.5">
         <span aria-hidden="true" className="text-primary">{icon}</span>
         <h3 className="font-medium">{title}</h3>

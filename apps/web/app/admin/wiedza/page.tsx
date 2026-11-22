@@ -13,7 +13,11 @@ import {
 } from "lucide-react"
 
 import { CONTENT_TYPE_LABELS } from "@zpr/contracts/content"
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -134,8 +138,8 @@ function AdminContent({ data }: { data: AdminKnowledgeData }) {
         <CardHeader>
           <CardTitle>Wszystkie materiały</CardTitle>
           <CardDescription>
-            Ostatnie 60 rekordów. Kliknij tytuł, aby otworzyć materiał publicznie.
-            „Do przeglądu” oznacza weryfikację starszą niż 180 dni.
+            Ostatnie 60 rekordów. Kliknij tytuł, aby otworzyć materiał
+            publicznie. „Do przeglądu” oznacza weryfikację starszą niż 180 dni.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
@@ -190,7 +194,9 @@ function AdminContent({ data }: { data: AdminKnowledgeData }) {
                       <input
                         type="hidden"
                         name="status"
-                        value={row.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED"}
+                        value={
+                          row.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED"
+                        }
                       />
                       <Button
                         type="submit"
@@ -226,7 +232,7 @@ export default async function AdminKnowledgePage() {
     data = await getAdminKnowledge()
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Administracja"
           title="Centrum wiedzy"
@@ -238,7 +244,7 @@ export default async function AdminKnowledgePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <PageHeader
         eyebrow="Administracja · wiedza"
         title="Centrum wiedzy"

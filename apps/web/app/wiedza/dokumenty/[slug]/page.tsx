@@ -12,11 +12,12 @@ import {
   UserRound,
 } from "lucide-react"
 
+import { DOCUMENT_KIND_LABELS, type DocumentKind } from "@zpr/contracts/content"
 import {
-  DOCUMENT_KIND_LABELS,
-  type DocumentKind,
-} from "@zpr/contracts/content"
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -78,7 +79,7 @@ export default async function KnowledgeDocumentPage({
     data = await getDocumentView(slug)
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <p className="text-sm text-muted-foreground">Dokument</p>
         <DbOffline error={error} />
       </div>
@@ -91,7 +92,7 @@ export default async function KnowledgeDocumentPage({
   const withdrawn = document.slug === "zaswiadczenie-z-3b"
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs
         items={[
           { href: "/wiedza/dokumenty", label: "Dokumenty i formularze" },
@@ -157,7 +158,10 @@ export default async function KnowledgeDocumentPage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <UserRound aria-hidden="true" className="size-4 text-primary" />
+                  <UserRound
+                    aria-hidden="true"
+                    className="size-4 text-primary"
+                  />
                   Kto wypełnia
                 </CardTitle>
               </CardHeader>
@@ -212,7 +216,10 @@ export default async function KnowledgeDocumentPage({
                   id="additional-heading"
                   className="flex items-center gap-2 text-base"
                 >
-                  <FileText aria-hidden="true" className="size-4 text-primary" />
+                  <FileText
+                    aria-hidden="true"
+                    className="size-4 text-primary"
+                  />
                   Dokumenty dodatkowe
                 </CardTitle>
               </CardHeader>
@@ -260,7 +267,7 @@ export default async function KnowledgeDocumentPage({
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-24">
-          <div className="rounded-xl border border-primary/20 bg-primary/[0.04] p-4">
+          <div className="rounded-md border border-primary/20 bg-primary/[0.04] p-4">
             <p className="text-xs font-semibold tracking-wide text-primary uppercase">
               Oficjalny wzór
             </p>
@@ -283,13 +290,18 @@ export default async function KnowledgeDocumentPage({
           </div>
 
           {document.generatorHref && (
-            <div className="rounded-xl border border-border/70 bg-card p-4">
+            <div className="rounded-md border border-border/70 bg-card p-4">
               <p className="text-sm font-medium">Zrób kolejny krok</p>
               <p className="mt-1 text-xs text-pretty text-muted-foreground">
                 {document.generatorLabel ??
                   "Otwórz powiązane narzędzie w aplikacji."}
               </p>
-              <Button asChild variant="outline" className="mt-3 w-full" size="sm">
+              <Button
+                asChild
+                variant="outline"
+                className="mt-3 w-full"
+                size="sm"
+              >
                 <Link href={document.generatorHref}>
                   {document.generatorLabel ?? "Otwórz narzędzie"}
                   <ArrowRight data-icon="inline-end" aria-hidden="true" />
@@ -298,7 +310,7 @@ export default async function KnowledgeDocumentPage({
             </div>
           )}
 
-          <div className="rounded-xl border border-border/70 bg-secondary/40 p-4 text-xs text-muted-foreground">
+          <div className="rounded-md border border-border/70 bg-secondary/40 p-4 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">Weryfikacja karty</p>
             <p className="mt-1">
               {formatDate(document.lastReviewedAt)} · źródło:{" "}

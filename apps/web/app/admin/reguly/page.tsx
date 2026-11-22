@@ -46,7 +46,7 @@ export default async function AdminRulesPage({
     data = await getAdminRules()
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Administracja"
           title="Parametry prawne"
@@ -65,7 +65,7 @@ export default async function AdminRulesPage({
   ).length
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <PageHeader
         eyebrow="Administracja · reguły"
         title="Parametry prawne"

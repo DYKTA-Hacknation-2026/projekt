@@ -6,14 +6,8 @@ import { DbOffline } from "@/components/db-offline"
 import { PageHeader } from "@/components/page-header"
 import { TimelinePlanner } from "@/components/timeline-planner"
 import { timeline } from "@/messages/pl"
-import {
-  buildTimelineSeed,
-  DEMO_SEED,
-} from "@/lib/plan-seed"
-import {
-  getActiveRuleSet,
-  getLatestImportForUser,
-} from "@/server/api-client"
+import { buildTimelineSeed, DEMO_SEED } from "@/lib/plan-seed"
+import { getActiveRuleSet, getLatestImportForUser } from "@/server/api-client"
 
 export const metadata: Metadata = { title: "Plan Rodzicielstwa" }
 export const dynamic = "force-dynamic"
@@ -24,7 +18,7 @@ export default async function TimelinePage() {
     ruleSet = await getActiveRuleSet()
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-8 py-10">
         <PageHeader
           eyebrow="Planer"
           title={timeline.title}
@@ -48,7 +42,7 @@ export default async function TimelinePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <TimelinePlanner ruleSet={ruleSet} today={warsawToday()} initial={seed} />
     </div>
   )
