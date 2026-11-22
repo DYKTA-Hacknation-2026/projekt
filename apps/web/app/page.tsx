@@ -27,17 +27,34 @@ function MethodCard({
   method: HomeMethod
   tone: "form" | "chat"
 }) {
+  const Icon = tone === "form" ? ListChecks : MessagesSquare
+
   return (
     <Link
       href={method.href}
       className={`home-method home-method--${tone}`}
       data-reveal="item"
     >
-      <h3>{method.label}</h3>
+      <span className="home-method__label">
+        <Icon size={18} aria-hidden="true" />
+        {method.label}
+      </span>
+      <h3>{method.title}</h3>
       <p>{method.description}</p>
-      <span className="home-method__cta">
-        {method.cta}
-        <ArrowRight size={18} aria-hidden="true" />
+      <ul className="home-method__bullets">
+        {method.bullets.map((bullet) => (
+          <li key={bullet}>
+            <Check size={17} aria-hidden="true" />
+            {bullet}
+          </li>
+        ))}
+      </ul>
+      <span className="home-method__footer">
+        <span className="home-method__cta">
+          {method.cta}
+          <ArrowRight size={18} aria-hidden="true" />
+        </span>
+        <span className="home-method__meta">{method.meta}</span>
       </span>
     </Link>
   )
@@ -113,6 +130,9 @@ export default function HomePage() {
             <MethodCard method={home.methods.form} tone="form" />
             <MethodCard method={home.methods.chat} tone="chat" />
           </div>
+          <p className="home-methods__note" data-reveal="copy">
+            {home.methods.note}
+          </p>
         </div>
       </section>
 
@@ -265,7 +285,7 @@ export default function HomePage() {
         <div className="home-shell home-knowledge">
           <div className="home-knowledge__photo" data-reveal="photo">
             <Image
-              src="/images/bliskosc-z-dzieckiem.webp"
+              src="/images/bliskosc-z-dzieckiem.jpg"
               alt="Mała dłoń dziecka trzyma palec rodzica."
               fill
               sizes="(max-width: 760px) 100vw, 40vw"
