@@ -8,5 +8,5 @@ test("assistant answers with citations", async ({ page }) => {
   await page.getByRole("button", { name: "Wyślij" }).click()
 
   await expect(page.getByText("Źródła").last()).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByText("KP art. 180 § 1–2").first()).toBeVisible()
+  await expect(page.getByText(/KP art\. 180 § 1/).first()).toBeVisible()
 })

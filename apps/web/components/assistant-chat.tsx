@@ -14,7 +14,11 @@ import {
 
 import { AI_DISCLOSURE } from "@zpr/contracts"
 import type { AssistantCitation } from "@zpr/contracts/assistant"
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -35,17 +39,17 @@ interface ChatMessage {
 }
 
 const suggestions = [
-  "Ile trwa urlop macierzyński przy jednym dziecku?",
-  "Jestem na zleceniu od 2 miesięcy. Czy dostanę L4 płatne?",
-  "Ile tygodni macierzyńskiego przy trojaczkach?",
-  "Mąż chce wziąć część urlopu rodzicielskiego. Jak to podzielić?",
+  "Pracuję na etacie i spodziewam się dziecka. Co muszę załatwić?",
+  "Moja umowa zlecenia skończyła się przed porodem. Jakie mam możliwości?",
+  "Chcę podzielić urlop rodzicielski z partnerem. Jak to zaplanować?",
+  "Jakie dokumenty są potrzebne do zasiłku macierzyńskiego?",
 ]
 
 const welcome: ChatMessage = {
   id: "welcome",
   role: "ASSISTANT",
   content:
-    "Dzień dobry. Odpowiadam na podstawie zaindeksowanych źródeł: Kodeksu pracy, ustawy zasiłkowej i poradnika ZUS. Wskażę fragment i podstawę prawną. Nie wyliczam kwot — od tego jest kalkulator.",
+    "Dzień dobry. Opowiedz mi o swojej sytuacji — np. jaki masz rodzaj umowy, kiedy spodziewasz się dziecka i czego chcesz się dowiedzieć. Odpowiem na podstawie źródeł i wskażę kolejne kroki. Kwoty wylicza osobny, deterministyczny kalkulator.",
 }
 
 type Reply = {
@@ -120,12 +124,16 @@ export function AssistantChat() {
       <Card className="overflow-hidden">
         <CardHeader className="border-b border-border/70">
           <CardTitle className="flex items-center gap-2">
-            <MessagesSquare aria-hidden="true" className="size-4 text-primary" />
+            <MessagesSquare
+              aria-hidden="true"
+              className="size-4 text-primary"
+            />
             Rozmowa z asystentem
           </CardTitle>
           <CardDescription>
-            Każda odpowiedź przechowuje cytaty i wywołanie narzędzia
-            wyszukiwania. Historia jest widoczna w bazie demo.
+            Opisz sytuację własnymi słowami. Każda odpowiedź przechowuje cytaty
+            i wywołanie narzędzia wyszukiwania, więc możesz sprawdzić jej
+            podstawę.
           </CardDescription>
         </CardHeader>
 
@@ -183,7 +191,10 @@ export function AssistantChat() {
                             className="rounded-lg bg-muted/60 p-2.5 text-xs"
                           >
                             <div className="flex flex-wrap items-center gap-1.5">
-                              <Badge variant="outline" className="font-mono text-[10px]">
+                              <Badge
+                                variant="outline"
+                                className="font-mono text-[10px]"
+                              >
                                 S{index + 1}
                               </Badge>
                               <span className="font-medium">
@@ -211,7 +222,10 @@ export function AssistantChat() {
                                 className="mt-1 inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
                               >
                                 Otwórz źródło
-                                <ExternalLink aria-hidden="true" className="size-3" />
+                                <ExternalLink
+                                  aria-hidden="true"
+                                  className="size-3"
+                                />
                               </a>
                             )}
                           </li>
@@ -229,14 +243,20 @@ export function AssistantChat() {
                   <Bot aria-hidden="true" className="size-4" />
                 </span>
                 <div className="flex items-center gap-2 rounded-xl border border-border/70 bg-card px-3.5 py-2.5 text-sm text-muted-foreground">
-                  <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
+                  <Loader2
+                    aria-hidden="true"
+                    className="size-3.5 animate-spin"
+                  />
                   Szukam w źródłach…
                 </div>
               </div>
             )}
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-3 border-t border-border/70 pt-4">
+          <form
+            onSubmit={onSubmit}
+            className="space-y-3 border-t border-border/70 pt-4"
+          >
             <label htmlFor="assistant-message" className="sr-only">
               Twoje pytanie
             </label>
@@ -258,7 +278,10 @@ export function AssistantChat() {
               <p className="text-xs text-muted-foreground">
                 Enter wysyła, Shift+Enter dodaje nową linię.
               </p>
-              <Button type="submit" disabled={pending || input.trim().length < 2}>
+              <Button
+                type="submit"
+                disabled={pending || input.trim().length < 2}
+              >
                 {pending ? (
                   <Loader2 aria-hidden="true" className="animate-spin" />
                 ) : (
@@ -285,10 +308,11 @@ export function AssistantChat() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Sparkles aria-hidden="true" className="size-4 text-primary" />
-              Spróbuj zapytać
+              Opowiedz o swojej sytuacji
             </CardTitle>
             <CardDescription>
-              Przykłady z dokumentacji scenariuszy. Kliknięcie wysyła pytanie.
+              Wybierz przykład albo napisz własnymi słowami. Kliknięcie wysyła
+              pytanie.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -314,10 +338,11 @@ export function AssistantChat() {
 
         <Alert variant="warning">
           <AlertTriangle aria-hidden="true" />
-          <AlertTitle>Asystent nie zna twojej sprawy</AlertTitle>
+          <AlertTitle>Asystent a Twoje dane</AlertTitle>
           <AlertDescription>
-            Odpowiada na podstawie ogólnych źródeł. Nie widzi twoich danych z
-            kreatora, dopóki nie dodasz ich świadomie w przyszłej wersji.
+            Asystent odpowiada na podstawie publicznych źródeł i nie widzi
+            danych wpisanych w formularzu. Nie wylicza kwot ani nie wydaje
+            decyzji — konkretne wyliczenie powstaje w kalkulatorze.
           </AlertDescription>
         </Alert>
       </div>

@@ -1,7 +1,23 @@
 import type { Metadata } from "next"
-import { BookOpen, Database, Search, ShieldAlert } from "lucide-react"
+import Link from "next/link"
+import {
+  ArrowRight,
+  BookOpen,
+  Calculator,
+  Database,
+  FileText,
+  Search,
+  ShieldAlert,
+} from "lucide-react"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import { Button } from "@workspace/ui/components/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card"
 import { AssistantChat } from "@/components/assistant-chat"
 import { PageHeader } from "@/components/page-header"
 import { assistant } from "@/messages/pl"
@@ -35,12 +51,59 @@ export default function AssistantPage() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
       <PageHeader
-        eyebrow="Asystent"
+        eyebrow="Rozmowa"
         title={assistant.title}
         lead={assistant.lead}
       />
 
       <AssistantChat />
+
+      <section
+        aria-label="Dalsze kroki po rozmowie"
+        className="grid gap-3 sm:grid-cols-2"
+      >
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FileText aria-hidden="true" className="size-4 text-primary" />
+              Wolisz formularz?
+            </CardTitle>
+            <CardDescription>
+              Te same pytania krok po kroku, z podsumowaniem danych i listą
+              kolejnych kroków.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link href="/start">
+                Otwórz formularz
+                <ArrowRight data-icon="inline-end" aria-hidden="true" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Calculator aria-hidden="true" className="size-4 text-primary" />
+              Potrzebujesz kwot?
+            </CardTitle>
+            <CardDescription>
+              Kwoty wylicza deterministyczny kalkulator — ten sam dla formularza
+              i rozmowy.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link href="/kalkulator">
+                Otwórz kalkulator
+                <ArrowRight data-icon="inline-end" aria-hidden="true" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </section>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {pipeline.map((step) => (
