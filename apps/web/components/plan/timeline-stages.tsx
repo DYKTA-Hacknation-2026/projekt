@@ -165,7 +165,7 @@ export function TimelineStages({
           założeń, a nie ze sztywnego kalendarza.
         </p>
       </div>
-      <ol className="rounded-xl border border-border/80 bg-card p-5 sm:p-6">
+      <ol className="rounded-lg border border-border/80 bg-card p-5 sm:p-6">
         {plan.stages.map((stage) => (
           <StageRow
             key={stage.id}

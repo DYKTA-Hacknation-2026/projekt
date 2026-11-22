@@ -5,7 +5,11 @@ import {
   CONTENT_SOURCE_KIND_LABELS,
   type ContentSourceKind,
 } from "@zpr/contracts/content"
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
 import {
   Card,
@@ -35,7 +39,7 @@ export default async function KnowledgeSourcesPage() {
     data = await getSourcesPage()
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Centrum wiedzy"
           title="Źródła i podstawy prawne"
@@ -54,7 +58,7 @@ export default async function KnowledgeSourcesPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs items={[{ label: "Źródła" }]} />
 
       <PageHeader
@@ -68,8 +72,8 @@ export default async function KnowledgeSourcesPage() {
         <AlertTitle>Jak czytać ten rejestr</AlertTitle>
         <AlertDescription>
           Data weryfikacji oznacza dzień, w którym redakcja sprawdziła treść
-          źródła. To nie jest data wejścia w życie przepisu. Przy aktach prawnych
-          zawsze sprawdź tekst jednolity i późniejsze nowelizacje.
+          źródła. To nie jest data wejścia w życie przepisu. Przy aktach
+          prawnych zawsze sprawdź tekst jednolity i późniejsze nowelizacje.
         </AlertDescription>
       </Alert>
 
@@ -107,7 +111,11 @@ export default async function KnowledgeSourcesPage() {
       </div>
 
       {[...grouped.entries()].map(([kind, sources]) => (
-        <section key={kind} aria-labelledby={`sources-${kind}`} className="space-y-3">
+        <section
+          key={kind}
+          aria-labelledby={`sources-${kind}`}
+          className="space-y-3"
+        >
           <h2
             id={`sources-${kind}`}
             className="text-lg font-semibold tracking-tight"
@@ -118,7 +126,7 @@ export default async function KnowledgeSourcesPage() {
             {sources.map((source) => (
               <li
                 key={source.id}
-                className="rounded-xl border border-border/70 bg-card p-4"
+                className="rounded-lg border border-border/70 bg-card p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">

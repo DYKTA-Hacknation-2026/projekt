@@ -35,7 +35,7 @@ export function SiteHeader() {
                     isActive(pathname, item.href) ? "page" : undefined
                   }
                   className={cn(
-                    "inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-heading focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    "inline-flex h-10 items-center rounded-md px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-heading focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                     isActive(pathname, item.href) &&
                       "bg-accent text-accent-foreground"
                   )}
@@ -71,7 +71,7 @@ export function SiteHeader() {
           </Button>
           <button
             type="button"
-            className="inline-flex size-11 items-center justify-center rounded-lg border border-border bg-background text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none lg:hidden"
+            className="inline-flex size-11 items-center justify-center rounded-md border border-border bg-background text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none lg:hidden"
             aria-expanded={open}
             aria-controls="mobile-nav"
             onClick={() => setOpen((value) => !value)}
@@ -104,7 +104,7 @@ export function SiteHeader() {
                     isActive(pathname, item.href) ? "page" : undefined
                   }
                   className={cn(
-                    "flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-muted-foreground hover:bg-muted hover:text-heading focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    "flex min-h-11 items-center rounded-md px-3 text-sm font-semibold text-muted-foreground hover:bg-muted hover:text-heading focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                     isActive(pathname, item.href) &&
                       "bg-accent text-accent-foreground"
                   )}

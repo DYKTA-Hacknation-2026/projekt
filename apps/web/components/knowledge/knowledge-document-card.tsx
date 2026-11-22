@@ -1,10 +1,7 @@
 import Link from "next/link"
 import { ArrowUpRight, FileText } from "lucide-react"
 
-import {
-  DOCUMENT_KIND_LABELS,
-  type DocumentKind,
-} from "@zpr/contracts/content"
+import { DOCUMENT_KIND_LABELS, type DocumentKind } from "@zpr/contracts/content"
 import type { DocumentSummary } from "@zpr/db/repositories"
 import { Badge } from "@workspace/ui/components/badge"
 
@@ -17,11 +14,15 @@ export function documentKindVariant(kind: DocumentKind) {
   return "secondary" as const
 }
 
-export function KnowledgeDocumentCard({ document }: { document: DocumentSummary }) {
+export function KnowledgeDocumentCard({
+  document,
+}: {
+  document: DocumentSummary
+}) {
   return (
     <Link
       href={`/wiedza/dokumenty/${document.slug}`}
-      className="group flex h-full flex-col rounded-xl border border-border/70 bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/[0.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+      className="group flex h-full flex-col rounded-lg border border-border/70 bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/[0.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
     >
       <span className="flex flex-wrap items-center gap-2">
         {document.code && (

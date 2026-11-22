@@ -1,7 +1,12 @@
 import type { Metadata } from "next"
 import { BookOpen, Calculator, ShieldAlert, Workflow } from "lucide-react"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card"
 import { AssistantChat } from "@/components/assistant-chat"
 import { PageHeader } from "@/components/page-header"
 import { assistant } from "@/messages/pl"
@@ -33,21 +38,30 @@ const pipeline = [
 
 export default function AssistantPage() {
   return (
-    <div className="mx-auto w-full max-w-[96rem] space-y-8 px-4 py-8 sm:px-6">
-      <PageHeader eyebrow="Asystent" title={assistant.title} lead={assistant.lead} />
+    <div className="page-shell space-y-8 py-10">
+      <PageHeader
+        eyebrow="Asystent"
+        title={assistant.title}
+        lead={assistant.lead}
+      />
 
       <AssistantChat />
 
-      <section aria-label="Jak działa asystent" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section
+        aria-label="Jak działa asystent"
+        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+      >
         {pipeline.map((step) => (
           <Card key={step.title}>
             <CardHeader>
-              <span className="mb-2 grid size-8 place-items-center rounded-lg bg-primary/10 text-primary">
+              <span className="mb-2 grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
                 <step.icon aria-hidden="true" className="size-4" />
               </span>
               <CardTitle className="text-sm">{step.title}</CardTitle>
             </CardHeader>
-            <CardContent className="text-xs text-pretty text-muted-foreground">{step.text}</CardContent>
+            <CardContent className="text-xs text-pretty text-muted-foreground">
+              {step.text}
+            </CardContent>
           </Card>
         ))}
       </section>

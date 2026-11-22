@@ -30,7 +30,7 @@ export default async function KnowledgeGlossaryPage({
     data = await getGlossaryPage({ letter: params.litera, query: params.q })
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Centrum wiedzy"
           title="Słownik pojęć"
@@ -49,7 +49,7 @@ export default async function KnowledgeGlossaryPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs items={[{ label: "Słownik pojęć" }]} />
 
       <PageHeader
@@ -67,11 +67,14 @@ export default async function KnowledgeGlossaryPage({
             data.selectedLetter ? { litera: data.selectedLetter } : undefined
           }
         />
-        <nav aria-label="Filtruj alfabetycznie" className="flex flex-wrap gap-1">
+        <nav
+          aria-label="Filtruj alfabetycznie"
+          className="flex flex-wrap gap-1"
+        >
           <Link
             href="/wiedza/slownik"
             aria-current={!data.selectedLetter ? "page" : undefined}
-            className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="inline-flex size-10 items-center justify-center rounded-md border border-border bg-background text-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
           >
             Wsz.
           </Link>
@@ -80,7 +83,7 @@ export default async function KnowledgeGlossaryPage({
               key={letter}
               href={`/wiedza/slownik?litera=${encodeURIComponent(letter)}`}
               aria-current={data.selectedLetter === letter ? "page" : undefined}
-              className="inline-flex size-9 items-center justify-center rounded-lg border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground aria-[current=page]:border-primary/40 aria-[current=page]:bg-primary/10 aria-[current=page]:text-primary"
+              className="inline-flex size-10 items-center justify-center rounded-md border border-border bg-background text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none aria-[current=page]:border-primary/40 aria-[current=page]:bg-primary/10 aria-[current=page]:text-primary"
             >
               {letter}
             </Link>
@@ -96,7 +99,7 @@ export default async function KnowledgeGlossaryPage({
       </p>
 
       {data.terms.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
           Brak pojęć dla wybranych kryteriów.
         </div>
       ) : (
@@ -116,7 +119,7 @@ export default async function KnowledgeGlossaryPage({
                 {terms.map((term) => (
                   <div
                     key={term.id}
-                    className="rounded-xl border border-border/70 bg-card p-4"
+                    className="rounded-lg border border-border/70 bg-card p-4"
                   >
                     <dt>
                       <Link

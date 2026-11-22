@@ -13,7 +13,11 @@ import {
   ShieldCheck,
 } from "lucide-react"
 
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -61,8 +65,12 @@ function headings(blocks: KnowledgeBlock[]) {
   return blocks
     .map((block, index) => ({ block, index }))
     .filter(
-      (entry): entry is { block: Extract<KnowledgeBlock, { kind: "heading" }>; index: number } =>
-        entry.block.kind === "heading"
+      (
+        entry
+      ): entry is {
+        block: Extract<KnowledgeBlock, { kind: "heading" }>
+        index: number
+      } => entry.block.kind === "heading"
     )
     .map((entry) => ({
       id: headingId(entry.block.text, entry.index),
@@ -82,7 +90,7 @@ export default async function KnowledgeArticlePage({
     data = await getArticleView(slug)
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <p className="text-sm text-muted-foreground">Artykuł</p>
         <DbOffline error={error} />
       </div>
@@ -98,7 +106,7 @@ export default async function KnowledgeArticlePage({
   )}`
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs
         items={[
           { href: `/wiedza/kategoria/${category.slug}`, label: category.title },
@@ -201,7 +209,10 @@ export default async function KnowledgeArticlePage({
           )}
 
           {data.faq.length > 0 && (
-            <section aria-labelledby="article-faq-heading" className="space-y-3">
+            <section
+              aria-labelledby="article-faq-heading"
+              className="space-y-3"
+            >
               <h2
                 id="article-faq-heading"
                 className="text-xl font-semibold tracking-tight"
@@ -285,10 +296,7 @@ export default async function KnowledgeArticlePage({
                           className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                         >
                           Otwórz źródło
-                          <ExternalLink
-                            aria-hidden="true"
-                            className="size-3"
-                          />
+                          <ExternalLink aria-hidden="true" className="size-3" />
                         </a>
                       )}
                     </div>
@@ -358,7 +366,7 @@ export default async function KnowledgeArticlePage({
           {toc.length > 0 && (
             <nav
               aria-labelledby="toc-heading"
-              className="rounded-xl border border-border/70 bg-card p-4"
+              className="rounded-md border border-border/70 bg-card p-4"
             >
               <p
                 id="toc-heading"
@@ -381,7 +389,7 @@ export default async function KnowledgeArticlePage({
             </nav>
           )}
 
-          <div className="rounded-xl border border-border/70 bg-card p-4">
+          <div className="rounded-md border border-border/70 bg-card p-4">
             <p className="text-sm font-medium">Sprawdź swoją sytuację</p>
             <p className="mt-1 text-xs text-pretty text-muted-foreground">
               Kalkulator porówna warianty, a asystent odpowie na dodatkowe
@@ -403,7 +411,7 @@ export default async function KnowledgeArticlePage({
             </div>
           </div>
 
-          <div className="rounded-xl border border-border/70 bg-secondary/40 p-4 text-xs text-pretty text-muted-foreground">
+          <div className="rounded-md border border-border/70 bg-secondary/40 p-4 text-xs text-pretty text-muted-foreground">
             <p className="flex items-center gap-1.5 font-medium text-foreground">
               <FileText aria-hidden="true" className="size-3.5 text-primary" />
               {category.articleCount} artykułów w dziale

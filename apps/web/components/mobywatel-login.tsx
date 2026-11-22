@@ -177,7 +177,7 @@ export function MobywatelLogin({ personas }: MobywatelLoginProps) {
                   aria-disabled={!provider.enabled || !hydrated}
                   onClick={() => provider.enabled && setStep(1)}
                   className={cn(
-                    "rounded-xl border p-4 text-left transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    "rounded-lg border p-4 text-left transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                     provider.enabled
                       ? "border-primary/40 bg-primary/5 hover:border-primary hover:bg-primary/10"
                       : "cursor-not-allowed border-border/60 bg-muted/30 opacity-60"
@@ -214,7 +214,7 @@ export function MobywatelLogin({ personas }: MobywatelLoginProps) {
                       aria-pressed={active}
                       onClick={() => selectPersona(persona.id)}
                       className={cn(
-                        "rounded-xl border p-4 text-left transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+                        "rounded-lg border p-4 text-left transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                         active
                           ? "border-primary bg-primary/10 ring-2 ring-primary/30"
                           : "border-border/70 bg-card hover:border-primary/50"
@@ -258,7 +258,7 @@ export function MobywatelLogin({ personas }: MobywatelLoginProps) {
 
           {step === 2 && selected && (
             <div className="space-y-4">
-              <div className="rounded-xl border border-border/70 bg-secondary/30 p-4">
+              <div className="rounded-lg border border-border/70 bg-secondary/30 p-4">
                 <div className="flex items-center gap-2 font-medium">
                   <Landmark aria-hidden="true" className="size-4 text-primary" />
                   Zasiłkowy Przewodnik
@@ -323,7 +323,7 @@ export function MobywatelLogin({ personas }: MobywatelLoginProps) {
 
           {step === 3 && selected && (
             <div className="space-y-4">
-              <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4">
                 <ShieldCheck
                   aria-hidden="true"
                   className="mt-0.5 size-5 text-primary"
@@ -389,7 +389,7 @@ export function MobywatelLogin({ personas }: MobywatelLoginProps) {
 
           {step === 4 && selected && (
             <div className="space-y-4">
-              <div className="flex items-start gap-3 rounded-xl border border-success/30 bg-success/10 p-4">
+              <div className="flex items-start gap-3 rounded-lg border border-success/30 bg-success/10 p-4">
                 <CheckCircle2
                   aria-hidden="true"
                   className="mt-0.5 size-6 text-success"

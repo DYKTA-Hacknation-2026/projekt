@@ -14,7 +14,11 @@ import {
   Users,
 } from "lucide-react"
 
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -63,7 +67,7 @@ export default async function KnowledgeGuidePage({
     data = await getGuideView(slug)
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <p className="text-sm text-muted-foreground">Przewodnik</p>
         <DbOffline error={error} />
       </div>
@@ -75,7 +79,7 @@ export default async function KnowledgeGuidePage({
   const { guide, category } = data
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs
         items={[
           { href: "/wiedza/przewodniki", label: "Przewodniki" },
@@ -153,7 +157,10 @@ export default async function KnowledgeGuidePage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <FileText aria-hidden="true" className="size-4 text-primary" />
+                  <FileText
+                    aria-hidden="true"
+                    className="size-4 text-primary"
+                  />
                   Dokumenty
                 </CardTitle>
                 <CardDescription>
@@ -200,7 +207,7 @@ export default async function KnowledgeGuidePage({
               {guide.steps.map((step, index) => (
                 <li
                   key={`${step.title}-${index}`}
-                  className="flex gap-3 rounded-xl border border-border/70 bg-card p-4"
+                  className="flex gap-3 rounded-lg border border-border/70 bg-card p-4"
                 >
                   <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary/10 font-mono text-sm font-semibold text-primary">
                     {index + 1}
@@ -266,7 +273,7 @@ export default async function KnowledgeGuidePage({
               >
                 Typowe problemy i wyjątki
               </h2>
-              <div className="divide-y divide-border/70 overflow-hidden rounded-xl border border-border/70 bg-card">
+              <div className="divide-y divide-border/70 overflow-hidden rounded-lg border border-border/70 bg-card">
                 {guide.problems.map((item) => (
                   <details key={item.problem} className="group">
                     <summary className="flex cursor-pointer list-none items-start gap-2 p-4 text-sm font-medium hover:bg-muted/50 [&::-webkit-details-marker]:hidden">
@@ -340,7 +347,7 @@ export default async function KnowledgeGuidePage({
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-24">
-          <div className="rounded-xl border border-primary/20 bg-primary/[0.04] p-4">
+          <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-4">
             <p className="text-sm font-medium">Skrót</p>
             <ul className="mt-2 space-y-1.5 text-xs text-muted-foreground">
               <li>{guide.steps.length} kroków</li>
@@ -356,7 +363,7 @@ export default async function KnowledgeGuidePage({
               </Button>
             )}
           </div>
-          <div className="rounded-xl border border-border/70 bg-secondary/40 p-4 text-xs text-muted-foreground">
+          <div className="rounded-lg border border-border/70 bg-secondary/40 p-4 text-xs text-muted-foreground">
             <p className="font-medium text-foreground">Ostatnia weryfikacja</p>
             <p className="mt-1">{formatDate(guide.lastReviewedAt)}</p>
             <Link

@@ -11,7 +11,11 @@ import {
   TriangleAlert,
 } from "lucide-react"
 
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import {
   Card,
   CardContent,
@@ -62,7 +66,7 @@ const sources = [
 
 export default function AboutPage() {
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <PageHeader
         eyebrow="O projekcie"
         title="Co jest prawdziwe, co jest symulacją, a gdzie pomaga AI"
@@ -146,8 +150,8 @@ export default function AboutPage() {
           </p>
           <p>
             <strong className="text-foreground">Q-15:</strong> polityka
-            zaokrągleń kwot dziennych i miesięcznych względem przykładowych spraw
-            ZUS.
+            zaokrągleń kwot dziennych i miesięcznych względem przykładowych
+            spraw ZUS.
           </p>
           <p>
             <strong className="text-foreground">Q-19:</strong> poufność

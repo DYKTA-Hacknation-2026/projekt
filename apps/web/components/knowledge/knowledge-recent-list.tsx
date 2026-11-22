@@ -9,7 +9,7 @@ import { knowledgeHref } from "@/server/services/knowledge-center"
 
 export function KnowledgeRecentList({ items }: { items: RecentContentItem[] }) {
   return (
-    <ol className="divide-y divide-border/70 overflow-hidden rounded-xl border border-border/70 bg-card">
+    <ol className="divide-y divide-border/70 overflow-hidden rounded-lg border border-border/70 bg-card">
       {items.map((item) => (
         <li key={`${item.type}-${item.slug}`}>
           <Link

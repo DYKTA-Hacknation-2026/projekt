@@ -243,7 +243,7 @@ export default async function PanelPage() {
     data = await getDashboardData()
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Panel"
           title={dashboard.title}
@@ -263,7 +263,7 @@ export default async function PanelPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <PageHeader
         eyebrow="Panel"
         title={dashboard.title}
@@ -323,7 +323,7 @@ export default async function PanelPage() {
 
       {imported && <ImportedDataCard imported={imported} />}
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr] lg:items-start">
         <CasesTable data={data} />
 
         <div className="space-y-4">
@@ -394,7 +394,7 @@ export default async function PanelPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         <Card>
           <CardHeader>
             <CardTitle>Ostatnie obliczenia</CardTitle>

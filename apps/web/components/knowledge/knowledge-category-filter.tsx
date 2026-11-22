@@ -23,12 +23,15 @@ export function KnowledgeCategoryFilter({
   }
 
   return (
-    <nav aria-label="Filtruj według kategorii" className="flex flex-wrap gap-1.5">
+    <nav
+      aria-label="Filtruj według kategorii"
+      className="flex flex-wrap gap-1.5"
+    >
       <Link
         href={href()}
         aria-current={!selectedSlug ? "page" : undefined}
         className={cn(
-          "inline-flex min-h-9 items-center rounded-full border border-border bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+          "inline-flex min-h-10 items-center rounded-full border border-border bg-background px-3.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
           !selectedSlug && "border-primary/40 bg-primary/10 text-primary"
         )}
       >
@@ -40,7 +43,7 @@ export function KnowledgeCategoryFilter({
           href={href(category.slug)}
           aria-current={selectedSlug === category.slug ? "page" : undefined}
           className={cn(
-            "inline-flex min-h-9 items-center rounded-full border border-border bg-background px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+            "inline-flex min-h-10 items-center rounded-full border border-border bg-background px-3.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
             selectedSlug === category.slug &&
               "border-primary/40 bg-primary/10 text-primary"
           )}

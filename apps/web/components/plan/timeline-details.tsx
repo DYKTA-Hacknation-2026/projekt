@@ -110,7 +110,7 @@ export function TimelineDetails({
     return (
       <aside
         aria-label="Szczegóły wydarzenia"
-        className="rounded-xl border border-dashed border-border bg-muted/25 p-5"
+        className="rounded-lg border border-dashed border-border bg-muted/25 p-5"
       >
         <div className="flex items-center gap-2 text-sm font-semibold">
           <MousePointerClick aria-hidden="true" className="size-4 text-primary" />
@@ -145,7 +145,7 @@ export function TimelineDetails({
     <aside
       aria-label="Szczegóły wydarzenia"
       aria-live="polite"
-      className="rounded-xl border border-border bg-card p-5 shadow-sm"
+      className="rounded-lg border border-border bg-card p-5"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-1.5">

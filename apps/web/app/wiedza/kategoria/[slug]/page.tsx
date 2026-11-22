@@ -50,7 +50,7 @@ export default async function KnowledgeCategoryPage({
     data = await getKnowledgeCategory(slug)
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Centrum wiedzy"
           title="Kategoria"
@@ -72,12 +72,12 @@ export default async function KnowledgeCategoryPage({
     data.glossary.length === 0
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs items={[{ label: category.title }]} />
 
       <header className="flex flex-col gap-4 border-b border-border/70 pb-8 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex gap-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+          <span className="grid size-12 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
             <KnowledgeIcon name={category.icon} className="size-6" />
           </span>
           <div className="space-y-2">
@@ -90,8 +90,12 @@ export default async function KnowledgeCategoryPage({
             <div className="flex flex-wrap gap-1.5 pt-1">
               <Badge variant="outline">{category.articleCount} artykułów</Badge>
               <Badge variant="outline">{category.faqCount} pytań</Badge>
-              <Badge variant="outline">{category.guideCount} przewodników</Badge>
-              <Badge variant="outline">{category.documentCount} dokumentów</Badge>
+              <Badge variant="outline">
+                {category.guideCount} przewodników
+              </Badge>
+              <Badge variant="outline">
+                {category.documentCount} dokumentów
+              </Badge>
               {category.glossaryCount > 0 && (
                 <Badge variant="outline">{category.glossaryCount} pojęć</Badge>
               )}
@@ -114,7 +118,9 @@ export default async function KnowledgeCategoryPage({
           </CardHeader>
           <CardContent>
             <Button asChild variant="outline">
-              <Link href="/wiedza/szukaj?q=zasi%C5%82ek">Szukaj w całym centrum</Link>
+              <Link href="/wiedza/szukaj?q=zasi%C5%82ek">
+                Szukaj w całym centrum
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -151,7 +157,7 @@ export default async function KnowledgeCategoryPage({
               <li key={term.id}>
                 <Link
                   href={`/wiedza/slownik/${term.slug}`}
-                  className="group flex h-full flex-col rounded-xl border border-border/70 bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/[0.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  className="group flex h-full flex-col rounded-lg border border-border/70 bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/[0.02] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
                 >
                   <span className="font-semibold group-hover:text-primary">
                     {term.term}
@@ -212,7 +218,7 @@ export default async function KnowledgeCategoryPage({
         </section>
       )}
 
-      <div className="rounded-xl border border-border/70 bg-secondary/40 p-4">
+      <div className="rounded-lg border border-border/70 bg-secondary/40 p-4">
         <p className="text-sm font-medium">Inne tematy</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {data.categories

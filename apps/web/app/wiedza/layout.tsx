@@ -12,9 +12,9 @@ export default function KnowledgeLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="pb-16">
+    <>
       <KnowledgeSubnav />
       {children}
-    </div>
+    </>
   )
 }

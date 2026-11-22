@@ -2,7 +2,11 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { FileSearch, Files, Info } from "lucide-react"
 
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import { Button } from "@workspace/ui/components/button"
 import { KnowledgeBreadcrumbs } from "@/components/knowledge/knowledge-breadcrumbs"
 import { KnowledgeCategoryFilter } from "@/components/knowledge/knowledge-category-filter"
@@ -31,7 +35,7 @@ export default async function KnowledgeDocumentsPage({
     data = await getDocumentsPage(params.kategoria)
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Centrum wiedzy"
           title="Dokumenty i formularze"
@@ -43,7 +47,7 @@ export default async function KnowledgeDocumentsPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs items={[{ label: "Dokumenty i formularze" }]} />
 
       <PageHeader
@@ -65,9 +69,9 @@ export default async function KnowledgeDocumentsPage({
         <AlertTitle>Ważne zmiany w formularzach</AlertTitle>
         <AlertDescription>
           Od 24 października 2026 r. ZAM zastępuje ZUR i ZAO, Z-3b został
-          wycofany, a Z-15 zastępuje Z-15A i Z-15B (na eZUS od połowy listopada).
-          Przed złożeniem zawsze sprawdź aktualny wzór na zus.pl — karty poniżej
-          wyjaśniają, który dokument jest właściwy.
+          wycofany, a Z-15 zastępuje Z-15A i Z-15B (na eZUS od połowy
+          listopada). Przed złożeniem zawsze sprawdź aktualny wzór na zus.pl —
+          karty poniżej wyjaśniają, który dokument jest właściwy.
         </AlertDescription>
       </Alert>
 
@@ -91,7 +95,7 @@ export default async function KnowledgeDocumentsPage({
       </div>
 
       {data.documents.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+        <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center">
           <p className="text-sm text-muted-foreground">
             Brak dokumentów w tej kategorii.
           </p>

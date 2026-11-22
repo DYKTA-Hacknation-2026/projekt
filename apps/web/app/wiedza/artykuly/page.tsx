@@ -26,10 +26,13 @@ export default async function KnowledgeArticlesPage({
   let data
 
   try {
-    data = await getArticleIndex({ category: params.kategoria, query: params.q })
+    data = await getArticleIndex({
+      category: params.kategoria,
+      query: params.q,
+    })
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-6 py-10">
         <PageHeader
           eyebrow="Centrum wiedzy"
           title="Artykuły i opracowania"
@@ -41,7 +44,7 @@ export default async function KnowledgeArticlesPage({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <KnowledgeBreadcrumbs items={[{ label: "Artykuły" }]} />
 
       <PageHeader
@@ -79,7 +82,7 @@ export default async function KnowledgeArticlesPage({
       </p>
 
       {data.articles.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-lg border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
           Brak artykułów dla wybranych kryteriów. Wyczyść filtr lub zmień frazę.
         </div>
       ) : (

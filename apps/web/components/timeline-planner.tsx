@@ -129,7 +129,7 @@ function FilterButton({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/60 focus-visible:outline-none",
+        "inline-flex min-h-10 items-center justify-center rounded-full border px-3.5 text-sm font-medium transition-colors focus-visible:ring-3 focus-visible:ring-ring/60 focus-visible:outline-none",
         active
           ? "border-primary/40 bg-primary/12 text-foreground"
           : "border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -912,7 +912,7 @@ export function TimelinePlanner({
         <>
           <section
             aria-labelledby="podsumowanie-planu"
-            className="rounded-xl border border-primary/20 bg-primary/[0.035] p-5 sm:p-6"
+            className="rounded-lg border border-primary/20 bg-primary/[0.035] p-5 sm:p-6"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
@@ -987,7 +987,7 @@ export function TimelinePlanner({
           </section>
 
           <section aria-label="Filtry planu" className="space-y-4">
-            <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-3 rounded-lg border border-border/70 bg-card p-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
                   Osoba
@@ -1044,7 +1044,7 @@ export function TimelinePlanner({
 
               <TabsContent value="timeline">
                 <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_350px] xl:items-start">
-                  <div className="rounded-xl border border-border/80 bg-card p-4 sm:p-5">
+                  <div className="rounded-lg border border-border/80 bg-card p-4 sm:p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <h2 className="text-lg font-semibold tracking-tight">

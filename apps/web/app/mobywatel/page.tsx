@@ -2,7 +2,11 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { Info, ShieldCheck, Smartphone } from "lucide-react"
 
-import { Alert, AlertDescription, AlertTitle } from "@workspace/ui/components/alert"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@workspace/ui/components/alert"
 import {
   Card,
   CardContent,
@@ -27,7 +31,7 @@ export default async function MobywatelPage() {
   const personas = listMobywatelPersonas()
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+    <div className="page-shell py-10">
       <PageHeader
         eyebrow="Logowanie · symulacja"
         title={copy.title}
@@ -54,7 +58,10 @@ export default async function MobywatelPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Smartphone aria-hidden="true" className="size-4 text-primary" />
+                <Smartphone
+                  aria-hidden="true"
+                  className="size-4 text-primary"
+                />
                 Jak działa prawdziwe logowanie
               </CardTitle>
               <CardDescription>
@@ -80,8 +87,8 @@ export default async function MobywatelPage() {
                 </li>
                 <li>
                   <span className="font-medium text-foreground">4.</span> Po
-                  potwierdzeniu (PIN/biometria) usługa dostaje kod
-                  autoryzacyjny i dane z uzgodnionego zakresu.
+                  potwierdzeniu (PIN/biometria) usługa dostaje kod autoryzacyjny
+                  i dane z uzgodnionego zakresu.
                 </li>
               </ol>
             </CardContent>
@@ -90,7 +97,10 @@ export default async function MobywatelPage() {
           <Card className="border-warning/30 bg-warning/5">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                <Info aria-hidden="true" className="size-4 text-warning-foreground" />
+                <Info
+                  aria-hidden="true"
+                  className="size-4 text-warning-foreground"
+                />
                 Co jest inne w demo
               </CardTitle>
             </CardHeader>

@@ -28,7 +28,7 @@ export default async function CalculatorPage() {
     ruleSet = await getActiveRuleSet()
   } catch (error) {
     return (
-      <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+      <div className="page-shell space-y-8 py-10">
         <PageHeader
           eyebrow="Kalkulator"
           title={calculator.title}
@@ -40,26 +40,32 @@ export default async function CalculatorPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-10 sm:px-6">
+    <div className="page-shell space-y-8 py-10">
       <PageHeader
         eyebrow="Kalkulator"
         title={calculator.title}
         lead={calculator.lead}
       />
 
-      <details className="calculator-notice">
-        <summary>Ważne o wyniku demonstracyjnym</summary>
-        <Alert variant="info">
-          <Info aria-hidden="true" />
-          <AlertTitle>Wynik demonstracyjny, ale deterministyczny</AlertTitle>
-          <AlertDescription>
-            Ten sam zestaw danych wejściowych zawsze daje ten sam wynik. Silnik
-            korzysta z zestawu reguł {ruleSet.version} zapisanego w bazie.
-            {ruleSet.verified
-              ? " Wszystkie parametry są zweryfikowane."
-              : " Część parametrów (Q-29, Q-15) nie jest jeszcze zweryfikowana — wynik jest oznaczony jako szacunek."}
-          </AlertDescription>
-        </Alert>
+      <details className="calculator-notice rounded-lg border border-border/70 bg-card">
+        <summary>
+          <span aria-hidden="true" className="disclosure-mark" />
+          Ważne o wyniku demonstracyjnym
+        </summary>
+        <div className="px-4 pb-4">
+          <Alert variant="info">
+            <Info aria-hidden="true" />
+            <AlertTitle>Wynik demonstracyjny, ale deterministyczny</AlertTitle>
+            <AlertDescription>
+              Ten sam zestaw danych wejściowych zawsze daje ten sam wynik.
+              Silnik korzysta z zestawu reguł {ruleSet.version} zapisanego w
+              bazie.
+              {ruleSet.verified
+                ? " Wszystkie parametry są zweryfikowane."
+                : " Część parametrów (Q-29, Q-15) nie jest jeszcze zweryfikowana — wynik jest oznaczony jako szacunek."}
+            </AlertDescription>
+          </Alert>
+        </div>
       </details>
 
       <CalculatorForm ruleSet={ruleSet} />

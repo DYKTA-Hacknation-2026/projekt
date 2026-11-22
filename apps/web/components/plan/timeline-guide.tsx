@@ -24,7 +24,7 @@ export function TimelineGuide({
   return (
     <section
       aria-labelledby="jak-czytac-plan"
-      className="rounded-xl border border-border/80 bg-card p-5 sm:p-6"
+      className="rounded-lg border border-border/80 bg-card p-5 sm:p-6"
     >
       <div className="flex items-center gap-2">
         <Info aria-hidden="true" className="size-5 text-primary" />
